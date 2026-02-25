@@ -1,0 +1,12 @@
+[submodule "libs/gin"]
+	path = libs/gin
+	url = https://github.com/FigBug/Gin.git
+[submodule "libs/MTS-ESP"]
+	path = libs/MTS-ESP
+	url = https://github.com/ODDSound/MTS-ESP.git
+[submodule "libs/JUCE"]
+	path = libs/JUCE
+	url = https://github.com/juce-framework/JUCE.git
+[submodule "libs/surge-tuning"]
+	path = libs/surge-tuning
+	url = https://github.com/surge-synthesizer/tuning-library.git
