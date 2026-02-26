@@ -36,8 +36,13 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
 {
     AudioProcessorValueTreeState::ParameterLayout layout;
 
-    layout.add(std::make_unique<AudioParameterInt>("polyphony", "Polyphony", 1, MAX_POLYPHONY, 8));
+    layout.add(std::make_unique<AudioParameterInt>("polyphony", "Polyphony", 2, 32, 32));
     layout.add(std::make_unique<AudioParameterBool>("legato", "Legato", false));
+    layout.add(std::make_unique<AudioParameterBool>("portamento", "Portamento", false));
+    layout.add(std::make_unique<AudioParameterBool>("mono", "Mono", false));
+    layout.add(std::make_unique<AudioParameterBool>("mpe", "MPE", false));
+    layout.add(std::make_unique<AudioParameterInt>("maxblocksize", "Max Blocksize", 0, 8, 7));
+    layout.add(std::make_unique<AudioParameterFloat>("glide", "Glide", NormalisableRange<float>(0.0f, 8000.0f, 1.f, 0.5f), 0.f));
 
     for (int i = 0; i < MAX_ENVELOPES; ++i) {
         layout.add(std::make_unique<AudioParameterChoice>("env" + juce::String(i + 1) + "_mode", "Env" + juce::String(i + 1) + " Mode", StringArray{ "ADSR", "AHD", "DADSR", "DAHDSR" }, 0));
@@ -120,6 +125,12 @@ TetraOPAudioProcessor::TetraOPAudioProcessor()
     synth = std::make_unique<Synth>(*this);
     modulation = std::make_unique<Modulation>(*this);
 
+    params.addParameterListener("polyphony", this);
+    params.addParameterListener("legato", this);
+    params.addParameterListener("mono", this);
+    params.addParameterListener("mpe", this);
+    params.addParameterListener("maxblocksize", this);
+
     loadSettings();
 }
 
@@ -132,6 +143,8 @@ void TetraOPAudioProcessor::parameterChanged(const juce::String& paramId, float 
 {
     (void)paramId;
     (void)value;
+
+    configsChanged = true;
 }
 
 void TetraOPAudioProcessor::loadSettings ()
@@ -365,13 +378,18 @@ void TetraOPAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
 
     buffer.clear();
 
-    synth->setMPE(false);
-    synth->setMono(true);
-    synth->setLegato(false);
-    synth->setGlissando(false);
-    synth->setPortamento(false);
-    synth->setGlideRate(250.f);
-    synth->setNumVoices(32);
+    if (configsChanged)
+    {
+        polyphony = (int)params.getRawParameterValue("polyphony")->load();
+        mpe_enabled = (bool)params.getRawParameterValue("mpe")->load();
+        synth->setMono((bool)params.getRawParameterValue("mono")->load());
+        synth->setLegato((bool)params.getRawParameterValue("legato")->load());
+        synth->setPortamento((bool)params.getRawParameterValue("portamento")->load());
+        synth->setGlideRate(params.getRawParameterValue("glide")->load());
+        synth->setMPE(mpe_enabled);
+        synth->setNumVoices(polyphony);
+        configsChanged = false;
+    }
 
     int pos = 0;
     int todo = buffer.getNumSamples();
@@ -400,13 +418,78 @@ juce::AudioProcessorEditor* TetraOPAudioProcessor::createEditor()
 //==============================================================================
 void TetraOPAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    (void)destData;
+    auto state = ValueTree("TETRAOP");
+    auto paramsState = params.copyState();
+    state.appendChild(paramsState, nullptr);
+    state.setProperty("version", PROJECT_VERSION, nullptr);
+
+    auto lfos = ValueTree("LFOS");
+    for (int i = 0; i < MAX_LFOS; ++i) {
+        auto lfo = ValueTree(String("LFO" + String(i + 1)));
+        lfo.setProperty("points", var(modulation->lfos[i].pattern.serialize()), nullptr);
+        lfos.appendChild(lfo, nullptr);
+    }
+    state.appendChild(lfos, nullptr);
+    state.appendChild(modulation->serialize(), nullptr);
+
+    auto macros = ValueTree("MACROS");
+    for (int i = 0; i < MAX_MACROS; ++i) {
+        macros.setProperty(String("macro") + String(i + 1), modulation->macroNames[i], nullptr);
+    }
+    state.appendChild(macros, nullptr);
+
+    std::unique_ptr<juce::XmlElement> xml(state.createXml());
+    copyXmlToBinary(*xml, destData);
 }
 
 void TetraOPAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    (void)data;
-    (void)sizeInBytes;
+    std::unique_ptr<juce::XmlElement>xmlState(getXmlFromBinary(data, sizeInBytes));
+    if (xmlState == nullptr) { // Fallback to utf8 parsing
+        auto xmlString = juce::String::fromUTF8(static_cast<const char*>(data), sizeInBytes);
+        xmlState = juce::parseXML(xmlString);
+    }
+
+    if (!xmlState) return;
+    auto state = ValueTree::fromXml(*xmlState);
+    if (!state.isValid()) return;
+
+    auto parameters = state.getChildWithName("PARAMETERS");
+    auto lfos = state.getChildWithName("LFOS");
+    auto mods = state.getChildWithName("MODULATIONS");
+    auto macros = state.getChildWithName("MACROS");
+
+    if (parameters.isValid()) {
+        params.replaceState(parameters);
+    }
+
+    if (lfos.isValid()) {
+        for (int i = 0; i < MAX_LFOS; ++i) {
+            auto lfo = lfos.getChildWithName("LFO" + String(i + 1));
+            if (lfo.isValid()) {
+                auto points = lfo.getProperty("points", "").toString().toStdString();
+                if (!points.empty()) {
+                    modulation->lfos[i].pattern.unserialize(points);
+                }
+            }
+        }
+    }
+
+    if (mods.isValid()) {
+        modulation->unserialize(mods);
+    }
+
+    for (int i = 0; i < MAX_MACROS; ++i) {
+        modulation->macroNames[i] = String("Macro") + String(i + 1);
+    }
+    if (macros.isValid()) {
+        for (int i = 0; i < MAX_MACROS; ++i) {
+            String name = macros.getProperty("macro" + String(i + 1)).toString();
+            if (name.isNotEmpty()) {
+                modulation->macroNames[i] = name;
+            }
+        }
+    }
 }
 
 //==============================================================================

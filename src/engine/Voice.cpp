@@ -26,7 +26,7 @@ void Voice::noteStarted()
     key = note.initialNote / 127.f;
     mpe_channel = note.midiChannel;
 
-    if (glideInfo.fromNote >= 0 && (glideInfo.glissando || glideInfo.portamento))
+    if (glideInfo.fromNote >= 0 && glideInfo.portamento)
     {
         noteSmoother.setTime (glideInfo.rate);
         noteSmoother.setValueUnsmoothed (glideInfo.fromNote / 127.0f);

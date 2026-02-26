@@ -43,7 +43,9 @@ public:
     float velsense = 1.f; // velocity sensitivity
 
     //
+    int polyphony = 32;
     bool mpe_enabled = false;
+    bool configsChanged = true;
 
     // tunning
     MTSClient* mtsClientPtr;
