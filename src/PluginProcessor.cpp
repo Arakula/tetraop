@@ -67,6 +67,8 @@ TetraOPAudioProcessor::TetraOPAudioProcessor()
         .getChildFile("presets")
         .getFullPathName();
 
+    synth = std::make_unique<Synth>(*this);
+
     loadSettings();
 }
 
@@ -237,6 +239,8 @@ void TetraOPAudioProcessor::changeProgramName (int index, const juce::String& ne
 //==============================================================================
 void TetraOPAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    osrate = (float)sampleRate;
+    synth->setCurrentPlaybackSampleRate(sampleRate);
 }
 
 void TetraOPAudioProcessor::releaseResources()
@@ -278,9 +282,8 @@ bool TetraOPAudioProcessor::supportsDoublePrecisionProcessing() const
 // O(N) version of
 // Sort the array by release time if the note is not pressed, otherwise sort by press time.
 // The release time sort should take priority over press time sort.
-int TetraOPAudioProcessor::pickVoice(int note) {
-    /*
-    bool reuseVoices = true
+/* int TetraOPAudioProcessor::pickVoice(int note) {
+    bool reuseVoices = true;
 
     // Priority 1: note already playing in a voice
     if (reuseVoices) {
@@ -314,9 +317,7 @@ int TetraOPAudioProcessor::pickVoice(int note) {
     }
 
     return pick;
-    */
-   return 0;
-}
+} */
 
 /*
 void TetraOPAudioProcessor::onNote(MidiMessage msg)
@@ -525,60 +526,111 @@ void TetraOPAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     }
 
     if (auto* phead = getPlayHead()) {
-        // if (auto pos = phead->getPosition()) {
-        //     if (auto tempo = pos->getBpm()) {
-        //         beatsPerSecond = *tempo / 60.0;
-        //         secondsPerBeat = 60.0 / *tempo;
-        //     }
-        //     if (auto seconds = pos->getTimeInSeconds()) {
-        //         timeInSeconds = *seconds;
-        //     }
-        //     else if (auto ppq = pos->getPpqPosition()) {
-        //         if (auto tempo = pos->getBpm()) {
-        //             timeInSeconds = *ppq * (60.0 / *tempo); // fallback
-        //         }
-        //     }
-        //     playing = pos->getIsPlaying();
-        // }
+        if (auto pos = phead->getPosition()) {
+            if (auto tempo = pos->getBpm()) {
+                beatsPerSecond = *tempo / 60.0;
+                secondsPerBeat = 60.0 / *tempo;
+            }
+            if (auto seconds = pos->getTimeInSeconds()) {
+                timeInSeconds = *seconds;
+            }
+            else if (auto ppq = pos->getPpqPosition()) {
+                if (auto tempo = pos->getBpm()) {
+                    timeInSeconds = *ppq * (60.0 / *tempo); // fallback
+                }
+            }
+            playing = pos->getIsPlaying();
+        }
     }
 
-    leftBuf.resize(numSamples);
+    buffer.clear();
+
+    synth->setMPE(false);
+    synth->setMono(false);
+    synth->setLegato(false);
+    synth->setGlissando(false);
+    synth->setPortamento(false);
+    synth->setGlideRate(250.f);
+    synth->setNumVoices(32);
+
+    int pos = 0;
+    int todo = buffer.getNumSamples();
+
+    while (todo > 0)
+    {
+        int thisBlock = std::min(todo, 32);
+        synth->renderNextBlock(buffer, midiMessages, pos, thisBlock);
+        pos += thisBlock;
+        todo -= thisBlock;
+    }
+
+
+    /* leftBuf.resize(numSamples);
     rightBuf.resize(numSamples);
     std::fill(leftBuf.begin(), leftBuf.end(), 0.f);
-    std::fill(rightBuf.begin(), rightBuf.end(), 0.f);
+    std::fill(rightBuf.begin(), rightBuf.end(), 0.f); */
 
     // audio blocks gets split into subblocks by midi messages
     // this allows block processing and sequential updates on MIDI
+
+    /* int minBlockSize = 32;
+    int maxBlockSize = 32; // or larger if you want
     int blkoffset = 0;
-    for (const auto& msg : midiMessages) {
-        int blocksize = msg.samplePosition - blkoffset;
-        if (blocksize > 0) {
-            processSubBlock(
-                leftBuf.data() + blkoffset,
-                rightBuf.data() + blkoffset,
-                blocksize, blkoffset, numSamples
-            );
+    bool strictMinimum = false;
+
+    auto processSubRange = [&](int start, int length)
+    {
+        int pos = start;
+        while (length > 0)
+        {
+            int subSize = length;
+
+            if (subSize > maxBlockSize)
+                subSize = maxBlockSize;
+
+            if ((pos != 0 || strictMinimum) && subSize < minBlockSize)
+                subSize = std::min(length, minBlockSize);
+
+            processSubBlock(leftBuf.data(), rightBuf.data(), subSize, pos, numSamples);
+
+            pos += subSize;
+            length -= subSize;
         }
-        blkoffset += blocksize;
+    };
+
+    // iterate over incoming MIDI
+    bool firstSubBlock = true;
+    int prevSample = 0;
+    for (const auto& msg : midiMessages)
+    {
+        const int midiPos = msg.samplePosition;
+        if (midiPos >= numSamples)
+            break;
+
+        const bool smallBlockAllowed = (prevSample == 0 && !strictMinimum);
+        const int thisBlockSize = smallBlockAllowed ? 1 : minBlockSize;
+
+        // only split if we are beyond minimumSubBlockSize from previous split
+        if (midiPos >= prevSample + thisBlockSize)
+        {
+            // process audio up to this midi msg position
+            processSubRange(prevSample, midiPos - prevSample);
+            prevSample = midiPos;
+        }
+
         handleMIDI(msg.getMessage());
-        // if (msg.getMessage().isNoteOnOrOff())
-        //     modulation->semiTick();
-    }
+    } */
 
-    const int remaining = numSamples - blkoffset;
-    if (remaining > 0) {
-        processSubBlock(
-            leftBuf.data() + blkoffset,
-            rightBuf.data() + blkoffset,
-            remaining, blkoffset, numSamples
-        );
-    }
+    // process any remaining samples after the last MIDI
+    /* if (prevSample < numSamples)
+        processSubRange(prevSample, numSamples - prevSample); */
 
-    for (int ch = 0; ch < totalNumOutputChannels; ++ch) {
+    /* for (int ch = 0; ch < totalNumOutputChannels; ++ch)
+    {
         auto* src   = (ch % 2 == 0) ? leftBuf.data() : rightBuf.data();
         auto* dst = buffer.getWritePointer(ch);
         std::copy(src, src + numSamples, dst);
-    }
+    } */
 }
 
 void TetraOPAudioProcessor::processSubBlock(float* bufL, float* bufR, int nsamples, int blockoffset, int blocksize)

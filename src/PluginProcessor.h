@@ -25,6 +25,7 @@
 #include <JuceHeader.h>
 #include <vector>
 #include "libMTSClient.h"
+#include "engine/Synth.h"
 
 
 class TetraOPAudioProcessor
@@ -35,6 +36,9 @@ class TetraOPAudioProcessor
 public:
 
     float scale = 1.f;
+
+    // synth
+    std::unique_ptr<Synth> synth;
 
     // tunning
     MTSClient* mtsClientPtr;
@@ -47,6 +51,13 @@ public:
     std::vector<float> leftBuf;
     std::vector<float> rightBuf;
 
+    // Playhead
+    float osrate = 44100.f;
+    double beatsPerSecond = 1.0;
+    double secondsPerBeat = 0.01;
+    double timeInSeconds = 0.0;
+    bool playing = false;
+
     // UI
     int selectedTab = 0;
 
@@ -58,6 +69,7 @@ public:
     ~TetraOPAudioProcessor() override;
 
     //==============================================================================
+    bool supportsMPE() const override { return true; }
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void parameterChanged(const juce::String& parameterID, float newValue) override;
     void releaseResources() override;

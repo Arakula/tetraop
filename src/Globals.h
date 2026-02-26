@@ -1,6 +1,9 @@
 #pragma once
 
 namespace globals {
+	constexpr int MAX_POLYPHONY = 50;
+
+
 	// theme colors
 	inline bool themeLoaded = false;
 	inline std::unordered_map<std::string, juce::Colour> colors;
