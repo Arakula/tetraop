@@ -22,6 +22,7 @@ void Voice::noteStarted()
 
     auto note = getCurrentlyPlayingNote();
     vel = audioProcessor.modulation->velCurve.get_y_at(note.noteOnVelocity.asUnsignedFloat());
+    vel_targ = vel;
     key = note.initialNote / 127.f;
     mpe_channel = note.midiChannel;
 
@@ -51,18 +52,21 @@ void Voice::noteRetriggered()
 
     // in mono mode retain velocity during retriggers
     if (!audioProcessor.synth->lastEventWasNoteOff && !released)
-        vel = audioProcessor.modulation->velCurve.get_y_at(note.noteOnVelocity.asUnsignedFloat());
+    {
+        vel_targ = audioProcessor.modulation->velCurve.get_y_at(note.noteOnVelocity.asUnsignedFloat());
+        vel_step = (vel_targ - vel) / float(getSampleRate() * 0.005); // 5 ms interpolation to avoid clicks
+    }
 
     key = note.initialNote / 127.f;
 
     if (glideInfo.fromNote >= 0 && glideInfo.portamento)
     {
         noteSmoother.setTime (glideInfo.rate);
-        noteSmoother.setValue (note.initialNote / 127.0f);
+        noteSmoother.setValue (key);
     }
     else
     {
-        noteSmoother.setValueUnsmoothed (note.initialNote / 127.0f);
+        noteSmoother.setValueUnsmoothed (key);
     }
 }
 
@@ -108,7 +112,7 @@ void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSa
 
     const float phaseInc = juce::MathConstants<float>::twoPi * freq / srate;
     
-    auto env_targ = audioProcessor.modulation->getEnvelopeValue(0, id, startSample + numSamples / srate);
+    auto env_targ = audioProcessor.modulation->getEnvelopeValue(0, id, startSample + numSamples);
     auto env_step = (env_targ - env) / numSamples;
 
     float velmult = vel * audioProcessor.velsense + 1.0f - audioProcessor.velsense;
@@ -124,7 +128,18 @@ void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSa
         *l++ += sample * velmult * env;
         *r++ += sample * velmult * env;
 
+        // interpolation
         env += env_step;
+        if (vel != vel_targ)
+        {
+            vel += vel_step;
+            if (vel_step > 0.f && vel > vel_targ || vel_step < 0.f && vel < vel_targ)
+            {
+                vel = vel_targ;
+                vel_step = 0.f;
+            }
+            velmult = vel * audioProcessor.velsense + 1.0f - audioProcessor.velsense;
+        }
     }
 
 

@@ -47,4 +47,8 @@ private:
 
     float ampKeyTrack = 1.0f;
     double phase = 0.f;
+
+    // interpolation
+    float vel_targ = 0.f;
+    float vel_step = 0.f;
 };
