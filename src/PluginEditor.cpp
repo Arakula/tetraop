@@ -174,6 +174,8 @@ void TetraOPAudioProcessorEditor::timerCallback()
 
 void TetraOPAudioProcessorEditor::startDragDrop(String modID, juce::Component* component)
 {
+    (void)modID;
+    (void)component;
     /*
     auto modColor = modID.startsWith("env")
         ? COLOR_ENVELOPE()
@@ -216,6 +218,7 @@ void TetraOPAudioProcessorEditor::startDragDrop(String modID, juce::Component* c
 */
 void TetraOPAudioProcessorEditor::mouseUp(const juce::MouseEvent& e)
 {
+    (void)e;
     /*
     if (isDragDropModulation) {
         isDragDropModulation = false;
@@ -251,6 +254,7 @@ void TetraOPAudioProcessorEditor::mouseUp(const juce::MouseEvent& e)
 */
 void TetraOPAudioProcessorEditor::quickConnect(String paramId)
 {
+    (void)paramId;
     /*
     if (!modulatedParams.count(paramId.toStdString()))
         return;

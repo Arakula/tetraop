@@ -9,9 +9,22 @@ Voice::Voice (TetraOPAudioProcessor& p, int _id)
 
 void Voice::noteStarted()
 {
+    srate = (float)getSampleRate();
     fastKill = false;
 
+    pressed = true;
+    released = false;
+    attack_elapsed = 0.f;
+    release_elapsed = 0.f;
+
+    pressed_ts = pressed_ts_counter;
+    pressed_ts_counter += 1;
+
     auto note = getCurrentlyPlayingNote();
+    vel = audioProcessor.modulation->velCurve.get_y_at(note.noteOnVelocity.asUnsignedFloat());
+    key = note.initialNote / 127.f;
+    mpe_channel = note.midiChannel;
+
     if (glideInfo.fromNote >= 0 && (glideInfo.glissando || glideInfo.portamento))
     {
         noteSmoother.setTime (glideInfo.rate);
@@ -26,9 +39,23 @@ void Voice::noteStarted()
 
 void Voice::noteRetriggered()
 {
+    auto& envmod = audioProcessor.modulation->envs[0];
+    if (released && envmod.mode != Envelope::AHD) 
+    {
+        attack_elapsed = envmod.getMatchingAttackTimeFromRelease(attack_elapsed, release_elapsed);
+        release_elapsed = 0.f;
+        released = false;
+    }
+
     auto note = getCurrentlyPlayingNote();
 
-    if (glideInfo.fromNote >= 0 && (glideInfo.glissando || glideInfo.portamento))
+    // in mono mode retain velocity during retriggers
+    if (!audioProcessor.synth->lastEventWasNoteOff && !released)
+        vel = audioProcessor.modulation->velCurve.get_y_at(note.noteOnVelocity.asUnsignedFloat());
+
+    key = note.initialNote / 127.f;
+
+    if (glideInfo.fromNote >= 0 && glideInfo.portamento)
     {
         noteSmoother.setTime (glideInfo.rate);
         noteSmoother.setValue (note.initialNote / 127.0f);
@@ -41,10 +68,13 @@ void Voice::noteRetriggered()
 
 void Voice::noteStopped (bool allowTailOff)
 {
-    //if (! allowTailOff)
-    //{
-        clearCurrentNote();
-    //}
+    released = true;
+    pressed = false;
+
+    if (! allowTailOff)
+    {
+      clearCurrentNote();
+    }
 }
 
 void Voice::notePressureChanged()
@@ -74,23 +104,31 @@ void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSa
     auto note = getCurrentlyPlayingNote();
     float currentMidiNote = noteSmoother.getCurrentValue() * 127.0f;
     currentMidiNote += float(note.totalPitchbendInSemitones);
-    float freq = float(std::min(audioProcessor.osrate / 2.0, 440.0 * std::pow(2.0, (currentMidiNote - 69.0) / 12.0)));
+    float freq = float(std::min(srate / 2.0, 440.0 * std::pow(2.0, (currentMidiNote - 69.0) / 12.0)));
 
-    const float phaseInc = juce::MathConstants<float>::twoPi * freq / audioProcessor.osrate;
+    const float phaseInc = juce::MathConstants<float>::twoPi * freq / srate;
+    
+    auto env_targ = audioProcessor.modulation->getEnvelopeValue(0, id, startSample + numSamples / srate);
+    auto env_step = (env_targ - env) / numSamples;
+
+    float velmult = vel * audioProcessor.velsense + 1.0f - audioProcessor.velsense;
+
     for (int i = 0; i < numSamples; ++i)
     {
-        float sample = std::sin(phase);
+        float sample = (float)std::sin(phase);
 
         phase += phaseInc;
         if (phase >= juce::MathConstants<float>::twoPi)
             phase -= juce::MathConstants<float>::twoPi;
 
-        *l++ += sample;
-        *r++ += sample;
+        *l++ += sample * velmult * env;
+        *r++ += sample * velmult * env;
+
+        env += env_step;
     }
 
-    float velocity = currentlyPlayingNote.noteOnVelocity.asUnsignedFloat();
-    buffer.applyGain(gin::velocityToGain(velocity, ampKeyTrack));
+
+    //buffer.applyGain(gin::velocityToGain(vel, ampKeyTrack));
 
     //if (adsr.getState() == gin::AnalogADSR::State::idle)
     //{
@@ -101,5 +139,18 @@ void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSa
     // Copy output to synth
     outputBuffer.addFrom (0, startSample, buffer, 0, 0, numSamples);
     outputBuffer.addFrom (1, startSample, buffer, 1, 0, numSamples);
+
     noteSmoother.process(numSamples);
+    env = env_targ;
+
+    if (released)
+        release_elapsed += (float)(numSamples / srate);
+    else
+        attack_elapsed += (float)(numSamples / srate);
+
+    // check if envelope has finished
+    if (released && release_elapsed > audioProcessor.modulation->envs[0].rel)
+    {
+        clearCurrentNote();
+    }
 }

@@ -11,6 +11,8 @@ class TetraOPAudioProcessor;
 class Synth : public gin::Synthesiser
 {
 public:
+    bool lastEventWasNoteOff = false;
+
     Synth(TetraOPAudioProcessor& p);
     ~Synth() override;
 

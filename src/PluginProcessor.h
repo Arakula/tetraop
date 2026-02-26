@@ -26,6 +26,7 @@
 #include <vector>
 #include "libMTSClient.h"
 #include "engine/Synth.h"
+#include "engine/Modulation.h"
 
 
 class TetraOPAudioProcessor
@@ -34,11 +35,15 @@ class TetraOPAudioProcessor
     , public juce::ValueTree::Listener
 {
 public:
-
-    float scale = 1.f;
-
     // synth
     std::unique_ptr<Synth> synth;
+    std::unique_ptr<Modulation> modulation;
+    std::vector<float> leftBuf;
+    std::vector<float> rightBuf;
+    float velsense = 1.f; // velocity sensitivity
+
+    //
+    bool mpe_enabled = false;
 
     // tunning
     MTSClient* mtsClientPtr;
@@ -48,18 +53,19 @@ public:
     std::unique_ptr<Tunings::Tuning> tuning;
     String tuningFileDir = ""; // default directory for open tuning file dialog
 
-    std::vector<float> leftBuf;
-    std::vector<float> rightBuf;
 
     // Playhead
-    float osrate = 44100.f;
+    float srate = 88200.f;
+    float osrate = 44100.f; // oversampled srate
     double beatsPerSecond = 1.0;
     double secondsPerBeat = 0.01;
     double timeInSeconds = 0.0;
     bool playing = false;
 
     // UI
+    float scale = 1.f;
     int selectedTab = 0;
+    String displayMod;
 
     juce::AudioProcessorValueTreeState params;
     juce::UndoManager undoManager;
@@ -80,12 +86,7 @@ public:
    #endif
 
     // ========================================================================
-    int pickVoice(int note);
-    inline void handleMIDI(MidiMessage msg);
-
-    // ========================================================================
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
-    void processSubBlock(float* bufL, float* bufR, int nsamples, int blockoffset, int blocksize);
 
     //==============================================================================
     juce::AudioProcessorEditor* createEditor() override;

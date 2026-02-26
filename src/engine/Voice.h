@@ -10,7 +10,19 @@ class TetraOPAudioProcessor;
 class Voice : public gin::SynthesiserVoice
 {
 public:
+
+
 	int id;
+    uint64_t pressed_ts = 1; // timestamp used for rand generators based on note start
+    float srate = 44100.f;
+    float attack_elapsed = 0.0f; // elapsed time in seconds
+    float release_elapsed = 0.0f;
+    bool released = false;
+    bool pressed = false;
+    float vel = 0.f; // norm velocity
+    float key = 0.f; // norm note used for keytracking
+    int mpe_channel = 1;
+    float env = 0.f; // adsr envelope value
 
     Voice (TetraOPAudioProcessor& p, int id);
 
@@ -29,15 +41,10 @@ public:
     void renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
 
 private:
-    void updateParams (int blockSize);
-
+    static inline uint64_t pressed_ts_counter = 1;
     TetraOPAudioProcessor& audioProcessor;
-
-    float currentMidiNote;
     gin::EasedValueSmoother<float> noteSmoother;
 
     float ampKeyTrack = 1.0f;
-
-
     double phase = 0.f;
 };

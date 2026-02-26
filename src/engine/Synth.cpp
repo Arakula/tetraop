@@ -2,7 +2,6 @@
 
 Synth::Synth(TetraOPAudioProcessor& p) : audioProcessor(p)
 {
-	enableLegacyMode();
     setVoiceStealingEnabled (true);
 
 	for (int i = 0; i < MAX_POLYPHONY; i++)
@@ -18,5 +17,10 @@ Synth::~Synth()
 
 void Synth::handleMidiEvent (const juce::MidiMessage& m)
 {
+    if (m.isNoteOff())
+        lastEventWasNoteOff = true;
+    else if (m.isNoteOn())
+        lastEventWasNoteOff = false;
+
     MPESynthesiser::handleMidiEvent (m);
 }
