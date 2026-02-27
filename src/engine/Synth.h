@@ -16,6 +16,11 @@ public:
     Synth(TetraOPAudioProcessor& p);
     ~Synth() override;
 
+    void renderNextSubBlock(AudioBuffer<float>& outputAudio,int startSample, int numSamples) override
+    {
+
+    }
+
     void handleMidiEvent (const juce::MidiMessage& m) override;
 
 private:

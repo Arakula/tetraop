@@ -44,6 +44,8 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add(std::make_unique<AudioParameterInt>("maxblocksize", "Max Blocksize", 0, 8, 7));
     layout.add(std::make_unique<AudioParameterFloat>("glide", "Glide", NormalisableRange<float>(0.0f, 8000.0f, 1.f, 0.5f), 0.f));
 
+    layout.add(std::make_unique<AudioParameterChoice>("layout", "FM Layout", StringArray{ "A_B_C_D", "DCBA", "DC_BA", "DC_B_A", "DA_DB_DC", "BA_CA_DA", "A_CB_DC", "DC_CA_CB", "DC_DB_BA_CA", "DB_CB_BA" }, 0));
+
     for (int i = 0; i < MAX_ENVELOPES; ++i) {
         layout.add(std::make_unique<AudioParameterChoice>("env" + juce::String(i + 1) + "_mode", "Env" + juce::String(i + 1) + " Mode", StringArray{ "ADSR", "AHD", "DADSR", "DAHDSR" }, 0));
         layout.add(std::make_unique<AudioParameterFloat>("env" + juce::String(i + 1) + "_del", "Env" + juce::String(i + 1) + " Delay", NormalisableRange<float>(0.0f, 5.f, 0.00001f, 0.3f), 0.f));

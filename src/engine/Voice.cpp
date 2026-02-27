@@ -5,6 +5,7 @@ Voice::Voice (TetraOPAudioProcessor& p, int _id)
     : audioProcessor (p)
 	, id(_id)
 {
+    fm = std::make_unique<FmMatrix>(audioProcessor);
 }
 
 void Voice::noteStarted()
@@ -41,7 +42,7 @@ void Voice::noteStarted()
 void Voice::noteRetriggered()
 {
     auto& envmod = audioProcessor.modulation->envs[0];
-    if (released && envmod.mode != Envelope::AHD) 
+    if (released && envmod.mode != Envelope::AHD)
     {
         attack_elapsed = envmod.getMatchingAttackTimeFromRelease(attack_elapsed, release_elapsed);
         release_elapsed = 0.f;
@@ -97,36 +98,31 @@ void Voice::setCurrentSampleRate (double newRate)
 {
     MPESynthesiserVoice::setCurrentSampleRate (newRate);
     noteSmoother.setSampleRate (newRate);
+    fm->prepare((float)newRate);
 }
 
 void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
 {
-    gin::ScratchBuffer buffer (2, numSamples);
-    auto l = buffer.getWritePointer(0);
-    auto r = buffer.getWritePointer(1);
+    gin::ScratchBuffer buffer(2, numSamples);
 
     auto note = getCurrentlyPlayingNote();
     float currentMidiNote = noteSmoother.getCurrentValue() * 127.0f;
     currentMidiNote += float(note.totalPitchbendInSemitones);
     float freq = float(std::min(srate / 2.0, 440.0 * std::pow(2.0, (currentMidiNote - 69.0) / 12.0)));
 
-    const float phaseInc = juce::MathConstants<float>::twoPi * freq / srate;
-    
     auto env_targ = audioProcessor.modulation->getEnvelopeValue(0, id, startSample + numSamples);
     auto env_step = (env_targ - env) / numSamples;
 
     float velmult = vel * audioProcessor.velsense + 1.0f - audioProcessor.velsense;
 
+    fm->renderBlock(buffer, startSample, numSamples);
+    auto l = buffer.getWritePointer(0);
+    auto r = buffer.getWritePointer(1);
+
     for (int i = 0; i < numSamples; ++i)
     {
-        float sample = (float)std::sin(phase);
-
-        phase += phaseInc;
-        if (phase >= juce::MathConstants<float>::twoPi)
-            phase -= juce::MathConstants<float>::twoPi;
-
-        *l++ += sample * velmult * env;
-        *r++ += sample * velmult * env;
+        *l++ *= velmult * env;
+        *r++ *= velmult * env;
 
         // interpolation
         env += env_step;
@@ -141,15 +137,6 @@ void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSa
             velmult = vel * audioProcessor.velsense + 1.0f - audioProcessor.velsense;
         }
     }
-
-
-    //buffer.applyGain(gin::velocityToGain(vel, ampKeyTrack));
-
-    //if (adsr.getState() == gin::AnalogADSR::State::idle)
-    //{
-    //    clearCurrentNote();
-    //    stopVoice();
-    //}
 
     // Copy output to synth
     outputBuffer.addFrom (0, startSample, buffer, 0, 0, numSamples);

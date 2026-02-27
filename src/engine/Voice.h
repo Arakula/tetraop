@@ -3,6 +3,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "FmMatrix.h"
 
 class TetraOPAudioProcessor;
 
@@ -10,8 +11,6 @@ class TetraOPAudioProcessor;
 class Voice : public gin::SynthesiserVoice
 {
 public:
-
-
 	int id;
     uint64_t pressed_ts = 1; // timestamp used for rand generators based on note start
     float srate = 44100.f;
@@ -44,6 +43,7 @@ private:
     static inline uint64_t pressed_ts_counter = 1;
     TetraOPAudioProcessor& audioProcessor;
     gin::EasedValueSmoother<float> noteSmoother;
+    std::unique_ptr<FmMatrix> fm;
 
     float ampKeyTrack = 1.0f;
     double phase = 0.f;
