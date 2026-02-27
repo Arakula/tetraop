@@ -66,6 +66,8 @@ class TetraOPAudioProcessorEditor
   , private juce::Timer
 {
 public:
+    int cpuUsage = 0;
+
     TetraOPAudioProcessor& audioProcessor;
 
     TetraOPAudioProcessorEditor (TetraOPAudioProcessor&);

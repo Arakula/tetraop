@@ -8,7 +8,7 @@ TetraOPAudioProcessorEditor::TetraOPAudioProcessorEditor(TetraOPAudioProcessor& 
     : AudioProcessorEditor(p)
     , audioProcessor(p)
 {
-    setSize(1000, 575);
+    setSize(600, 575);
     Desktop::getInstance().setGlobalScaleFactor(audioProcessor.scale);
     startTimerHz(60);
 
@@ -94,6 +94,8 @@ void TetraOPAudioProcessorEditor::loadTheme() const
 
 void TetraOPAudioProcessorEditor::timerCallback()
 {
+    cpuUsage = audioProcessor.synth->getCpuUsage();
+    repaint();
     /*
     if (isDragDropModulation) {
         dragDropOverlay->repaint();
@@ -334,6 +336,9 @@ void TetraOPAudioProcessorEditor::parameterChanged(const juce::String& parameter
 void TetraOPAudioProcessorEditor::paint(Graphics& g)
 {
     g.fillAll(COLOR_BACKGROUND());
+    g.setFont(FontOptions(16.f));
+    g.setColour(Colours::white);
+    g.drawText(String("CPU ") + String(cpuUsage), Rectangle<int>(20, 20, 100, 60), Justification::centred);
 }
 
 void TetraOPAudioProcessorEditor::showParamContextMenu(ModulatedParam* param)

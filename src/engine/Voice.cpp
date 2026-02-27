@@ -9,6 +9,7 @@ Voice::Voice (TetraOPAudioProcessor& p, int _id)
 
 void Voice::noteStarted()
 {
+    audioProcessor.modulation->lastUsedVoice = id;
     fastKill = false;
 
     pressed = true;
@@ -48,6 +49,7 @@ void Voice::noteStarted()
 
 void Voice::noteRetriggered()
 {
+    audioProcessor.modulation->lastUsedVoice = id;
     auto& envmod = audioProcessor.modulation->envs[0];
     if (released && envmod.mode != Envelope::AHD)
     {

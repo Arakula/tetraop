@@ -117,7 +117,7 @@ void FmMatrix::processBlock(SIMDVox& data, int numSamples)
         B.out = renderSIMD(B.phase + A.out * matrix[0][1]) * B.level;
 
         // increment phases
-        for (int j = 0; j < 4; ++j) 
+        for (int j = 0; j < MAX_OPERATORS; ++j) 
         {
             auto& osc = data.osc[j];
             osc.phase += osc.phase_inc;

@@ -397,6 +397,7 @@ void TetraOPAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     int pos = 0;
     int todo = buffer.getNumSamples();
 
+    synth->startBlock();
     while (todo > 0)
     {
         int thisBlock = std::min(todo, 128);
@@ -405,6 +406,7 @@ void TetraOPAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
         pos += thisBlock;
         todo -= thisBlock;
     }
+    synth->endBlock(numSamples);
 }
 
 //==============================================================================

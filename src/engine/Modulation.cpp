@@ -84,6 +84,7 @@ void Modulation::tickMacros()
     for (int i = 0; i < MAX_MACROS; ++i) {
         auto id = (String("macro") + String(i + 1)).toStdString();
         auto& mod = modulators[id];
+        if (mod.connections == 0) continue;
         mod.active = lastVoice->isActive() || lastVoice->pressed;
         mod.value = getValue(id, false);
     }
@@ -111,7 +112,9 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
 
     // init envelopes
     for (auto i = 0; i < MAX_ENVELOPES; ++i) {
-        auto prefix = juce::String("env") + juce::String(i + 1) + "_";
+        auto& mod = modulators[(String("env") + String(i + 1)).toStdString()];
+        if (i > 0 && mod.connections == 0) continue;
+        auto prefix = String("env") + String(i + 1) + "_";
         auto mode = (Envelope::Mode)audioProcessor.params.getRawParameterValue(prefix + "mode")->load();
         float delay = getValue((prefix + "del").toStdString());
         float attack = getValue((prefix + "att").toStdString());
@@ -128,6 +131,8 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
 
     // init lfos
     for (auto i = 0; i < MAX_LFOS; ++i) {
+        auto& mod = modulators[(juce::String("lfo") + juce::String(i + 1)).toStdString()];
+        if (mod.connections == 0) continue;
         auto& lfo = lfos[i];
         auto prefix = juce::String("lfo") + juce::String(i + 1) + "_";
         auto mode = (LFO::Mode)getValue((prefix + "mode").toStdString());
@@ -163,6 +168,8 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
 
     // init rand generators
     for (int i = 0; i < MAX_RNDS; ++i) {
+        auto& mod = modulators[(juce::String("rnd") + juce::String(i + 1)).toStdString()];
+        if (mod.connections == 0) continue;
         auto prefix = juce::String("rnd") + juce::String(i + 1) + "_";
         auto mode = (RandGen::Mode)audioProcessor.params.getRawParameterValue(prefix + "mode")->load();
         auto sync = (LFO::SyncMode)audioProcessor.params.getRawParameterValue(prefix + "sync")->load();
@@ -186,14 +193,16 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
     internalClock += (double)dt;
 
     // tick envelopes
-    for (int i = 0; i < MAX_ENVELOPES; ++i) {
+    for (int i = 0; i < MAX_ENVELOPES; ++i) 
+    {    
+        auto& mod = modulators[(juce::String("env") + juce::String(i + 1)).toStdString()];
+        if (i > 0 && mod.connections == 0) continue;
         auto& env = envs[i];
         float value = !lastVoice->pressed && !lastVoice->released
             ? env.getValue(0.f, 0.f)
             : env.getValue(lastVoice->attack_elapsed, lastVoice->release_elapsed, dt, lastVoice->released);
 
         // store modulator values
-        auto& mod = modulators[(String("env") + String(i + 1)).toStdString()];
         mod.value = value;
         mod.released = lastVoice->released;
         mod.x = env.mode == Envelope::AHD
@@ -207,8 +216,10 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
     }
 
     // tick LFOS
-    for (int i = 0; i < MAX_LFOS; ++i) {
+    for (int i = 0; i < MAX_LFOS; ++i) 
+    {
         auto& mod = modulators[(String("lfo") + String(i + 1)).toStdString()];
+        if (mod.connections == 0) continue;
         auto& lfo = lfos[i];
         auto elapsed = !lastVoice->pressed && !lastVoice->released
             ? 0.f // initial voice state
@@ -226,6 +237,7 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
     // tick randgens
     for (int i = 0; i < MAX_RNDS; ++i) {
         auto& mod = modulators[(String("rnd") + String(i + 1)).toStdString()];
+        if (mod.connections == 0) continue;
         auto& rnd = rnds[i];
         auto elapsed = !lastVoice->pressed && !lastVoice->released
             ? 0.f

@@ -8,6 +8,7 @@ namespace globals {
 	constexpr int MAX_MACROS = 4;
 	constexpr int MAX_LFOS = 4;
 	constexpr int MAX_ENVELOPES = 4;
+	constexpr int MAX_OPERATORS = 4;
 	constexpr int MAX_RNDS = 2;
 	constexpr int MAX_MODS = 4; // max visible mods like vel ktrack modwheel on the right panel
 	constexpr int EQ_BANDS = 4;
