@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include "../Globals.h"
 #include "Voice.h"
+#include "FmMatrix.h"
 
 using namespace globals;
 
@@ -11,16 +12,14 @@ class TetraOPAudioProcessor;
 class Synth : public gin::Synthesiser
 {
 public:
+    std::unique_ptr<FmMatrix> fm;
     bool lastEventWasNoteOff = false;
 
     Synth(TetraOPAudioProcessor& p);
     ~Synth() override;
 
-    void renderNextSubBlock(AudioBuffer<float>& outputAudio,int startSample, int numSamples) override
-    {
-
-    }
-
+    void prepare();
+    void renderNextSubBlock(AudioBuffer<float>& outputAudio, int startSample, int numSamples) override;
     void handleMidiEvent (const juce::MidiMessage& m) override;
 
 private:

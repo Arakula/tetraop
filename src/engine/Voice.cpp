@@ -5,12 +5,10 @@ Voice::Voice (TetraOPAudioProcessor& p, int _id)
     : audioProcessor (p)
 	, id(_id)
 {
-    fm = std::make_unique<FmMatrix>(audioProcessor);
 }
 
 void Voice::noteStarted()
 {
-    srate = (float)getSampleRate();
     fastKill = false;
 
     pressed = true;
@@ -36,6 +34,15 @@ void Voice::noteStarted()
     else
     {
         noteSmoother.setValueUnsmoothed (note.initialNote / 127.0f);
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        osc[i].phase = 0.f;
+        osc[i].freq = 440.0f * std::pow(2.0f, (note.initialNote - 69) / 12.0f);
+        osc[i].phase_inc = osc[i].freq * israte;
+        osc[i].level = i == 0 ? 0.5f : 0.1f;
+        osc[i].out = 0.f;
     }
 }
 
@@ -98,8 +105,10 @@ void Voice::setCurrentSampleRate (double newRate)
 {
     MPESynthesiserVoice::setCurrentSampleRate (newRate);
     noteSmoother.setSampleRate (newRate);
-    fm->prepare((float)newRate);
+    srate = (float)getSampleRate();
+    israte = 1.f / srate;
 }
+
 
 void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
 {
@@ -108,14 +117,13 @@ void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSa
     auto note = getCurrentlyPlayingNote();
     float currentMidiNote = noteSmoother.getCurrentValue() * 127.0f;
     currentMidiNote += float(note.totalPitchbendInSemitones);
-    float freq = float(std::min(srate / 2.0, 440.0 * std::pow(2.0, (currentMidiNote - 69.0) / 12.0)));
+    //float freq = float(std::min(srate / 2.0, 440.0 * std::pow(2.0, (currentMidiNote - 69.0) / 12.0)));
 
     auto env_targ = audioProcessor.modulation->getEnvelopeValue(0, id, startSample + numSamples);
-    auto env_step = (env_targ - env) / numSamples;
+    //auto env_step = (env_targ - env) / numSamples;
 
     float velmult = vel * audioProcessor.velsense + 1.0f - audioProcessor.velsense;
 
-    fm->renderBlock(buffer, startSample, numSamples);
     auto l = buffer.getWritePointer(0);
     auto r = buffer.getWritePointer(1);
 
@@ -149,6 +157,30 @@ void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSa
         release_elapsed += (float)(numSamples / srate);
     else
         attack_elapsed += (float)(numSamples / srate);
+
+    // check if envelope has finished
+    if (released && release_elapsed > audioProcessor.modulation->envs[0].rel)
+    {
+        clearCurrentNote();
+    }
+}
+
+void Voice::startBlock(int startSample, int numSamples)
+{
+    auto env_targ = audioProcessor.modulation->getEnvelopeValue(0, id, startSample + numSamples);
+    env_step = (env_targ - env) / numSamples;
+    vel_mult = vel * audioProcessor.velsense + 1.0f - audioProcessor.velsense;
+}
+
+void Voice::endBlock(int startSample, int numSamples)
+{
+    (void)startSample;
+    noteSmoother.process(numSamples);
+
+    if (released)
+        release_elapsed += (float)(numSamples * israte);
+    else
+        attack_elapsed += (float)(numSamples * israte);
 
     // check if envelope has finished
     if (released && release_elapsed > audioProcessor.modulation->envs[0].rel)

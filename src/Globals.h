@@ -1,6 +1,7 @@
 #pragma once
 
 namespace globals {
+	constexpr int MAX_BLOCKSIZE = 256;
 	constexpr int MAX_POLYPHONY = 50;
 	constexpr int MAX_MODULATIONS = 64;
 	constexpr float POWER_CURVE_POWER = 40.f;

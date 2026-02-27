@@ -3,15 +3,22 @@
 #include <JuceHeader.h>
 #include "../Globals.h"
 #include "FmMatrix.h"
+#include "Voice.h"
+#include "Utils.h"
 
 using namespace globals;
-
 class TetraOPAudioProcessor;
+
+struct SIMDVox
+{
+    Voice::SIMDVoice voice;
+    OSC::SIMDOSC osc[4];
+};
 
 class FmMatrix
 {
 public:
-    using Matrix4x4 = std::array<std::array<int, 4>, 4>;
+    using Matrix4x4 = std::array<std::array<float, 4>, 4>;
 
     struct OSC {
         bool on = false;
@@ -40,6 +47,15 @@ public:
     std::array<Matrix4x4, kLayouts> matrices{};
     Matrix4x4 matrix{};
 
+    std::array<SIMDF, MAX_BLOCKSIZE> outL;
+    std::array<SIMDF, MAX_BLOCKSIZE> outR;
+
+    bool AisOut = false;
+    bool BisOut = false;
+    bool CisOut = false;
+    bool DisOut = false;
+    bool isOut[4] = {};
+
     FmMatrix(TetraOPAudioProcessor& p);
     ~FmMatrix();
 
@@ -47,19 +63,20 @@ public:
     void prepare(float _srate);
     void renderBlock (gin::ScratchBuffer& buf, int blockoffset, int numSamples);
 
+    SIMDF renderSIMD(SIMDF phase);
+    void processBlock(SIMDVox& data, int numSamples);
+
 private:
 	TetraOPAudioProcessor& audioProcessor;
     float srate;
 
-    bool AisOut = true;
-    bool BisOut = true;
-    bool CisOut = true;
-    bool DisOut = true;
+    const SIMDF zero = 0.f;
+    const SIMDF one = 1.f;
+    SIMDF aout;
+    SIMDF bout;
+    SIMDF cout;
+    SIMDF dout;
 
-    OSC A;
-    OSC B;
-    OSC C;
-    OSC D;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FmMatrix)
 };

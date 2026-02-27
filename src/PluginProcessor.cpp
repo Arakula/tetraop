@@ -310,6 +310,7 @@ void TetraOPAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBloc
     srate = (float)sampleRate;
     osrate = (float)sampleRate;
     synth->setCurrentPlaybackSampleRate(sampleRate);
+    synth->prepare();
 }
 
 void TetraOPAudioProcessor::releaseResources()

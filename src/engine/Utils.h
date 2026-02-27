@@ -8,6 +8,8 @@
 #include "../Globals.h"
 
 using namespace globals;
+using SIMDF = mipp::Reg<float>;
+using SIMDM = mipp::Msk<4>;
 
 /*
 * A copy of LookupTableTransform with additional cubic interpolation
