@@ -96,7 +96,7 @@ void Voice::noteStopped (bool allowTailOff)
 
     if (! allowTailOff)
     {
-      clearCurrentNote();
+        clearCurrentNote();
     }
 }
 
@@ -179,12 +179,15 @@ void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSa
 void Voice::startBlock(int startSample, int numSamples)
 {
     auto env_targ = audioProcessor.modulation->getEnvelopeValue(0, id, startSample + numSamples);
+    if (fastKill)
+        env_targ *= 0.01f; // TODO use a proper fadeout
     env_step = (env_targ - env) / numSamples;
     vel_mult = vel * audioProcessor.velsense + 1.0f - audioProcessor.velsense;
 }
 
 void Voice::endBlock(int startSample, int numSamples)
 {
+    // TODO env = env_targ
     (void)startSample;
     noteSmoother.process(numSamples);
 

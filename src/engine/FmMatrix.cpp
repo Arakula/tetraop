@@ -111,10 +111,11 @@ std::pair<SIMDF, SIMDF> FmMatrix::processUnison(OSC::SIMDOSC& osc, SIMDF phaseOf
         if (U.voices == 1) continue; // unused voice
 
         int batch = (U.voices + 3) >> 2;
+        auto offset = SIMDF(phaseOffset.get(lane));
 
         for (int v = 0; v < batch; ++v) // for each unison voice
         {
-            SIMDF s = renderSIMD(U.phase[v] + phaseOffset);
+            SIMDF s = renderSIMD(U.phase[v] + offset);
             s *= U.mask[v];
 
             accL[lane] += (s * 1.f).sum();
