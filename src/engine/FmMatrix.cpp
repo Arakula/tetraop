@@ -103,31 +103,85 @@ SIMDF FmMatrix::renderSIMD(SIMDF phase)
     return mipp::sin(phase * MathConstants<float>::twoPi);
 }
 
+std::pair<SIMDF, SIMDF> FmMatrix::processUnison(OSC::SIMDOSC osc, SIMDF phaseOffset)
+{
+    alignas(sizeof(SIMDF)) std::array<float, 4> voiceL = { 0.f, 0.f, 0.f, 0.f };
+    alignas(sizeof(SIMDF)) std::array<float, 4> voiceR = { 0.f, 0.f, 0.f, 0.f };
+
+    for (int lane = 0; lane < 4; ++lane)
+    {
+        auto& U = osc.unison[lane];
+        int batch = (U.voices + 3) >> 2;
+
+        for (int v = 0; v < batch; ++v)
+        {
+            SIMDF s = renderSIMD(U.phase[v] + phaseOffset);
+            s *= U.mask[v];
+
+            voiceL[lane] += (s * 1.f).sum();
+            voiceR[lane] += (s * 1.f).sum();
+
+            U.phase[v] += U.inc[v];
+            U.phase[v] -= U.phase[v].trunc();
+        }
+    }
+
+    return { mipp::load(&voiceL[0]), mipp::load(&voiceR[0])};
+}
+
 // SIMD'ed voices rendering
 void FmMatrix::processBlock(SIMDVox& data, int numSamples)
 {
     auto& A = data.osc[0];
     auto& B = data.osc[1];
-    SIMDM mask;
-    SIMDF out;
+    SIMDF la, lb, lc, ld;
+    SIMDF offsetA, offsetB;
+    SIMDF left, right;
+    SIMDF AoutL;
+    SIMDF AoutR;
+    SIMDF BoutL;
+    SIMDF BoutR;
 
     for (int i = 0; i < numSamples; ++i)
     {
-        A.out = renderSIMD(A.phase + B.out * matrix[1][0]) * A.level;
-        B.out = renderSIMD(B.phase + A.out * matrix[0][1]) * B.level;
+        la = A.out; lb = B.out;
+
+        // compute mono outputs
+        offsetA = lb * matrix[1][0];
+        offsetB = la * matrix[0][1];
+        A.out = renderSIMD(A.phase + offsetA) * A.level;
+        B.out = renderSIMD(B.phase + offsetB) * B.level;
+
+        AoutL = AoutR = A.out * AisOut;
+        BoutL = BoutR = B.out * BisOut;
+
+        // compute unison
+        if (AisOut && A.unison->voices > 1)
+        {
+            auto [uniL, uniR] = processUnison(A, offsetA);
+            AoutL = uniL * A.level;
+            AoutR = uniR * A.level;
+        }
+
+        if (BisOut && B.unison->voices > 1)
+        {
+            auto [uniL, uniR] = processUnison(B, offsetB);
+            BoutL = uniL * B.level;
+            BoutR = uniR * B.level;
+        }
 
         // increment phases
         for (int j = 0; j < MAX_OPERATORS; ++j) 
         {
             auto& osc = data.osc[j];
             osc.phase += osc.phase_inc;
-            mask = osc.phase > one;
-            osc.phase = mipp::blend(osc.phase - one, osc.phase, mask);
+            osc.phase -= osc.phase.trunc();
         }
 
         // render output
-        out = A.out * AisOut + B.out * BisOut;
-        outL[i] = out;
-        outR[i] = out;
+        left = AoutL + BoutL;
+        right = AoutR + BoutR;
+        outL[i] = left;
+        outR[i] = right;
     }
 }

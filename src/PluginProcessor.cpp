@@ -41,7 +41,6 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add(std::make_unique<AudioParameterBool>("portamento", "Portamento", false));
     layout.add(std::make_unique<AudioParameterBool>("mono", "Mono", false));
     layout.add(std::make_unique<AudioParameterBool>("mpe", "MPE", false));
-    layout.add(std::make_unique<AudioParameterInt>("maxblocksize", "Max Blocksize", 0, 8, 7));
     layout.add(std::make_unique<AudioParameterFloat>("glide", "Glide", NormalisableRange<float>(0.0f, 8000.0f, 1.f, 0.5f), 0.f));
 
     layout.add(std::make_unique<AudioParameterChoice>("layout", "FM Layout", StringArray{ "A_B_C_D", "DCBA", "DC_BA", "DC_B_A", "DA_DB_DC", "BA_CA_DA", "A_CB_DC", "DC_CA_CB", "DC_DB_BA_CA", "DB_CB_BA" }, 0));
@@ -131,7 +130,6 @@ TetraOPAudioProcessor::TetraOPAudioProcessor()
     params.addParameterListener("legato", this);
     params.addParameterListener("mono", this);
     params.addParameterListener("mpe", this);
-    params.addParameterListener("maxblocksize", this);
 
     loadSettings();
 }
@@ -400,7 +398,7 @@ void TetraOPAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     synth->startBlock();
     while (todo > 0)
     {
-        int thisBlock = std::min(todo, 128);
+        int thisBlock = std::min(todo, MAX_BLOCKSIZE);
         modulation->tick((double)osrate, thisBlock, (float)secondsPerBeat);
         synth->renderNextBlock(buffer, midiMessages, pos, thisBlock);
         pos += thisBlock;

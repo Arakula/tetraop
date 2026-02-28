@@ -20,15 +20,6 @@ class FmMatrix
 public:
     using Matrix4x4 = std::array<std::array<float, 4>, 4>;
 
-    struct OSC {
-        bool on = false;
-        float phase = 0.f;
-        float phaseInc = 0.f;
-        float level = 0.5;
-        float freq = 0.5;
-        float out = 0.f;
-    };
-
     enum Layout {
         A_B_C_D,
         DCBA,
@@ -61,9 +52,9 @@ public:
 
     void setLayout(Layout l);
     void prepare(float _srate);
-    void renderBlock (gin::ScratchBuffer& buf, int blockoffset, int numSamples);
 
     SIMDF renderSIMD(SIMDF phase);
+    std::pair<SIMDF, SIMDF> processUnison(OSC::SIMDOSC osc, SIMDF phaseOffset);
     void processBlock(SIMDVox& data, int numSamples);
 
 private:

@@ -7,16 +7,34 @@
 
 class TetraOPAudioProcessor;
 
-
 struct OSC
 {
+    struct SIMDUnison
+    {
+        int voices = 1;
+        SIMDF phase[4]; // four batches for each lane == MAX 16 unison voices per osc per voice
+        SIMDF inc[4];
+        SIMDF mask[4];
+    };
+
+    struct UnisonVec
+    {
+        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> phase;
+        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> inc;
+        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> gainL;
+        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> gainR;
+        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> mask;
+        int voices = 1;
+    };
+
     struct SIMDOSC
     {
-        mipp::Reg<float> phase;
-        mipp::Reg<float> phase_inc;
-        mipp::Reg<float> freq;
-        mipp::Reg<float> level;
-        mipp::Reg<float> out;
+        SIMDF phase;
+        SIMDF phase_inc;
+        SIMDF freq;
+        SIMDF level;
+        SIMDF out;
+        SIMDUnison unison[4]; // four lanes of voices
     };
 
     struct OSCVec
@@ -26,6 +44,7 @@ struct OSC
         alignas(sizeof(SIMDF)) float freq[4];
         alignas(sizeof(SIMDF)) float level[4];
         alignas(sizeof(SIMDF)) float out[4];
+        UnisonVec unison[4];
     };
 
     void stateToVec(OSCVec& vec, int lane) const
@@ -35,6 +54,14 @@ struct OSC
         vec.freq[lane] = freq;
         vec.level[lane] = level;
         vec.out[lane] = out;
+        vec.unison[lane].voices = uni_voices;
+
+        if (uni_voices > 1) 
+        {
+            vec.unison[lane].phase = unison_phases;
+            vec.unison[lane].inc = unison_phases_inc;
+            vec.unison[lane].mask = unison_mask;
+        }
     }
 
     void vecToState(OSCVec& vec, int lane)
@@ -44,6 +71,13 @@ struct OSC
         freq = vec.freq[lane];
         level = vec.level[lane];
         out = vec.out[lane];
+
+        if (vec.unison[lane].voices > 1)
+        {
+            unison_phases = vec.unison[lane].phase;
+            unison_phases_inc = vec.unison[lane].inc;
+            unison_mask = vec.unison[lane].mask;
+        }
     }
 
     static SIMDOSC vecToSIMD(OSCVec& vec)
@@ -54,6 +88,22 @@ struct OSC
         o.freq.load(vec.freq);
         o.level.load(vec.level);
         o.out.load(vec.out);
+        
+        for (int lane = 0; lane < 4; ++lane)
+        {
+            o.unison[lane].voices = vec.unison[lane].voices;
+            if (o.unison[lane].voices == 1)
+                continue;
+
+            for (int batch = 0; batch < 4; batch++)
+            {
+                auto idx = batch * 4;
+                o.unison[lane].phase[batch].load(&vec.unison[lane].phase[idx]);
+                o.unison[lane].inc[batch].load(&vec.unison[lane].inc[idx]);
+                o.unison[lane].mask[batch].load(&vec.unison[lane].mask[idx]);
+            }
+        }
+
         return o;
     }
 
@@ -65,14 +115,32 @@ struct OSC
         simd.freq.store(vec.freq);
         simd.level.store(vec.level);
         simd.out.store(vec.out);
+
+        for (int lane = 0; lane < 4; ++lane)
+        {
+            if (simd.unison[lane].voices == 1)
+                continue;
+
+            for (int batch = 0; batch < 4; batch++)
+            {
+                simd.unison[lane].phase[batch].store(&vec.unison[lane].phase[batch * 4]);
+                simd.unison[lane].inc[batch].store(&vec.unison[lane].inc[batch * 4]);
+            }
+        }
+
         return vec;
     }
+
+    alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> unison_phases;
+    alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> unison_phases_inc;
+    alignas(sizeof(SIMDM)) std::array<float, MAX_UNISON> unison_mask;
 
     float phase;
     float freq;
     float phase_inc;
     float level;
     float out;
+    int uni_voices = 2;
 };
 
 //==============================================================================
