@@ -19,11 +19,11 @@ struct OSC
 
     struct UnisonVec
     {
-        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> phase;
-        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> inc;
-        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> gainL;
-        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> gainR;
-        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> mask;
+        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> phase{};
+        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> inc{};
+        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> gainL{};
+        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> gainR{};
+        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> mask{};
         int voices = 1;
     };
 
@@ -76,7 +76,6 @@ struct OSC
         {
             unison_phases = vec.unison[lane].phase;
             unison_phases_inc = vec.unison[lane].inc;
-            unison_mask = vec.unison[lane].mask;
         }
     }
 
@@ -118,6 +117,7 @@ struct OSC
 
         for (int lane = 0; lane < 4; ++lane)
         {
+            vec.unison[lane].voices = simd.unison[lane].voices;
             if (simd.unison[lane].voices == 1)
                 continue;
 
@@ -151,13 +151,15 @@ public:
 #if GIN_HAS_SIMD
     struct SIMDVoice
     {
-        mipp::Reg<float> env;
-        mipp::Reg<float> vel_mult;
-        mipp::Reg<float> env_step;
+        SIMDF mask;
+        SIMDF env;
+        SIMDF vel_mult;
+        SIMDF env_step;
     };
 
     struct VoiceVec
     {
+        alignas(sizeof(SIMDF)) float mask[4] = { 0.f, 0.f, 0.f, 0.f };
         alignas(sizeof(SIMDF)) float vel_mult[4];
         alignas(sizeof(SIMDF)) float env[4];
         alignas(sizeof(SIMDF)) float env_step[4];
@@ -165,6 +167,7 @@ public:
 
     void stateToVec(VoiceVec& vec, int lane) const
     {
+        vec.mask[lane] = 1.f;
         vec.env[lane] = env;
         vec.vel_mult[lane] = vel_mult;
         vec.env_step[lane] = env_step;
@@ -179,6 +182,7 @@ public:
     static SIMDVoice vecToSIMD(VoiceVec& vec)
     {
         SIMDVoice s;
+        s.mask.load(vec.mask);
         s.env.load(vec.env);
         s.vel_mult.load(vec.vel_mult);
         s.env_step.load(vec.env_step);

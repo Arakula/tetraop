@@ -96,37 +96,36 @@ void FmMatrix::renderBlock (gin::ScratchBuffer& buffer, int blockoffset, int num
 
 SIMDF FmMatrix::renderSIMD(SIMDF phase)
 {
-    SIMDF phaseTrunc = mipp::trunc(phase);
-    auto mask = phase >= zero;
-    
-    phase = mipp::blend(phase - phaseTrunc, phase + one - phaseTrunc, mask);
+    Utils::wrapPhase(phase);
     return mipp::sin(phase * MathConstants<float>::twoPi);
 }
 
-std::pair<SIMDF, SIMDF> FmMatrix::processUnison(OSC::SIMDOSC osc, SIMDF phaseOffset)
+std::pair<SIMDF, SIMDF> FmMatrix::processUnison(OSC::SIMDOSC& osc, SIMDF phaseOffset)
 {
-    alignas(sizeof(SIMDF)) std::array<float, 4> voiceL = { 0.f, 0.f, 0.f, 0.f };
-    alignas(sizeof(SIMDF)) std::array<float, 4> voiceR = { 0.f, 0.f, 0.f, 0.f };
+    alignas(sizeof(SIMDF)) float accL[4] = { 0.f, 0.f, 0.f, 0.f };
+    alignas(sizeof(SIMDF)) float accR[4] = { 0.f, 0.f, 0.f, 0.f };
 
-    for (int lane = 0; lane < 4; ++lane)
+    for (int lane = 0; lane < 4; ++lane) // for each voice
     {
         auto& U = osc.unison[lane];
+        if (U.voices == 1) continue; // unused voice
+
         int batch = (U.voices + 3) >> 2;
 
-        for (int v = 0; v < batch; ++v)
+        for (int v = 0; v < batch; ++v) // for each unison voice
         {
             SIMDF s = renderSIMD(U.phase[v] + phaseOffset);
             s *= U.mask[v];
 
-            voiceL[lane] += (s * 1.f).sum();
-            voiceR[lane] += (s * 1.f).sum();
+            accL[lane] += (s * 1.f).sum();
+            accR[lane] += (s * 1.f).sum();
 
             U.phase[v] += U.inc[v];
-            U.phase[v] -= U.phase[v].trunc();
+            Utils::wrapPhase(U.phase[v]);
         }
     }
 
-    return { mipp::load(&voiceL[0]), mipp::load(&voiceR[0])};
+    return { mipp::load(accL), mipp::load(accR) };
 }
 
 // SIMD'ed voices rendering
@@ -136,7 +135,6 @@ void FmMatrix::processBlock(SIMDVox& data, int numSamples)
     auto& B = data.osc[1];
     SIMDF la, lb, lc, ld;
     SIMDF offsetA, offsetB;
-    SIMDF left, right;
     SIMDF AoutL;
     SIMDF AoutR;
     SIMDF BoutL;
@@ -175,13 +173,11 @@ void FmMatrix::processBlock(SIMDVox& data, int numSamples)
         {
             auto& osc = data.osc[j];
             osc.phase += osc.phase_inc;
-            osc.phase -= osc.phase.trunc();
+            Utils::wrapPhase(osc.phase);
         }
 
         // render output
-        left = AoutL + BoutL;
-        right = AoutR + BoutR;
-        outL[i] = left;
-        outR[i] = right;
+        outL[i] = AoutL + BoutL;
+        outR[i] = AoutR + BoutR;
     }
 }

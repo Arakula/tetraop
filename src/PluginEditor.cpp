@@ -94,7 +94,6 @@ void TetraOPAudioProcessorEditor::loadTheme() const
 
 void TetraOPAudioProcessorEditor::timerCallback()
 {
-    cpuUsage = audioProcessor.synth->getCpuUsage();
     repaint();
     /*
     if (isDragDropModulation) {
@@ -338,7 +337,8 @@ void TetraOPAudioProcessorEditor::paint(Graphics& g)
     g.fillAll(COLOR_BACKGROUND());
     g.setFont(FontOptions(16.f));
     g.setColour(Colours::white);
-    g.drawText(String("CPU ") + String(cpuUsage), Rectangle<int>(20, 20, 100, 60), Justification::centred);
+    g.drawText(String("CPU ") + String(audioProcessor.synth->getCpuUsage()), Rectangle<int>(20, 20, 100, 60), Justification::centred);
+    g.drawText(String("V ") + String(audioProcessor.synth->getNumActiveVoices()), Rectangle<int>(20 + 100, 20, 100, 60), Justification::centred);
 }
 
 void TetraOPAudioProcessorEditor::showParamContextMenu(ModulatedParam* param)

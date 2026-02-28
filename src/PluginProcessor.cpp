@@ -48,7 +48,7 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     for (int i = 0; i < MAX_ENVELOPES; ++i) {
         layout.add(std::make_unique<AudioParameterChoice>("env" + juce::String(i + 1) + "_mode", "Env" + juce::String(i + 1) + " Mode", StringArray{ "ADSR", "AHD", "DADSR", "DAHDSR" }, 0));
         layout.add(std::make_unique<AudioParameterFloat>("env" + juce::String(i + 1) + "_del", "Env" + juce::String(i + 1) + " Delay", NormalisableRange<float>(0.0f, 5.f, 0.00001f, 0.3f), 0.f));
-        layout.add(std::make_unique<AudioParameterFloat>("env" + juce::String(i + 1) + "_att", "Env" + juce::String(i + 1) + " Attack", NormalisableRange<float>(0.0f, 30.f, 0.00001f, 0.3f), .1f));
+        layout.add(std::make_unique<AudioParameterFloat>("env" + juce::String(i + 1) + "_att", "Env" + juce::String(i + 1) + " Attack", NormalisableRange<float>(0.0f, 30.f, 0.00001f, 0.3f), .01f));
         layout.add(std::make_unique<AudioParameterFloat>("env" + juce::String(i + 1) + "_hld", "Env" + juce::String(i + 1) + " Hold", NormalisableRange<float>(0.0f, 5.f, 0.00001f, 0.3f), 0.f));
         layout.add(std::make_unique<AudioParameterFloat>("env" + juce::String(i + 1) + "_dec", "Env" + juce::String(i + 1) + " Decay", NormalisableRange<float>(0.0f, 30.f, 0.00001f, 0.3f), 0.15f));
         layout.add(std::make_unique<AudioParameterFloat>("env" + juce::String(i + 1) + "_sus", "Env" + juce::String(i + 1) + " Sustain", NormalisableRange<float>(0.0f, 1.0f), 0.8f));

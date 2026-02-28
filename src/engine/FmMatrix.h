@@ -54,7 +54,7 @@ public:
     void prepare(float _srate);
 
     SIMDF renderSIMD(SIMDF phase);
-    std::pair<SIMDF, SIMDF> processUnison(OSC::SIMDOSC osc, SIMDF phaseOffset);
+    std::pair<SIMDF, SIMDF> processUnison(OSC::SIMDOSC& osc, SIMDF phaseOffset);
     void processBlock(SIMDVox& data, int numSamples);
 
 private:

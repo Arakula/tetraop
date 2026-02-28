@@ -101,6 +101,12 @@ private:
 class Utils
 {
 public:
+    inline static void wrapPhase(SIMDF& p)
+    {
+        p -= p.trunc();
+        p.blend(p + 1.f, p >= 0.f);
+    }
+
     inline static constexpr float LOG_MAX_OVER_MIN_FREQ = 6.907755278982137f; // log(20000 / 20)
 
     inline static float normalToFreq(float norm)
