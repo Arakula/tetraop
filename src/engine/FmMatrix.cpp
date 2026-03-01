@@ -62,38 +62,6 @@ void FmMatrix::prepare(float _srate)
     srate = _srate;
 }
 
-/*
-static float render(float phase)
-{
-    if (phase >= 0.f) {
-        phase -= std::trunc(phase);
-    } else {
-        phase += 1 - (std::trunc(phase));
-    }
-    return std::sin(phase * MathConstants<float>::twoPi);
-}
-
-void FmMatrix::renderBlock (gin::ScratchBuffer& buffer, int blockoffset, int numSamples)
-{
-    auto l = buffer.getWritePointer(0);
-    auto r = buffer.getWritePointer(1);
-
-    for (int i = 0; i < numSamples; ++i)
-    {
-        A.out = render(A.phase + B.out * matrix[1][0]) * A.level;
-        A.phase += A.phaseInc;
-        if (A.phase > 1) A.phase -= 1;
-
-        B.out = render(B.phase + A.out * matrix[0][1]) * B.level;
-        B.phase += B.phaseInc;
-        if (B.phase > 1) B.phase -= 1;
-
-        *l++ += A.out;
-        *r++ += A.out;
-    }
-}
-*/
-
 SIMDF FmMatrix::renderSIMD(SIMDF phase)
 {
     Utils::wrapPhase(phase);
@@ -170,7 +138,7 @@ void FmMatrix::processBlock(SIMDVox& data, int numSamples)
         }
 
         // increment phases
-        for (int j = 0; j < MAX_OPERATORS; ++j) 
+        for (int j = 0; j < MAX_OSCILLATORS; ++j)
         {
             auto& osc = data.osc[j];
             osc.phase += osc.phase_inc;

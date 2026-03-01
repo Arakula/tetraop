@@ -10,6 +10,7 @@ Synth::Synth(TetraOPAudioProcessor& p) : audioProcessor(p)
         addVoice (voice);
     }
     fm = std::make_unique<FmMatrix>(audioProcessor);
+    unison = std::make_unique<Unison>(audioProcessor);
 }
 
 Synth::~Synth()
@@ -64,11 +65,11 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
 
         // fetch data into arrays
         Voice::VoiceVec voiceVec{};
-        OSC::OSCVec oscVec[MAX_OPERATORS] = {};
-        for (int lane = 0; lane < batchSize; ++lane) 
+        OSC::OSCVec oscVec[MAX_OSCILLATORS] = {};
+        for (int lane = 0; lane < batchSize; ++lane)
         {
             activeVoices[i + lane]->stateToVec(voiceVec, lane);
-            for (int o = 0; o < MAX_OPERATORS; ++o)
+            for (int o = 0; o < MAX_OSCILLATORS; ++o)
             {
                 activeVoices[i + lane]->osc[o].stateToVec(oscVec[o], lane);
             }
@@ -93,12 +94,12 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
         Voice::VoiceVec voiceVecOut{};
         OSC::OSCVec oscVecOut[4] = {};
         voiceVecOut = Voice::SIMDToVec(vox.voice);
-        for (int o = 0; o < MAX_OPERATORS; ++o)
+        for (int o = 0; o < MAX_OSCILLATORS; ++o)
             oscVecOut[o] = OSC::SIMDToVec(vox.osc[o]);
         for (int lane = 0; lane < batchSize; ++lane)
         {
             activeVoices[i + lane]->vecToState(voiceVecOut, lane);
-            for (int o = 0; o < MAX_OPERATORS; ++o)
+            for (int o = 0; o < MAX_OSCILLATORS; ++o)
                 activeVoices[i + lane]->osc[o].vecToState(oscVecOut[o], lane);
         }
     }

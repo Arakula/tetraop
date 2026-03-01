@@ -9,6 +9,7 @@
 
 using namespace globals;
 using SIMDF = mipp::Reg<float>;
+using SIMDFx2 = mipp::Regx2<float>;
 using SIMDM = mipp::Msk<4>;
 
 /*
@@ -105,6 +106,31 @@ public:
     {
         p -= p.trunc();
         p.blend(p + 1.f, p >= 0.f);
+    }
+
+    inline static SIMDFx2 panToGain(SIMDF& pan)
+    {
+        pan = (pan + 1.f) * 0.5f;
+        return pan.cossin();
+    }
+
+    inline static SIMDFx2 panToGainCheap(SIMDF& pan)
+    {
+        pan = (pan + 1.f) * 0.5f;
+        auto l = SIMDF(1.f) - pan * pan;
+        auto r = -(pan * pan) + pan * 2.f;
+        return SIMDFx2(l, r);
+    }
+
+    inline static float centsToRatio(float cents)
+    {
+        return std::pow(2.0f, cents / 1200.0f);
+    }
+
+    inline static SIMDF centsToRatio(SIMDF& cents)
+    {
+        constexpr float LN2_OVER_1200 = 0.00057762265f; // ln(2)/1200
+        return (cents * LN2_OVER_1200).exp();
     }
 
     inline static constexpr float LOG_MAX_OVER_MIN_FREQ = 6.907755278982137f; // log(20000 / 20)
@@ -282,7 +308,7 @@ public:
     float process(float input, float dt)
     {
         // no smoothing
-        if (r >= 1.f) { 
+        if (r >= 1.f) {
             state = input;
         }
         else {

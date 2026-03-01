@@ -1,14 +1,16 @@
 #pragma once
 
 namespace globals {
+	constexpr int SIMD_SZ = 4;
 	constexpr int MAX_BLOCKSIZE = 128;
 	constexpr int MAX_POLYPHONY = 50;
 	constexpr int MAX_MODULATIONS = 64;
+	constexpr float MAX_DETUNE_CENTS = 200.f;
 	constexpr float POWER_CURVE_POWER = 40.f;
 	constexpr int MAX_MACROS = 4;
 	constexpr int MAX_LFOS = 4;
 	constexpr int MAX_ENVELOPES = 4;
-	constexpr int MAX_OPERATORS = 4;
+	constexpr int MAX_OSCILLATORS = 4;
 	constexpr int MAX_RNDS = 2;
 	constexpr int MAX_MODS = 4; // max visible mods like vel ktrack modwheel on the right panel
 	constexpr int EQ_BANDS = 4;
