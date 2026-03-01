@@ -62,8 +62,26 @@ void TetraOPAudioProcessorEditor::buildUI()
             audioProcessor.saveSettings();
         };
 
+
+
+
+    avoices.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    avoices.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 20);
+    addAndMakeVisible(avoices);
+    avoices.setBounds(30, 100, 60, 60);
+    avoicesAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.params, "a_unison_voices", avoices);
+
+    blevel.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    blevel.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 20);
+    addAndMakeVisible(blevel);
+    blevel.setBounds(30, 160, 60, 60);
+    blevelAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.params, "b_level", blevel);
+
+
+
+
     juce::Desktop::getInstance().addGlobalMouseListener(this);
-    // audioProcessor.modulation->UIDirty.store(true); // refresh connections on startup
+    audioProcessor.modulation->UIDirty.store(true); // refresh connections on startup
 }
 
 void TetraOPAudioProcessorEditor::rebuild()

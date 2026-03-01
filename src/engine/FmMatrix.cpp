@@ -76,8 +76,6 @@ std::pair<SIMDF, SIMDF> FmMatrix::processUnison(OSC::SIMDOSC& osc, SIMDF phaseOf
     for (int lane = 0; lane < 4; ++lane) // for each voice
     {
         auto& U = osc.unison[lane];
-        if (U.voices == 1) continue; // unused voice
-
         int batch = (U.voices + 3) >> 2;
         auto offset = SIMDF(phaseOffset.get(lane));
 
@@ -86,8 +84,8 @@ std::pair<SIMDF, SIMDF> FmMatrix::processUnison(OSC::SIMDOSC& osc, SIMDF phaseOf
             SIMDF s = renderSIMD(U.phase[v] + offset);
             s *= U.mask[v];
 
-            accL[lane] += (s * 1.f).sum();
-            accR[lane] += (s * 1.f).sum();
+            accL[lane] += (s * U.gain_l[v]).sum();
+            accR[lane] += (s * U.gain_r[v]).sum();
 
             U.phase[v] += U.inc[v];
             Utils::wrapPhase(U.phase[v]);
@@ -146,7 +144,7 @@ void FmMatrix::processBlock(SIMDVox& data, int numSamples)
         }
 
         // render output
-        outL[i] = AoutL + BoutL;
-        outR[i] = AoutR + BoutR;
+        outL[i] = AoutL * A.gain_l + BoutL * B.gain_l;
+        outR[i] = AoutR * A.gain_r + BoutR * B.gain_r;
     }
 }

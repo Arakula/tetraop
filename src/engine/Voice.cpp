@@ -44,18 +44,7 @@ void Voice::noteStarted()
 
     for (int i = 0; i < MAX_OSCILLATORS; i++)
     {
-        osc[i].phase = 0.f;
-        osc[i].freq = 440.0f * std::pow(2.0f, (note.initialNote - 69) / 12.0f);
-        osc[i].phase_inc = osc[i].freq * israte;
-        osc[i].level = i == 0 ? 0.5f : 0.35f;
-        osc[i].out = 0.f;
-
-        auto& unison = audioProcessor.synth->unison;
-        auto phases = unison->generatePhases(i);
-        for (int j = 0; j < MAX_UNISON; j++)
-        {
-            osc[i].unison_phases[j] = phases[j];
-        }
+        osc[i].trigger(note.initialNote, srate);
     }
 }
 

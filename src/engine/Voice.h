@@ -12,8 +12,6 @@ class TetraOPAudioProcessor;
 class Voice : public gin::SynthesiserVoice
 {
 public:
-
-#if GIN_HAS_SIMD
     struct SIMDVoice
     {
         SIMDF env;
@@ -58,7 +56,6 @@ public:
         simd.env_step.store(vec.env_step);
         return vec;
     }
-#endif
 
 	int id;
     uint64_t pressed_ts = 1; // timestamp used for rand generators based on note start

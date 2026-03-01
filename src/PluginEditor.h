@@ -91,6 +91,18 @@ public:
     void paint(Graphics& g) override;
     void mouseUp(const juce::MouseEvent& e) override;
 
+
+
+    juce::Slider avoices;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> avoicesAttachment;
+    juce::Slider blevel;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> blevelAttachment;
+
+
+
+
+
+
     // Panels
     std::unique_ptr<AboutDialog> aboutDialog;
 

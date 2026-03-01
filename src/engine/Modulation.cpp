@@ -123,7 +123,7 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
         auto prefix = "env" + String(i + 1);
         auto& mod = modulators[prefix];
         if (i > 0 && mod.connections == 0) continue;
-        auto mode = (Envelope::Mode)getValue(prefix + "mode");
+        auto mode = (Envelope::Mode)getValue(prefix + "_mode");
         float delay = getValue((prefix + "_del"));
         float attack = getValue((prefix + "_att"));
         float hold = getValue((prefix + "_hld"));
@@ -615,8 +615,6 @@ float Modulation::getEnvelopeValue(int envid, int voiceId, int blockOffset)
 * Calculates the sum of multiple connections contributions
 * cons are the connections to a single param from different sources
 * voiceId when -1 (default) uses the pre-calculated modulator values from tick()
-*
-* sampsOffset used in audioRate modulation for elapsed time inside a block
 */
 float Modulation::calculateOffset(std::vector<Connection*> conns, int voiceId, int blockOffset, float srate)
 {
@@ -685,13 +683,7 @@ float Modulation::calculateOffset(std::vector<Connection*> conns, int voiceId, i
                 ? voice->attack_elapsed + voice->release_elapsed
                 : lfo.voices[0].x;
 
-            if (audioRate) {
-                srcValue = lfo.getAudioRateValue(elapsed, dt, voiceId + 1, conn->dst);
-            }
-            else {
-                elapsed += dt;
-                srcValue = lfo.getSmoothedValue(elapsed, voiceId + 1);
-            }
+            srcValue = lfo.getAudioRateValue(elapsed, dt, voiceId + 1, conn->dst);
         }
         else if (src.startsWith("rnd") && modindex > 0 && modindex <= MAX_RNDS) {
             auto rndindex = modindex - 1;

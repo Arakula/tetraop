@@ -49,10 +49,10 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     {
         auto prefix = String(i == 0 ? "a_" : i == 1 ? "b_" : i == 2 ? "c_" : "d_");
         auto prefixnm = String(i == 0 ? "A " : i == 1 ? "B " : i == 2 ? "C " : "D ");
-        layout.add(std::make_unique<AudioParameterBool>(prefix + "on", prefixnm + "On", i == 0));
+        layout.add(std::make_unique<AudioParameterBool>(prefix + "on", prefixnm + "On", i < 2));
         layout.add(std::make_unique<AudioParameterBool>(prefix + "fixed", prefixnm + "Fixed", false));
-        layout.add(std::make_unique<AudioParameterFloat>(prefix + "level", prefixnm + "Level", 0.f, 1.f, 0.35f));
-        layout.add(std::make_unique<AudioParameterFloat>(prefix + "pan", prefixnm + "Pan", -1.f, 1.f, 0.f));
+        layout.add(std::make_unique<AudioParameterFloat>(prefix + "level", prefixnm + "Level", 0.f, 1.f, i == 0 ? 1.f : 0.f));
+        layout.add(std::make_unique<AudioParameterFloat>(prefix + "pan", prefixnm + "Pan", 0.f, 1.f, 0.5f));
         layout.add(std::make_unique<AudioParameterInt>(prefix + "pitch_semis", prefixnm + "Pitch Semis", -48, 48, 0));
         layout.add(std::make_unique<AudioParameterInt>(prefix + "pitch_fine", prefixnm + "Pitch Fine", -100, 100, 0.f));
         layout.add(std::make_unique<AudioParameterInt>(prefix + "pitch_coarse", prefixnm + "Pitch Coarse", -1.f, 1.f, 0.f));
@@ -63,8 +63,8 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         layout.add(std::make_unique<AudioParameterInt>(prefix + "unison_voices", prefixnm + "Unison Voices", 1, MAX_UNISON, 1));
         layout.add(std::make_unique<AudioParameterChoice>(prefix + "unison_mode", prefixnm + "Unison Mode", StringArray{ "Unison", "Gaussian", "Alternate", "5ths", "Sub" }, 0));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "unison_detune", prefixnm + "Unison Detune", 0.f, 1.f, 0.35f));
-        layout.add(std::make_unique<AudioParameterFloat>(prefix + "unison_stereo", prefixnm + "Unison Stereo", -1.f, 1.f, 1.f));
-        layout.add(std::make_unique<AudioParameterFloat>(prefix + "unison_spread", prefixnm + "Unison Spread", -1.f, 1.f, 0.8f));
+        layout.add(std::make_unique<AudioParameterFloat>(prefix + "unison_stereo", prefixnm + "Unison Stereo", 0.f, 1.f, 1.f));
+        layout.add(std::make_unique<AudioParameterFloat>(prefix + "unison_spread", prefixnm + "Unison Spread", -1.f, 1.f, -0.33f));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "unison_blend", prefixnm + "Unison Blend", 0.f, 1.f, 1.f));
     }
 

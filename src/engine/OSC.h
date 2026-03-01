@@ -18,6 +18,8 @@ public:
         SIMDF phase[4]; // four batches for each lane == MAX 16 unison voices per osc per voice
         SIMDF inc[4];
         SIMDF mask[4];
+        SIMDF gain_l[4];
+        SIMDF gain_r[4];
     };
 
     struct UnisonVec
@@ -34,6 +36,8 @@ public:
     {
         SIMDF phase;
         SIMDF phase_inc;
+        SIMDF gain_l;
+        SIMDF gain_r;
         SIMDF freq;
         SIMDF level;
         SIMDF out;
@@ -67,7 +71,7 @@ public:
     float phase_inc = 0.f;
     float level = 0.f;
     float out = 0.f;
-    float pan = 0.f;
+    float pan = -2.f;
     float gain_l = 0.f;
     float gain_r = 0.f;
     int unison_voices = 1;
@@ -80,6 +84,10 @@ public:
     OSC(int _id, int _voiceId, TetraOPAudioProcessor& p);
     ~OSC() {}
 
+    OSC(OSC&&) = default;
+    OSC& operator=(OSC&&) = default;
+
+    void trigger(int note, float srate);
     void prepareBlock(int startSample, int numSamples);
     void recalcUnison();
 
@@ -112,6 +120,8 @@ public:
         o.freq.load(vec.freq);
         o.level.load(vec.level);
         o.out.load(vec.out);
+        o.gain_l.load(vec.gain_l);
+        o.gain_r.load(vec.gain_r);
 
         for (int lane = 0; lane < 4; ++lane) // for each voice
         {
@@ -122,10 +132,13 @@ public:
             for (int batch = 0; batch < 4; batch++) // for each unison voice
             {
                 auto idx = batch * 4;
-                o.unison[lane].phase[batch].load(&vec.unison[lane].phase[idx]);
-                o.unison[lane].inc[batch].load(&vec.unison[lane].ratio[idx]);
+                auto& uni = vec.unison[lane];
+                o.unison[lane].phase[batch].load(&uni.phase[idx]);
+                o.unison[lane].inc[batch].load(&uni.ratio[idx]);
                 o.unison[lane].inc[batch] *= vec.phase_inc[lane]; // convert ratio to increment
-                o.unison[lane].mask[batch].load(&vec.unison[lane].mask[idx]);
+                o.unison[lane].mask[batch].load(&uni.mask[idx]);
+                o.unison[lane].gain_l[batch].load(&uni.gain_l[idx]);
+                o.unison[lane].gain_l[batch].load(&uni.gain_r[idx]);
             }
         }
 

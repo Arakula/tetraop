@@ -9,13 +9,32 @@ OSC::OSC(int _id, int _voiceId, TetraOPAudioProcessor& p)
 {
 }
 
+void OSC::trigger(int note, float srate)
+{
+	phase = 0.f;
+	freq = 440.0f * std::pow(2.0f, (note - 69) / 12.0f);
+	phase_inc = freq / srate;
+	out = 0.f;
+	auto phase_start = audioProcessor.modulation->getValue(prefix + "phase_start");
+	auto phase_rand = audioProcessor.modulation->getValue(prefix + "phase_rand");
+	unison_phase = Unison::generatePhases(phase_start, phase_rand);
+}
+
 void OSC::prepareBlock(int startSample, int numSamples)
 {
+	(void)startSample;
 	auto& mod = audioProcessor.modulation;
 	isOn = mod->getValue(prefix + "level");
 	level = mod->getPolyValue(prefix + "level", voiceId, numSamples) * isOn;
 	if (level <= 0.f) return;
-	pan = mod->getPolyValue(prefix + "pan", voiceId, numSamples);
+
+	auto pan_targ = mod->getPolyValue(prefix + "pan", voiceId, numSamples);
+	if (pan != pan_targ)
+	{
+		gain_l = std::cos(MathConstants<float>::halfPi * pan);
+		gain_r = std::sin(MathConstants<float>::halfPi * pan);
+	}
+	pan = pan_targ;
 
 	auto unison_v = (int)mod->getValue(prefix + "unison_voices", true);
 	auto unison_mod = (int)mod->getValue(prefix + "unison_mode", true);
@@ -50,10 +69,10 @@ void OSC::recalcUnison()
 		unison_mask[i] = 1.f;
 
 	unison_ratio = Unison::generateDetuneRatios(unison_voices, unison_detune);
-	auto pan = Unison::generateVoicesPan(unison_voices, unison_stereo);
+	auto panarr = Unison::generateVoicesPan(unison_voices, unison_stereo);
 	for (int i = 0; i < unison_voices; i += SIMD_SZ)
 	{
-		SIMDF p = mipp::load(&pan[i]);
+		SIMDF p = mipp::load(&panarr[i]);
 		auto lr = Utils::panToGainCheap(p);
 		lr[0].store(&unison_gain_l[i]);
 		lr[1].store(&unison_gain_r[i]);
