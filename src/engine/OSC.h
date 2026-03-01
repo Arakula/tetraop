@@ -91,7 +91,7 @@ public:
     void prepareBlock(int startSample, int numSamples);
     void recalcUnison();
 
-    void stateToVec(OSCVec& vec, int lane) const
+    void stateToVec(OSCVec& vec, int lane, bool isFMOutput) const
     {
         vec.phase[lane] = phase;
         vec.phase_inc[lane] = phase_inc;
@@ -102,6 +102,11 @@ public:
         vec.gain_r[lane] = gain_r;
 
         vec.unison[lane].voices = unison_voices;
+        if (!isFMOutput || level <= 0.f)
+        {
+            vec.unison[lane].voices = 1; // optimization, disable unison if its not processed
+        }
+
         if (unison_voices > 1)
         {
             vec.unison[lane].phase = unison_phase;
@@ -138,7 +143,7 @@ public:
                 o.unison[lane].inc[batch] *= vec.phase_inc[lane]; // convert ratio to increment
                 o.unison[lane].mask[batch].load(&uni.mask[idx]);
                 o.unison[lane].gain_l[batch].load(&uni.gain_l[idx]);
-                o.unison[lane].gain_l[batch].load(&uni.gain_r[idx]);
+                o.unison[lane].gain_r[batch].load(&uni.gain_r[idx]);
             }
         }
 

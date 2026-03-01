@@ -31,10 +31,10 @@ void OSC::prepareBlock(int startSample, int numSamples)
 	auto pan_targ = mod->getPolyValue(prefix + "pan", voiceId, numSamples);
 	if (pan != pan_targ)
 	{
+		pan = pan_targ;
 		gain_l = std::cos(MathConstants<float>::halfPi * pan);
 		gain_r = std::sin(MathConstants<float>::halfPi * pan);
 	}
-	pan = pan_targ;
 
 	auto unison_v = (int)mod->getValue(prefix + "unison_voices", true);
 	auto unison_mod = (int)mod->getValue(prefix + "unison_mode", true);
