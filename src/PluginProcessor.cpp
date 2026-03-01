@@ -131,6 +131,18 @@ TetraOPAudioProcessor::TetraOPAudioProcessor()
     params.addParameterListener("mono", this);
     params.addParameterListener("mpe", this);
 
+    //auto& tree = apvts.state; // ValueTree
+    //for (int i = 0; i < tree.getNumChildren(); ++i)
+    //{
+    //    auto paramNode = tree.getChild(i);
+    //
+    //    // Each node should have a "id" property
+    //    auto paramID = paramNode.getProperty("id").toString();
+    //    auto paramName = paramNode.getProperty("name").toString();
+    //
+    //    DBG("Parameter ID: " << paramID << ", Name: " << paramName);
+    //}
+
     loadSettings();
 }
 

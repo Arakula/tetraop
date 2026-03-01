@@ -44,8 +44,8 @@ public:
 	void setSmooth(float smooth);
 	float getValue(float elapsed, float phase_offset);
 	float getSmoothedValue(float elapsed, int voiceId);
-	float getAudioRateValue(float elapsed, float dt, int voiceId, std::string param);
+	float getAudioRateValue(float elapsed, float dt, int voiceId, const juce::String& param);
 	float getXNorm(float elapsed, float phase_offset);
 
-	std::array<std::unordered_map<std::string, RCFilterBlock>, MAX_POLYPHONY + 1> audioRateParamSmoothCache;
+	std::array<std::unordered_map<juce::String, RCFilterBlock>, MAX_POLYPHONY + 1> audioRateParamSmoothCache;
 };

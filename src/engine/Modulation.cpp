@@ -14,7 +14,14 @@ Modulation::Modulation(TetraOPAudioProcessor& p)
     velCurve.buildSegments();
 }
 
-float getRateBeats(int sync, LFO::SyncMode mode)
+void Modulation::parameterChanged(const juce::String& paramId, float value)
+{
+    auto& param = params[paramId];
+    param.value.store(value);
+    param.norm.store(param.range.convertTo0to1(value));
+}
+
+static float getRateBeats(int sync, LFO::SyncMode mode)
 {
     float qn = 1.f;
     if (sync == 0) qn = 1.f * 16.f * 4.f; // 16bar
@@ -37,7 +44,7 @@ float getRateBeats(int sync, LFO::SyncMode mode)
     return qn;
 }
 
-float getDelayBeats(int sync, LFO::SyncMode mode)
+static float getDelayBeats(int sync, LFO::SyncMode mode)
 {
     if (sync == 0) return 0.f;
 
@@ -66,7 +73,7 @@ float getDelayBeats(int sync, LFO::SyncMode mode)
 void Modulation::tickConnections()
 {
     for (auto& conn : connections) {
-        auto prefix = juce::String("mod") + juce::String(conn->id) + "_";
+        auto prefix = "mod" + juce::String(conn->id) + "_";
         auto amount = getValue((prefix + "amt"), false);
         auto tension = getValue((prefix + "ten"), false);
         conn->amount = amount;
@@ -82,7 +89,7 @@ void Modulation::tickMacros()
 {
     auto lastVoice = (Voice*)audioProcessor.synth->getVoice(lastUsedVoice);
     for (int i = 0; i < MAX_MACROS; ++i) {
-        auto id = (String("macro") + String(i + 1)).toStdString();
+        auto id = "macro" + String(i + 1);
         auto& mod = modulators[id];
         if (mod.connections == 0) continue;
         mod.active = lastVoice->isActive() || lastVoice->pressed;
@@ -90,6 +97,7 @@ void Modulation::tickMacros()
     }
 }
 
+// Intra block Tick
 // Modulators, connectors and macros depend on each other
 // When a noteOn or noteOff arrives, refresh values
 void Modulation::subTick()
@@ -112,51 +120,51 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
 
     // init envelopes
     for (auto i = 0; i < MAX_ENVELOPES; ++i) {
-        auto& mod = modulators[(String("env") + String(i + 1)).toStdString()];
+        auto prefix = "env" + String(i + 1);
+        auto& mod = modulators[prefix];
         if (i > 0 && mod.connections == 0) continue;
-        auto prefix = String("env") + String(i + 1) + "_";
-        auto mode = (Envelope::Mode)audioProcessor.params.getRawParameterValue(prefix + "mode")->load();
-        float delay = getValue((prefix + "del").toStdString());
-        float attack = getValue((prefix + "att").toStdString());
-        float hold = getValue((prefix + "hld").toStdString());
-        float decay = getValue((prefix + "dec").toStdString());
-        float sustain = getValue((prefix + "sus").toStdString());
-        float release = getValue((prefix + "rel").toStdString());
-        float tenatt = getValue((prefix + "tenatt").toStdString());
-        float tendec = getValue((prefix + "tendec").toStdString());
-        float tenrel = getValue((prefix + "tenrel").toStdString());
+        auto mode = (Envelope::Mode)getValue(prefix + "mode");
+        float delay = getValue((prefix + "_del"));
+        float attack = getValue((prefix + "_att"));
+        float hold = getValue((prefix + "_hld"));
+        float decay = getValue((prefix + "_dec"));
+        float sustain = getValue((prefix + "_sus"));
+        float release = getValue((prefix + "_rel"));
+        float tenatt = getValue((prefix + "_tenatt"));
+        float tendec = getValue((prefix + "_tendec"));
+        float tenrel = getValue((prefix + "_tenrel"));
         auto& env = envs[i];
         env.init(mode, delay, attack, hold, decay, sustain, release, tenatt, tendec, tenrel);
     }
 
     // init lfos
     for (auto i = 0; i < MAX_LFOS; ++i) {
-        auto& mod = modulators[(juce::String("lfo") + juce::String(i + 1)).toStdString()];
+        auto prefix = String("lfo") + String(i + 1);
+        auto& mod = modulators[prefix];
         if (mod.connections == 0) continue;
         auto& lfo = lfos[i];
-        auto prefix = juce::String("lfo") + juce::String(i + 1) + "_";
-        auto mode = (LFO::Mode)getValue((prefix + "mode").toStdString());
-        auto sync = (LFO::SyncMode)getValue((prefix + "sync").toStdString());
+        auto mode = (LFO::Mode)getValue(prefix + "_mode");
+        auto sync = (LFO::SyncMode)getValue(prefix + "_sync");
 
         auto rate = sync == LFO::SyncMode::Rate
-            ? getValue((prefix + "rate").toStdString())
-            : getRateBeats((int)getValue((prefix + "rate_sync").toStdString()), sync);
+            ? getValue(prefix + "_rate")
+            : getRateBeats((int)getValue(prefix + "_rate_sync"), sync);
         if (sync != LFO::Rate)
             rate *= secondsPerBeat;
 
         auto delay = sync == LFO::SyncMode::Rate
-            ? getValue((prefix + "delay").toStdString())
-            : getDelayBeats((LFO::SyncMode)getValue((prefix + "delay_sync").toStdString()), sync);
+            ? getValue((prefix + "_delay"))
+            : getDelayBeats((LFO::SyncMode)getValue(prefix + "_delay_sync"), sync);
         if (sync != LFO::Rate)
             delay *= secondsPerBeat;
 
         auto rise = sync == LFO::SyncMode::Rate
-            ? getValue((prefix + "rise").toStdString())
-            : getDelayBeats((LFO::SyncMode)getValue((prefix + "rise_sync").toStdString()), sync);
+            ? getValue((prefix + "_rise"))
+            : getDelayBeats((LFO::SyncMode)getValue((prefix + "_rise_sync")), sync);
         if (sync != LFO::Rate)
             rise *= secondsPerBeat;
 
-        auto smooth = getValue((prefix + "smooth").toStdString());
+        auto smooth = getValue((prefix + "_smooth"));
 
         auto duration = rate;
         bool srateChanged = lfo.srate != srate;
@@ -168,16 +176,16 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
 
     // init rand generators
     for (int i = 0; i < MAX_RNDS; ++i) {
-        auto& mod = modulators[(juce::String("rnd") + juce::String(i + 1)).toStdString()];
+        auto prefix = "rnd" + juce::String(i + 1);
+        auto& mod = modulators[prefix];
         if (mod.connections == 0) continue;
-        auto prefix = juce::String("rnd") + juce::String(i + 1) + "_";
-        auto mode = (RandGen::Mode)audioProcessor.params.getRawParameterValue(prefix + "mode")->load();
-        auto sync = (LFO::SyncMode)audioProcessor.params.getRawParameterValue(prefix + "sync")->load();
-        auto global = (LFO::SyncMode)audioProcessor.params.getRawParameterValue(prefix + "global")->load();
+        auto mode = (RandGen::Mode)getValue(prefix + "_mode");
+        auto sync = (LFO::SyncMode)getValue(prefix + "_sync");
+        auto global = (LFO::SyncMode)getValue(prefix + "_global");
 
         auto rate = sync == LFO::SyncMode::Rate
-            ? getValue((prefix + "rate").toStdString())
-            : getRateBeats((int)getValue((prefix + "rate_sync").toStdString()), sync);
+            ? getValue((prefix + "_rate"))
+            : getRateBeats((int)getValue(prefix + "_rate_sync"), sync);
         if (sync != LFO::Rate)
             rate *= secondsPerBeat;
 
@@ -193,8 +201,8 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
     internalClock += (double)dt;
 
     // tick envelopes
-    for (int i = 0; i < MAX_ENVELOPES; ++i) 
-    {    
+    for (int i = 0; i < MAX_ENVELOPES; ++i)
+    {
         auto& mod = modulators[(juce::String("env") + juce::String(i + 1)).toStdString()];
         if (i > 0 && mod.connections == 0) continue;
         auto& env = envs[i];
@@ -216,9 +224,9 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
     }
 
     // tick LFOS
-    for (int i = 0; i < MAX_LFOS; ++i) 
+    for (int i = 0; i < MAX_LFOS; ++i)
     {
-        auto& mod = modulators[(String("lfo") + String(i + 1)).toStdString()];
+        auto& mod = modulators["lfo" + String(i + 1)];
         if (mod.connections == 0) continue;
         auto& lfo = lfos[i];
         auto elapsed = !lastVoice->pressed && !lastVoice->released
@@ -236,7 +244,7 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
 
     // tick randgens
     for (int i = 0; i < MAX_RNDS; ++i) {
-        auto& mod = modulators[(String("rnd") + String(i + 1)).toStdString()];
+        auto& mod = modulators["rnd" + String(i + 1)];
         if (mod.connections == 0) continue;
         auto& rnd = rnds[i];
         auto elapsed = !lastVoice->pressed && !lastVoice->released
@@ -306,23 +314,13 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
     modulators["lift"].value = (lastVoice->mpe_channel > 1 && lastVoice->released)
         ? mpe[lastVoice->mpe_channel].lift : 0.f;
 
-    // cache each param value based on modulations, used by UI
-    for (auto& [dst, conns] : destinations) {
-        float offset = calculateOffset(conns);
-        auto param = audioProcessor.params.getParameter(dst);
-        auto norm = param->getValue();
-        auto& p = params[dst];
-        p.norm.store(std::clamp(norm + offset, 0.f, 1.f));
-        p.value.store(param->convertFrom0to1(p.norm));
-    }
-
     tickMacros();
 }
 
 /*
 * Public connect method, locks behind a mutex
 */
-void Modulation::connect(const std::string& src, const std::string& dst, int sliderId)
+void Modulation::connect(const juce::String& src, const juce::String& dst, int sliderId)
 {
     if (src == dst) return; // prevent macro1 <> macro1 connections
     disconnect(src, dst);
@@ -335,7 +333,7 @@ void Modulation::connect(const std::string& src, const std::string& dst, int sli
 *
 * connIndex sets the position in the connections array, used by changeConnection()
 */
-void Modulation::_connect(const std::string& src, const std::string& dst, int sliderId, int connIndex)
+void Modulation::_connect(const juce::String& src, const juce::String& dst, int sliderId, int connIndex)
 {
     if (connections.size() == MAX_MODULATIONS) return;
 
@@ -387,7 +385,7 @@ void Modulation::_connect(const std::string& src, const std::string& dst, int sl
 /*
 * Public disconnect method with mutex lock
 */
-void Modulation::disconnect(const std::string& src, const std::string& dst)
+void Modulation::disconnect(const juce::String& src, const juce::String& dst)
 {
     std::lock_guard<std::mutex> lock(mtx);
     _disconnect(src, dst);
@@ -396,7 +394,7 @@ void Modulation::disconnect(const std::string& src, const std::string& dst)
 /*
 * Inner disconect method, no mutex lock
 */
-void Modulation::_disconnect(const std::string& src, const std::string& dst)
+void Modulation::_disconnect(const juce::String& src, const juce::String& dst)
 {
     auto it = std::find_if(connections.begin(), connections.end(),
         [&src, &dst](const std::unique_ptr<Connection>& connPtr) {
@@ -421,25 +419,25 @@ void Modulation::_disconnect(const std::string& src, const std::string& dst)
     }
 }
 
-void Modulation::disconnectSelectedMod(const std::string& dst)
+void Modulation::disconnectSelectedMod(const juce::String& dst)
 {
-    if (selectedMod.empty()) return;
+    if (selectedMod.isEmpty()) return;
     disconnect(selectedMod, dst);
 }
 
-bool Modulation::isConnected(const std::string& param)
+bool Modulation::isConnected(const juce::String& param)
 {
     auto it = params.find(param);
     return it != params.end() && it->second.connections > 0;
 }
 
-bool Modulation::isSrcConnected(const std::string& src)
+bool Modulation::isSrcConnected(const juce::String& src)
 {
     auto it = sources.find(src);
     return it != sources.end() && !it->second.empty();
 }
 
-Modulation::Connection* Modulation::getConnection(const std::string& src, const std::string& dst)
+Modulation::Connection* Modulation::getConnection(const juce::String& src, const juce::String& dst)
 {
     auto it = std::find_if(connections.begin(), connections.end(),
         [&src, &dst](const std::unique_ptr<Connection>& connPtr) {
@@ -454,7 +452,7 @@ Modulation::Connection* Modulation::getConnection(const std::string& src, const 
 
 // Change connection source and/or destination
 // Replaces the old connection with a new one with same params and same array position
-void Modulation::changeConnection(const std::string& src, const std::string& dst, const std::string newsrc, const std::string newdst)
+void Modulation::changeConnection(const juce::String& src, const juce::String& dst, const juce::String newsrc, const juce::String newdst)
 {
     std::lock_guard<std::mutex> lock(mtx);
     if (newsrc == newdst) return; // prevent macro1 <> macro1
@@ -485,7 +483,7 @@ void Modulation::changeConnection(const std::string& src, const std::string& dst
     stringToMap(newconn->mpoints, curvemaps[newconn->id]);
 }
 
-void Modulation::setConnectionBypass(const std::string& src, const std::string& dst, bool bypass)
+void Modulation::setConnectionBypass(const juce::String& src, const juce::String& dst, bool bypass)
 {
     std::lock_guard<std::mutex> lock(mtx);
     auto* conn = getConnection(src, dst);
@@ -495,7 +493,7 @@ void Modulation::setConnectionBypass(const std::string& src, const std::string& 
     }
 }
 
-void Modulation::setConnectionBipolar(const std::string& src, const std::string& dst, bool bipolar)
+void Modulation::setConnectionBipolar(const juce::String& src, const juce::String& dst, bool bipolar)
 {
     std::lock_guard<std::mutex> lock(mtx);
     auto* conn = getConnection(src, dst);
@@ -505,7 +503,7 @@ void Modulation::setConnectionBipolar(const std::string& src, const std::string&
     }
 }
 
-void Modulation::setConnectionMPoints(const std::string& src, const std::string& dst, std::string& mpoints)
+void Modulation::setConnectionMPoints(const juce::String& src, const juce::String& dst, juce::String& mpoints)
 {
     std::lock_guard<std::mutex> lock(mtx);
     auto* conn = getConnection(src, dst);
@@ -516,7 +514,7 @@ void Modulation::setConnectionMPoints(const std::string& src, const std::string&
     }
 }
 
-void Modulation::setConnectionMapped(const std::string& src, const std::string& dst, bool mapped)
+void Modulation::setConnectionMapped(const juce::String& src, const juce::String& dst, bool mapped)
 {
     std::lock_guard<std::mutex> lock(mtx);
     auto* conn = getConnection(src, dst);
@@ -527,37 +525,59 @@ void Modulation::setConnectionMapped(const std::string& src, const std::string& 
 }
 
 /**
+ * Retrieves an internally tracked param
+ * If the param is not registered yet registers it and starts listening to events
+ */
+Modulation::Param& Modulation::getParam(const juce::String& pname)
+{
+    auto it = params.find(pname);
+    if (it == params.end())
+    {
+        auto& entry = params[pname]; // inserts and returns reference
+        entry.id = pname;
+
+        auto* param = audioProcessor.params.getParameter(pname);
+        entry.norm.store(param->getValue());
+        entry.value.store(audioProcessor.params.getRawParameterValue(pname)->load());
+        entry.range = param->getNormalisableRange();
+
+        audioProcessor.params.addParameterListener(pname, this);
+        return entry;
+    }
+    else
+    {
+        return it->second;
+    }
+}
+
+/**
  * Thread safe get modulated value
  */
 float Modulation::getValue(const juce::String& pname, bool useCache, int blockOffset, bool audioRate, float srate)
 {
-    if (useCache) {
-        auto it = params.find(pname.toStdString());
-        return it != params.end() && it->second.connections > 0
-            ? it->second.value.load()
-            : audioProcessor.params.getRawParameterValue(pname)->load();
+    if (useCache)
+    {
+        return getParam(pname).value.load();
     }
-    else {
-        auto it = destinations.find(pname.toStdString());
-        if (it != destinations.end()) {
+    else
+    {
+        auto it = destinations.find(pname);
+        if (it != destinations.end())
+        {
             float offset = calculateOffset(it->second, lastUsedVoice, blockOffset, audioRate, srate);
-            auto param = audioProcessor.params.getParameter(pname);
-            auto norm = param->getValue();
-            return param->convertFrom0to1(std::clamp(norm + offset, 0.f, 1.f));
+            auto& param = getParam(pname);
+            return param.range.convertFrom0to1(std::clamp(param.norm.load() + offset, 0.f, 1.f));
         }
-        return audioProcessor.params.getRawParameterValue(pname)->load();
+        return getParam(pname).value.load();
     }
 }
 
 /**
  * Thread safe get modulated norm
  */
-float Modulation::getNorm(const std::string& param)
+float Modulation::getNorm(const juce::String& param)
 {
-    auto it = params.find(param);
-    return it != params.end() && it->second.connections > 0
-        ? it->second.norm.load()
-        : audioProcessor.params.getParameter(param)->getValue();
+    return getParam(param).norm.load();
 }
 
 /**
@@ -565,14 +585,15 @@ float Modulation::getNorm(const std::string& param)
  */
 float Modulation::getPolyValue(const juce::String& pname, int voiceId, int blockOffset, bool audioRate)
 {
-    auto it = destinations.find(pname.toStdString());
-    if (it != destinations.end()) {
+    auto it = destinations.find(pname);
+    if (it != destinations.end()) 
+    {
         float offset = calculateOffset(it->second, voiceId, blockOffset, audioRate);
-        auto param = audioProcessor.params.getParameter(pname);
-        auto norm = param->getValue();
-        return param->convertFrom0to1(std::clamp(norm + offset, 0.f, 1.f));
+        auto& param = getParam(pname);
+        auto norm = param.norm.load();
+        return param.range.convertFrom0to1(std::clamp(norm + offset, 0.f, 1.f));
     }
-    return audioProcessor.params.getRawParameterValue(pname)->load();
+    return getParam(pname).value;
 }
 
 float Modulation::getEnvelopeValue(int envid, int voiceId, int blockOffset)
@@ -639,10 +660,10 @@ float Modulation::calculateOffset(std::vector<Connection*> conns, int voiceId, i
 
     for (auto* conn : conns) {
         if (conn->bypass) continue;
-        juce::String src = conn->src;
+        juce::String& src = conn->src;
         float srcValue = 0.0f;
         int modindex = src.retainCharacters("0123456789").getIntValue();
-        auto& mod = modulators[src.toStdString()];
+        auto& mod = modulators[src];
 
         if (voice == nullptr) { // no voice, global modulator, use cached value
             srcValue = mod.value;
@@ -702,7 +723,7 @@ float Modulation::calculateOffset(std::vector<Connection*> conns, int voiceId, i
             srcValue = randFromVoiceTimestamp(voice->pressed_ts);
         }
         else if (src.startsWith("macro")) {
-            srcValue = getValue(src.toStdString(), true);
+            srcValue = getValue(src, true);
         }
         else if (src == "at") {
             if (audioProcessor.mpe_enabled)
@@ -755,12 +776,11 @@ void Modulation::setChannelPressure(float value)
     }
 }
 
-void Modulation::setSelectedMod(const std::string& id)
+void Modulation::setSelectedMod(const juce::String& id)
 {
     selectedMod = id;
-    String sid = String(id);
-    if (sid.startsWith("env") || sid.startsWith("lfo") || sid.startsWith("rnd")) {
-        audioProcessor.displayMod = sid;
+    if (id.startsWith("env") || id.startsWith("lfo") || id.startsWith("rnd")) {
+        audioProcessor.displayMod = id;
     }
     UIDirty.store(true);
 }
@@ -771,7 +791,7 @@ bool Modulation::isAnyVoiceActive()
     return lastVoice->isActive() || lastVoice->pressed;
 }
 
-float Modulation::getKeyTrackFor(const std::string& param)
+float Modulation::getKeyTrackFor(const juce::String& param)
 {
     std::lock_guard<std::mutex> lock(mtx);
     auto* conn = getConnection("key", param);
@@ -781,7 +801,7 @@ float Modulation::getKeyTrackFor(const std::string& param)
     return conn->amount;
 }
 
-float Modulation::getKeyTrackOffsetFor(const std::string& param, int note)
+float Modulation::getKeyTrackOffsetFor(const juce::String& param, int note)
 {
     std::lock_guard<std::mutex> lock(mtx);
     auto* conn = getConnection("key", param);
@@ -796,7 +816,7 @@ void Modulation::onVoiceTriggered(int voiceId, float songTimeInSeconds, bool son
     std::lock_guard<std::mutex> lock(mtx);
     bool resetGlobalVoice = ((Voice*)audioProcessor.synth->getVoice(lastUsedVoice))->id == voiceId;
     for (int i = 0; i < MAX_LFOS; ++i) {
-        auto& mod = modulators[(String("lfo") + String(i + 1)).toStdString()];
+        auto& mod = modulators["lfo" + String(i + 1)];
         auto& lfo = lfos[i];
 
         auto phaseOffset = 0.f;
@@ -815,7 +835,7 @@ void Modulation::onVoiceTriggered(int voiceId, float songTimeInSeconds, bool son
     }
 
     for (int i = 0; i < MAX_RNDS; ++i) {
-        auto& mod = modulators[(String("rnd") + String(i + 1)).toStdString()];
+        auto& mod = modulators["rnd" + String(i + 1)];
         auto& rnd = rnds[i];
 
         auto phaseOffset = 0.f;
@@ -898,27 +918,27 @@ void Modulation::unserialize(const ValueTree state)
 		const auto bipolar = (bool)conn.getProperty("bipolar");
 		const auto bypass = (bool)conn.getProperty("bupass");
 		const auto mapped = (bool)conn.getProperty("mapped");
-        const auto mpoints = conn.getProperty("mpoints", "").toString().toStdString();
+        const auto mpoints = conn.getProperty("mpoints", "").toString();
 
         if (!source.isEmpty() && !dest.isEmpty()) {
-            _connect(source.toStdString(), dest.toStdString(), id);
-            auto c = getConnection(source.toStdString(), dest.toStdString());
+            _connect(source, dest, id);
+            auto c = getConnection(source, dest);
             c->bipolar = bipolar;
             c->bypass = bypass;
             c->mapped = mapped;
-            if (!mpoints.empty())
+            if (!mpoints.isEmpty())
                 c->mpoints = mpoints;
             stringToMap(c->mpoints, curvemaps[id]);
         }
     }
 }
 
-std::string Modulation::mapToString(Pattern& map)
+juce::String Modulation::mapToString(Pattern& map)
 {
     return map.serialize();
 }
 
-void Modulation::stringToMap(std::string points, Pattern& map)
+void Modulation::stringToMap(juce::String points, Pattern& map)
 {
-    map.unserialize(points);
+    map.unserialize(points.toStdString());
 }

@@ -16,13 +16,13 @@
 class TetraOPAudioProcessor;
 using namespace globals;
 
-class Modulation
+class Modulation : public juce::AudioProcessorValueTreeState::Listener
 {
 public:
 	struct Connection
 	{
-	    std::string src;
-	    std::string dst;
+	    juce::String src;
+	    juce::String dst;
 		bool bipolar = false;
 		int id; // slider num
 		bool bypass = false;
@@ -30,14 +30,15 @@ public:
 		float tension = 0.0f; // read only, updated from slider
 		float power = 1.0f; // read only, updated from slider
 		bool mapped = false;
-		std::string mpoints = "0 0 0 1 0 1 1 0 1 0"; // custom curve
+		juce::String mpoints = "0 0 0 1 0 1 1 0 1 0"; // custom curve
 	};
 	struct Param
 	{
-		std::string id;
+		juce::String id;
 		int connections = 0;
 		std::atomic<float> norm { 0.f };
     	std::atomic<float> value { 0.f };
+		juce::NormalisableRange<float> range{};
 	};
 	struct Modulator
 	{
@@ -64,31 +65,32 @@ public:
 
 	Modulation(TetraOPAudioProcessor& p);
 	~Modulation() {}
+	void parameterChanged(const juce::String& paramId, float value) override;
 
 	void tick(double srate, int nsamples, float secondsPerBeat);
 	void subTick(); // intrablock update
 	void tickConnections();
 	void tickMacros();
-	void connect(const std::string& src, const std::string& dst, int sliderId = 0);
-	void disconnect(const std::string& src, const std::string& dst);
-	void disconnectSelectedMod(const std::string& dst);
-	void changeConnection(const std::string& src, const std::string& dst, const std::string newsrc, const std::string newdst);
-	bool isConnected(const std::string& param);
-	bool isSrcConnected(const std::string& src);
+	void connect(const juce::String& src, const juce::String& dst, int sliderId = 0);
+	void disconnect(const juce::String& src, const juce::String& dst);
+	void disconnectSelectedMod(const juce::String& dst);
+	void changeConnection(const juce::String& src, const juce::String& dst, const juce::String newsrc, const juce::String newdst);
+	bool isConnected(const juce::String& param);
+	bool isSrcConnected(const juce::String& src);
 	float getValue(const juce::String& param, bool useCache = false, int blockOffset = 0, bool audioRate = false, float srate = 0.f);
-	float getNorm(const std::string& param);
+	float getNorm(const juce::String& param);
 	float getPolyValue(const juce::String& param, int voiceId, int blockOffset = 0, bool audioRate = false);
 	float getEnvelopeValue(int envid, int voiceId, int blockOffset = 0);
-	float getKeyTrackFor(const std::string& param);
-	float getKeyTrackOffsetFor(const std::string& param, int note);
+	float getKeyTrackFor(const juce::String& param);
+	float getKeyTrackOffsetFor(const juce::String& param, int note);
 	void setVoiceAftertouch(int voiceId, float value);
 	void setChannelPressure(float value);
-	void setSelectedMod(const std::string& id);
-	Connection* getConnection(const std::string& src, const std::string& dst);
-	void setConnectionBypass(const std::string& src, const std::string& dst, bool bypass);
-	void setConnectionBipolar(const std::string& src, const std::string& dst, bool bipolar);
-	void setConnectionMPoints(const std::string& src, const std::string& dst, std::string& mpoints);
-	void setConnectionMapped(const std::string& src, const std::string& dst, bool mapped);
+	void setSelectedMod(const juce::String& id);
+	Connection* getConnection(const juce::String& src, const juce::String& dst);
+	void setConnectionBypass(const juce::String& src, const juce::String& dst, bool bypass);
+	void setConnectionBipolar(const juce::String& src, const juce::String& dst, bool bipolar);
+	void setConnectionMPoints(const juce::String& src, const juce::String& dst, juce::String& mpoints);
+	void setConnectionMapped(const juce::String& src, const juce::String& dst, bool mapped);
 	std::vector<Connection> getConnections();
 	float calculateOffset(std::vector<Connection*> conns, int voiceId = -1, int blockOffset = 0, bool audioRate = false, float srate = 0.f);
 	bool isAnyVoiceActive();
@@ -96,10 +98,10 @@ public:
 
 	ValueTree serialize();
 	void unserialize(const ValueTree state);
-	static std::string mapToString(Pattern& map);
-	static void stringToMap(std::string points, Pattern& map);
+	static juce::String mapToString(Pattern& map);
+	static void stringToMap(juce::String points, Pattern& map);
 
-	std::string selectedMod = "env1";
+	juce::String selectedMod = "env1";
 	std::array<Envelope, MAX_ENVELOPES> envs{};
 	std::array<LFO, MAX_LFOS> lfos{};
 	std::array<RandGen, MAX_RNDS> rnds{};
@@ -119,19 +121,20 @@ public:
 	Pattern velCurve; // velocity mapping curve
 	float lastVel = 0.f; // last active voice raw velocity
 
-	std::unordered_map<std::string, Modulator>modulators;
+	std::unordered_map<juce::String, Modulator>modulators;
 	std::array<MPE, 17> mpe; // MPE first two channels unused, works for channels 2-16
 private:
+	Param& getParam(const juce::String& pname);
 	double internalClock = 0.f; // keep track of elapsed time in seconds, to offset LFOs phase
-	void _disconnect(const std::string& src, const std::string& dst);
-	void _connect(const std::string& src, const std::string& dst, int sliderId = 0, int connIndex = -1);
+	void _disconnect(const juce::String& src, const juce::String& dst);
+	void _connect(const juce::String& src, const juce::String& dst, int sliderId = 0, int connIndex = -1);
 	float randFromVoiceTimestamp(uint64_t ts);
 	std::mutex mtx;
 	TetraOPAudioProcessor& audioProcessor;
 	std::vector<std::unique_ptr<Connection>> connections;
-	std::unordered_map<std::string, std::vector<Connection*>> sources;
-	std::unordered_map<std::string, std::vector<Connection*>> destinations;
-	std::unordered_map<std::string, Param> params;
+	std::unordered_map<juce::String, std::vector<Connection*>> sources;
+	std::unordered_map<juce::String, std::vector<Connection*>> destinations;
+	std::unordered_map<juce::String, Param> params;
 	std::array<Pattern, MAX_MODULATIONS + 1> curvemaps{}; // modulation custom curve mappings, 0 is not used
 	uint64_t start_ts; // used to seed random generated numbers
 

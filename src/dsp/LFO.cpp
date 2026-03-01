@@ -83,11 +83,11 @@ float LFO::getSmoothedValue(float elapsed, int voiceId)
 	return voice.y;
 }
 
-float LFO::getAudioRateValue(float elapsed, float dt, int voiceId, std::string param)
+float LFO::getAudioRateValue(float elapsed, float dt, int voiceId, const juce::String& param)
 {
 	auto& voice = voices[voiceId];
 
-	auto id = String(String(param) + String(voiceId)).toStdString();
+	auto id = param + String(voiceId);
 	auto& smoothCache = audioRateParamSmoothCache[voiceId];
 	if (!smoothCache.count(id)) {
 		float zero_val = pattern.get_y_at(voice.phase_offset);
