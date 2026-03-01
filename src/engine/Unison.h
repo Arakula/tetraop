@@ -34,6 +34,7 @@ public:
     Unison(TetraOPAudioProcessor& p);
     ~Unison();
 
+    void tick(); // called every subblock
     void recalcUnison(int oscIdx);
     FloatArr16x generatePhases(int oscIdx);
     FloatArr16x generateDetuneRatios(int oscIdx);

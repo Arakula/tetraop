@@ -47,11 +47,9 @@ void Voice::noteStarted()
 
         auto& unison = audioProcessor.synth->unison;
         auto phases = unison->generatePhases(i);
-        auto incs = unison->generateDetuneRatios(i, osc[i].freq, srate);
         for (int j = 0; j < MAX_UNISON; j++)
         {
             osc[i].unison_phases[j] = phases[j];
-            osc[i].unison_incs[j] = incs[j];
         }
     }
 }

@@ -35,6 +35,8 @@ void Synth::handleMidiEvent (const juce::MidiMessage& m)
 
 void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int numSamples)
 {
+    unison->tick();
+
     const ScopedLock sl(voicesLock);
     auto left = buffer.getWritePointer(0);
     auto right = buffer.getWritePointer(1);
@@ -71,7 +73,7 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
             activeVoices[i + lane]->stateToVec(voiceVec, lane);
             for (int o = 0; o < MAX_OSCILLATORS; ++o)
             {
-                activeVoices[i + lane]->osc[o].stateToVec(oscVec[o], lane);
+                activeVoices[i + lane]->osc[o].stateToVec(oscVec[o], lane, o, *unison);
             }
         }
         // convert arrays to SIMD

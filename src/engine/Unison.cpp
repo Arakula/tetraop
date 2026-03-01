@@ -13,6 +13,12 @@ Unison::~Unison()
 {
 }
 
+void Unison::tick()
+{
+    recalcUnison(0);
+    recalcUnison(1);
+}
+
 void Unison::recalcUnison(int oscIdx)
 {
     auto& o = osc[oscIdx];
@@ -32,13 +38,14 @@ void Unison::recalcUnison(int oscIdx)
     auto pans = generateVoicesPan(oscIdx);
     auto ratios = generateDetuneRatios(oscIdx);
 
-    for (int j = 0; j < o.voices; ++j)
+    for (int i = 0; i < o.voices; ++i)
     {
-        auto pan = pans[j];
+        auto pan = pans[i];
         auto pansqr = pan * pan;
-        o.gain_l[j] = 1 - pansqr;
-        o.gain_r[j] = -pansqr + pan*2.f;
-        o.ratio[j] = ratios[j];
+        o.mask[i] = 1.f;
+        o.gain_l[i] = 1 - pansqr;
+        o.gain_r[i] = -pansqr + pan*2.f;
+        o.ratio[i] = ratios[i];
     }
 }
 
@@ -68,7 +75,7 @@ FloatArr16x Unison::generateDetuneRatios(int oscIdx)
 
     bool oddVoices = (voices % 2 != 0);
     int centerIndex = voices / 2;
-    int maxPos = oddVoices ? centerIndex : (voices / 2 - 0.5);
+    float maxPos = oddVoices ? centerIndex : (voices * 0.5f - 0.5f);
     float imaxPos = 1.f / maxPos;
 
     for (int i = 0; i < voices; ++i)
@@ -102,7 +109,7 @@ FloatArr16x Unison::generateVoicesPan(int oscIdx)
             : float(i) - (voices - 1) * 0.5f;
 
         float pan = pos * imaxPos;
-        out[i] = (pan + 1.f) * 0.5;
+        out[i] = (pan + 1.f) * 0.5f;
     }
 
     return out;

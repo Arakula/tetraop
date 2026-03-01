@@ -21,6 +21,9 @@ public:
     float out;
     int uni_voices = 2;
 
+    OSC() {}
+    ~OSC() {}
+
     struct SIMDUnison
     {
         int voices = 1;
@@ -59,20 +62,22 @@ public:
         UnisonVec unison[4];
     };
 
-    void stateToVec(OSCVec& vec, int lane, Unison& uni) const
+    void stateToVec(OSCVec& vec, int lane, int oscIdx, Unison& uni) const
     {
         vec.phase[lane] = phase;
         vec.phase_inc[lane] = phase_inc;
         vec.freq[lane] = freq;
         vec.level[lane] = level;
         vec.out[lane] = out;
-        vec.unison[lane].voices = uni_voices;
 
-        if (uni_voices > 1)
+        int voices = uni.osc[oscIdx].voices;
+        vec.unison[lane].voices = voices;
+
+        if (voices > 1)
         {
             vec.unison[lane].phase = unison_phases;
-            vec.unison[lane].ratio = uni.osc[lane].ratio; // increments stored as ratios at this stage
-            vec.unison[lane].mask = uni.osc[lane].mask;
+            vec.unison[lane].ratio = uni.osc[oscIdx].ratio; // increments stored as ratios at this stage
+            vec.unison[lane].mask = uni.osc[oscIdx].mask;
         }
     }
 
@@ -110,7 +115,7 @@ public:
                 auto idx = batch * 4;
                 o.unison[lane].phase[batch].load(&vec.unison[lane].phase[idx]);
                 o.unison[lane].inc[batch].load(&vec.unison[lane].ratio[idx]);
-                o.unison[lane].inc[batch].mul(vec.phase_inc[lane]); // convert ratio to increment
+                o.unison[lane].inc[batch] *= vec.phase_inc[lane]; // convert ratio to increment
                 o.unison[lane].mask[batch].load(&vec.unison[lane].mask[idx]);
             }
         }
@@ -130,7 +135,7 @@ public:
         for (int lane = 0; lane < 4; ++lane)
         {
             vec.unison[lane].voices = simd.unison[lane].voices;
-            if (simd.unison[lane].voices == 1)
+            if (simd.unison[lane].voices < 2)
                 continue;
 
             for (int batch = 0; batch < 4; batch++)
