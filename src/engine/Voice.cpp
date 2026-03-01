@@ -5,6 +5,11 @@ Voice::Voice (TetraOPAudioProcessor& p, int _id)
     : audioProcessor (p)
 	, id(_id)
 {
+    osc.reserve(4);
+    for (int i = 0; i < MAX_OSCILLATORS; ++i)
+    {
+        osc.emplace_back(i, _id, audioProcessor);
+    }
 }
 
 void Voice::noteStarted()

@@ -4,7 +4,6 @@
 #include "../Globals.h"
 #include "Voice.h"
 #include "FmMatrix.h"
-#include "Unison.h"
 
 using namespace globals;
 
@@ -14,7 +13,6 @@ class Synth : public gin::Synthesiser
 {
 public:
     std::unique_ptr<FmMatrix> fm;
-    std::unique_ptr<Unison> unison;
     bool lastEventWasNoteOff = false;
 
     Synth(TetraOPAudioProcessor& p);

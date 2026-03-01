@@ -75,7 +75,7 @@ public:
     float env_step = 0.f;
     float vel_mult = 1.f;
 
-    OSC osc[4] = {};
+    std::vector<OSC> osc;
 
     Voice (TetraOPAudioProcessor& p, int id);
 

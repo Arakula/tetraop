@@ -93,7 +93,7 @@ void Modulation::tickMacros()
         auto& mod = modulators[id];
         if (mod.connections == 0) continue;
         mod.active = lastVoice->isActive() || lastVoice->pressed;
-        mod.value = getValue(id, false);
+        mod.value = getValue(id);
     }
 }
 
@@ -553,9 +553,9 @@ Modulation::Param& Modulation::getParam(const juce::String& pname)
 /**
  * Thread safe get modulated value
  */
-float Modulation::getValue(const juce::String& pname, bool useCache, int blockOffset, bool audioRate, float srate)
+float Modulation::getValue(const juce::String& pname, bool rawValue, int blockOffset, float srate)
 {
-    if (useCache)
+    if (rawValue)
     {
         return getParam(pname).value.load();
     }
@@ -564,7 +564,7 @@ float Modulation::getValue(const juce::String& pname, bool useCache, int blockOf
         auto it = destinations.find(pname);
         if (it != destinations.end())
         {
-            float offset = calculateOffset(it->second, lastUsedVoice, blockOffset, audioRate, srate);
+            float offset = calculateOffset(it->second, lastUsedVoice, blockOffset, srate);
             auto& param = getParam(pname);
             return param.range.convertFrom0to1(std::clamp(param.norm.load() + offset, 0.f, 1.f));
         }
@@ -583,17 +583,17 @@ float Modulation::getNorm(const juce::String& param)
 /**
  * Recalculate value for a specific voice
  */
-float Modulation::getPolyValue(const juce::String& pname, int voiceId, int blockOffset, bool audioRate)
+float Modulation::getPolyValue(const juce::String& pname, int voiceId, int blockOffset)
 {
     auto it = destinations.find(pname);
     if (it != destinations.end()) 
     {
-        float offset = calculateOffset(it->second, voiceId, blockOffset, audioRate);
+        float offset = calculateOffset(it->second, voiceId, blockOffset);
         auto& param = getParam(pname);
         auto norm = param.norm.load();
         return param.range.convertFrom0to1(std::clamp(norm + offset, 0.f, 1.f));
     }
-    return getParam(pname).value;
+    return getParam(pname).value.load();
 }
 
 float Modulation::getEnvelopeValue(int envid, int voiceId, int blockOffset)
@@ -618,7 +618,7 @@ float Modulation::getEnvelopeValue(int envid, int voiceId, int blockOffset)
 *
 * sampsOffset used in audioRate modulation for elapsed time inside a block
 */
-float Modulation::calculateOffset(std::vector<Connection*> conns, int voiceId, int blockOffset, bool audioRate, float srate)
+float Modulation::calculateOffset(std::vector<Connection*> conns, int voiceId, int blockOffset, float srate)
 {
     auto calcOffset = [this](float value, Connection* conn)
         {
@@ -654,9 +654,7 @@ float Modulation::calculateOffset(std::vector<Connection*> conns, int voiceId, i
         ? nullptr
         : (Voice*)audioProcessor.synth->getVoice(voiceId);
 
-    auto dt = audioRate
-        ? blockOffset / (srate > 0.f ? srate : audioProcessor.osrate)
-        : blockDelta;
+    auto dt = blockOffset * (srate > 0.f ? 1.f / srate : audioProcessor.osrate);
 
     for (auto* conn : conns) {
         if (conn->bypass) continue;

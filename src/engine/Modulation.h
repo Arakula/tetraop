@@ -77,9 +77,9 @@ public:
 	void changeConnection(const juce::String& src, const juce::String& dst, const juce::String newsrc, const juce::String newdst);
 	bool isConnected(const juce::String& param);
 	bool isSrcConnected(const juce::String& src);
-	float getValue(const juce::String& param, bool useCache = false, int blockOffset = 0, bool audioRate = false, float srate = 0.f);
+	float getValue(const juce::String& param, bool rawValue = false, int blockOffset = 0, float srate = 0.f);
 	float getNorm(const juce::String& param);
-	float getPolyValue(const juce::String& param, int voiceId, int blockOffset = 0, bool audioRate = false);
+	float getPolyValue(const juce::String& param, int voiceId, int blockOffset = 0);
 	float getEnvelopeValue(int envid, int voiceId, int blockOffset = 0);
 	float getKeyTrackFor(const juce::String& param);
 	float getKeyTrackOffsetFor(const juce::String& param, int note);
@@ -92,7 +92,7 @@ public:
 	void setConnectionMPoints(const juce::String& src, const juce::String& dst, juce::String& mpoints);
 	void setConnectionMapped(const juce::String& src, const juce::String& dst, bool mapped);
 	std::vector<Connection> getConnections();
-	float calculateOffset(std::vector<Connection*> conns, int voiceId = -1, int blockOffset = 0, bool audioRate = false, float srate = 0.f);
+	float calculateOffset(std::vector<Connection*> conns, int voiceId = -1, int blockOffset = 0, float srate = 0.f);
 	bool isAnyVoiceActive();
 	void onVoiceTriggered(int voiceId, float songTimeInSeconds, bool songIsPlaying);
 

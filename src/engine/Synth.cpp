@@ -1,4 +1,5 @@
 #include "Synth.h"
+#include "../PluginEditor.h"
 
 Synth::Synth(TetraOPAudioProcessor& p) : audioProcessor(p)
 {
@@ -10,7 +11,6 @@ Synth::Synth(TetraOPAudioProcessor& p) : audioProcessor(p)
         addVoice (voice);
     }
     fm = std::make_unique<FmMatrix>(audioProcessor);
-    unison = std::make_unique<Unison>(audioProcessor);
 }
 
 Synth::~Synth()
@@ -35,8 +35,6 @@ void Synth::handleMidiEvent (const juce::MidiMessage& m)
 
 void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int numSamples)
 {
-    unison->tick();
-
     const ScopedLock sl(voicesLock);
     auto left = buffer.getWritePointer(0);
     auto right = buffer.getWritePointer(1);
@@ -62,7 +60,6 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
     for (size_t i = 0; i < numActive; i += W)
     {
         size_t batchSize = std::min(W, numActive - i);
-
         SIMDVox vox;
 
         // fetch data into arrays
@@ -73,7 +70,8 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
             activeVoices[i + lane]->stateToVec(voiceVec, lane);
             for (int o = 0; o < MAX_OSCILLATORS; ++o)
             {
-                activeVoices[i + lane]->osc[o].stateToVec(oscVec[o], lane, o, *unison);
+                activeVoices[i + lane]->osc[o].prepareBlock(startSample, numSamples, audioProcessor);
+                activeVoices[i + lane]->osc[o].stateToVec(oscVec[o], lane, o);
             }
         }
         // convert arrays to SIMD

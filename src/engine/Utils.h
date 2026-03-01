@@ -114,9 +114,9 @@ public:
         return pan.cossin();
     }
 
+    // expects pan norm 0..1
     inline static SIMDFx2 panToGainCheap(SIMDF& pan)
     {
-        pan = (pan + 1.f) * 0.5f;
         auto l = SIMDF(1.f) - pan * pan;
         auto r = -(pan * pan) + pan * 2.f;
         return SIMDFx2(l, r);
@@ -124,7 +124,8 @@ public:
 
     inline static float centsToRatio(float cents)
     {
-        return std::pow(2.0f, cents / 1200.0f);
+        constexpr float LN2_OVER_1200 = 0.00057762265f; // ln(2)/1200
+        return std::exp(cents * LN2_OVER_1200);
     }
 
     inline static SIMDF centsToRatio(SIMDF& cents)

@@ -7,23 +7,11 @@
 
 using namespace globals;
 
-class Synth;
+class TetraOPAudioProcessor;
 
 class OSC
 {
 public:
-    alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> unison_phases;
-
-    float phase;
-    float freq;
-    float phase_inc;
-    float level;
-    float out;
-    int uni_voices = 2;
-
-    OSC() {}
-    ~OSC() {}
-
     struct SIMDUnison
     {
         int voices = 1;
@@ -35,8 +23,8 @@ public:
     struct UnisonVec
     {
         alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> phase{};
-        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> gainL{};
-        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> gainR{};
+        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> gain_l{};
+        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> gain_r{};
         alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> mask{};
         alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> ratio{};
         int voices = 1;
@@ -59,39 +47,60 @@ public:
         alignas(sizeof(SIMDF)) float freq[4];
         alignas(sizeof(SIMDF)) float level[4];
         alignas(sizeof(SIMDF)) float out[4];
+        alignas(sizeof(SIMDF)) float gain_l[4];
+        alignas(sizeof(SIMDF)) float gain_r[4];
         UnisonVec unison[4];
     };
 
-    void stateToVec(OSCVec& vec, int lane, int oscIdx, Unison& uni) const
+    alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> unison_phase{};
+    alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> unison_ratio{};
+    alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> unison_mask{};
+    alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> unison_gain_l{};
+    alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> unison_gain_r{};
+
+    bool isOn = false;
+    int voiceId = 0;
+    int id = 0;
+    String prefix = "";
+    float phase = 0.f;
+    float freq = 1000.f;
+    float phase_inc = 0.f;
+    float level = 0.f;
+    float out = 0.f;
+    float pan = 0.f;
+    float gain_l = 0.f;
+    float gain_r = 0.f;
+    int unison_voices = 1;
+    int unison_mode = 0;
+    float unison_detune = -1.f;
+    float unison_stereo = -1.f;
+    float unison_spread = -1.f;
+    float unison_blend = -1.f;
+
+    OSC(int _id, int _voiceId, TetraOPAudioProcessor& p);
+    ~OSC() {}
+
+    void prepareBlock(int startSample, int numSamples);
+    void recalcUnison();
+
+    void stateToVec(OSCVec& vec, int lane) const
     {
         vec.phase[lane] = phase;
         vec.phase_inc[lane] = phase_inc;
         vec.freq[lane] = freq;
         vec.level[lane] = level;
         vec.out[lane] = out;
+        vec.gain_l[lane] = gain_l;
+        vec.gain_r[lane] = gain_r;
 
-        int voices = uni.osc[oscIdx].voices;
-        vec.unison[lane].voices = voices;
-
-        if (voices > 1)
+        vec.unison[lane].voices = unison_voices;
+        if (unison_voices > 1)
         {
-            vec.unison[lane].phase = unison_phases;
-            vec.unison[lane].ratio = uni.osc[oscIdx].ratio; // increments stored as ratios at this stage
-            vec.unison[lane].mask = uni.osc[oscIdx].mask;
-        }
-    }
-
-    void vecToState(OSCVec& vec, int lane)
-    {
-        phase = vec.phase[lane];
-        phase_inc = vec.phase_inc[lane];
-        freq = vec.freq[lane];
-        level = vec.level[lane];
-        out = vec.out[lane];
-
-        if (vec.unison[lane].voices > 1)
-        {
-            unison_phases = vec.unison[lane].phase;
+            vec.unison[lane].phase = unison_phase;
+            vec.unison[lane].ratio = unison_ratio;
+            vec.unison[lane].mask = unison_mask;
+            vec.unison[lane].gain_l = unison_gain_l;
+            vec.unison[lane].gain_r = unison_gain_r;
         }
     }
 
@@ -127,8 +136,6 @@ public:
     {
         OSCVec vec{};
         simd.phase.store(vec.phase);
-        simd.phase_inc.store(vec.phase_inc);
-        simd.freq.store(vec.freq);
         simd.level.store(vec.level);
         simd.out.store(vec.out);
 
@@ -140,12 +147,28 @@ public:
 
             for (int batch = 0; batch < 4; batch++)
             {
-                simd.unison[lane].phase[batch].store(&vec.unison[lane].phase[batch * 4]);
+                int idx = batch * 4;
+                simd.unison[lane].phase[batch].store(&vec.unison[lane].phase[idx]);
             }
         }
 
         return vec;
     }
+
+    void vecToState(OSCVec& vec, int lane)
+    {
+        phase = vec.phase[lane];
+        level = vec.level[lane];
+        out = vec.out[lane];
+
+        if (vec.unison[lane].voices > 1)
+        {
+            unison_phase = vec.unison[lane].phase;
+        }
+    }
+
+private:
+    TetraOPAudioProcessor& audioProcessor;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OSC)
 };
