@@ -1,4 +1,5 @@
 #include "FmMatrix.h"
+#include "../PluginProcessor.h"
 
 FmMatrix::FmMatrix(TetraOPAudioProcessor& p) : audioProcessor(p)
 {
@@ -73,6 +74,41 @@ SIMDF FmMatrix::renderSIMD(SIMDF phase)
     return mipp::sin(phase * MathConstants<float>::twoPi);
 }
 
+static inline SIMDF renderUnison(const std::vector<float> table, int size, SIMDF phase)
+{
+    static constexpr float almostOne = 1.f - std::numeric_limits<float>::epsilon();
+
+    Utils::wrapPhase(phase);
+    auto pos = phase.min(almostOne) * (float)size;
+    auto frac = pos - (pos = pos.trunc());
+    auto posi = mipp::cvt<float, int32_t>(pos);
+
+    SIMDF l1 = mipp::gather(&table[0], posi);
+    SIMDF l2 = mipp::gather(&table[0], posi + 1);
+
+    return l1 + frac * (l2 - l1);
+}
+
+static inline SIMDF renderWave(const std::vector<float> table, int size, SIMDF phase)
+{
+    static constexpr float almostOne = 1.f - std::numeric_limits<float>::epsilon();
+
+    Utils::wrapPhase(phase);
+    auto pos = phase.min(almostOne) * (float)size;
+    auto frac = pos - (pos = pos.trunc());
+    auto posi = mipp::cvt<float, int32_t>(pos);
+
+    int p[4];
+    posi.store(p);
+    float f[4];
+    frac.store(f);
+
+    SIMDF l1 = SIMDF{ table[p[0]], table[p[1]], table[p[2]], table[p[3]] };
+    SIMDF l2 = SIMDF{ table[p[0] + 1], table[p[1] + 1], table[p[2] + 1], table[p[3] + 1] };
+
+    return l1 + frac * (l2 - l1);
+}
+
 std::pair<SIMDF, SIMDF> FmMatrix::processUnison(OSC::SIMDOSC& osc, SIMDF phaseOffset)
 {
     alignas(sizeof(SIMDF)) float accL[4] = { 0.f, 0.f, 0.f, 0.f };
@@ -100,9 +136,16 @@ std::pair<SIMDF, SIMDF> FmMatrix::processUnison(OSC::SIMDOSC& osc, SIMDF phaseOf
     return { mipp::load(accL), mipp::load(accR) };
 }
 
+
+
 // SIMD'ed voices rendering
 void FmMatrix::processBlock(SIMDVox& data, int numSamples)
 {
+    auto& tables = audioProcessor.wavetables[0].tables;
+    auto tableIndex = std::min(tables.size() - 1, int(float(tables.size()) * 0.5f));
+    auto& table = tables.getTable(tableIndex)->tableForNote(0.5f);
+    int size = tables.getTable(tableIndex)->tableSize;
+
     auto& A = data.osc[0];
     auto& B = data.osc[1];
     auto& C = data.osc[2];
@@ -131,10 +174,10 @@ void FmMatrix::processBlock(SIMDVox& data, int numSamples)
         offsetC = la * ac         + lb * bc           + lc * C.feedback   + ld * dc;
         offsetD = la * ad         + lb * bd           + lc * cd           + ld * D.feedback;
 
-        A.out = renderSIMD(A.phase + offsetA) * A.level;
-        B.out = renderSIMD(B.phase + offsetB) * B.level;
-        C.out = renderSIMD(C.phase + offsetC) * C.level;
-        D.out = renderSIMD(D.phase + offsetD) * D.level;
+        A.out = renderWave(table, size, A.phase + offsetA) * A.level;
+        B.out = renderWave(table, size, B.phase + offsetB) * B.level;
+        C.out = renderWave(table, size, C.phase + offsetC) * C.level;
+        D.out = renderWave(table, size, D.phase + offsetD) * D.level;
 
         AoutL = AoutR = A.out * AisOut;
         BoutL = BoutR = B.out * BisOut;

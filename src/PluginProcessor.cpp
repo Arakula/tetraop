@@ -183,6 +183,75 @@ void TetraOPAudioProcessor::parameterChanged(const juce::String& paramId, float 
     configsChanged = true;
 }
 
+// =================================================================
+
+void TetraOPAudioProcessor::reloadWavetables()
+{
+    for (int i = 0; i < MAX_OSCILLATORS; ++i)
+    {
+        auto& table = wavetables[i];
+        if (table.srate != osrate)
+        {
+            table.name = "Basic Shapes";
+            juce::MemoryBlock block(BinaryData::Basic_Shapes_wt2048, BinaryData::Basic_Shapes_wt2048Size);
+
+            loadWaveTable(table.tables, osrate, block, "flac", 2048);
+        }
+    }
+}
+
+
+bool TetraOPAudioProcessor::loadWaveTable(gin::Wavetable& table, double sr, const juce::MemoryBlock& wav, const juce::String& format, int size) const
+{
+    auto is = new juce::MemoryInputStream(wav, false);
+
+    if (format == "wav")
+    {
+        if (auto reader = std::unique_ptr<juce::AudioFormatReader>(juce::WavAudioFormat().createReaderFor(is, true)))
+        {
+            if (size <= 0)
+                size = gin::getWavetableSize(wav);
+
+            if (size > 0)
+            {
+                int samplesToUse = int(reader->lengthInSamples);
+                int frames = samplesToUse / size;
+
+                samplesToUse = frames * size;
+
+                juce::AudioSampleBuffer buf(1, samplesToUse);
+                reader->read(&buf, 0, samplesToUse, 0, true, false);
+
+                gin::Wavetable t;
+                loadWavetables(t, sr, buf, reader->sampleRate, size);
+
+                juce::ScopedLock sl(dspLock);
+                std::swap(t, table);
+
+                return true;
+            }
+        }
+    }
+    else if (format == "flac")
+    {
+        if (auto reader = std::unique_ptr<juce::AudioFormatReader>(juce::FlacAudioFormat().createReaderFor(is, true)))
+        {
+            juce::AudioSampleBuffer buf(1, int(reader->lengthInSamples));
+            reader->read(&buf, 0, int(reader->lengthInSamples), 0, true, false);
+
+            gin::Wavetable t;
+            loadWavetables(t, sr, buf, reader->sampleRate, 2048);
+
+            juce::ScopedLock sl(dspLock);
+            std::swap(t, table);
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void TetraOPAudioProcessor::loadSettings ()
 {
     if (auto* file = settings.getUserSettings()) {
@@ -346,6 +415,8 @@ void TetraOPAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBloc
     iosrate = 1.f / osrate;
     synth->setCurrentPlaybackSampleRate(sampleRate);
     synth->prepare();
+
+    reloadWavetables();
 }
 
 void TetraOPAudioProcessor::releaseResources()
@@ -387,6 +458,11 @@ bool TetraOPAudioProcessor::supportsDoublePrecisionProcessing() const
 void TetraOPAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals disableDenormals;
+    if (!dspLock.tryEnter())
+    {
+        blockMissed = true;
+        return;
+    }
 
     auto totalNumOutputChannels = getTotalNumOutputChannels();
     auto numSamples = buffer.getNumSamples();
@@ -442,6 +518,8 @@ void TetraOPAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
         todo -= thisBlock;
     }
     synth->endBlock(numSamples);
+
+    dspLock.exit();
 }
 
 //==============================================================================

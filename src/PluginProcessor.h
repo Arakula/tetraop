@@ -35,17 +35,27 @@ class TetraOPAudioProcessor
     , public juce::ValueTree::Listener
 {
 public:
+    struct WTable 
+    {
+        String name;
+        float srate;
+        gin::Wavetable tables;
+    };
+
     // synth
     std::unique_ptr<Synth> synth;
     std::unique_ptr<Modulation> modulation;
     std::vector<float> leftBuf;
     std::vector<float> rightBuf;
     float velsense = 1.f; // velocity sensitivity
+    WTable wavetables[4];
 
     //
     int polyphony = 32;
     bool mpe_enabled = false;
     bool configsChanged = true;
+    juce::CriticalSection dspLock;
+    bool blockMissed = false;
 
     // tunning
     MTSClient* mtsClientPtr;
@@ -76,11 +86,15 @@ public:
     //==============================================================================
     TetraOPAudioProcessor();
     ~TetraOPAudioProcessor() override;
+    void parameterChanged(const juce::String& parameterID, float newValue) override;
+
+    //==============================================================================
+    void reloadWavetables();
+    bool loadWaveTable(gin::Wavetable& table, double sr, const juce::MemoryBlock& wav, const juce::String& format, int size) const;
 
     //==============================================================================
     bool supportsMPE() const override { return true; }
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
-    void parameterChanged(const juce::String& parameterID, float newValue) override;
     void releaseResources() override;
     bool supportsDoublePrecisionProcessing() const override;
 

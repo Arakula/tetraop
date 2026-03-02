@@ -9,6 +9,7 @@
 
 using namespace globals;
 using SIMDF = mipp::Reg<float>;
+using SIMDI = mipp::Reg<int32_t>;
 using SIMDFx2 = mipp::Regx2<float>;
 using SIMDM = mipp::Msk<4>;
 
@@ -356,4 +357,75 @@ private:
     const float mult = 1.0f / 2147483648.0f;
     uint32_t original_seed;
     uint32_t state;
+};
+
+
+/*
+ ==============================================================================
+
+ This code is part of the GIN library.
+ Copyright (c) 2018 - 2026 by Roland Rabien.
+
+ ==============================================================================
+ */
+class PinkNoiseGen
+{
+public:
+    PinkNoiseGen(uint64_t seed)
+    {
+        rand.s = seed;
+        rand.x = 0;
+        rand.w = 0;
+        counter = 0;
+
+        memset(octave_hold_vals, 0, 9 * 4);
+        out = 0;
+    }
+
+    float next()
+    {
+        uint8_t octave = trailing_zeros[counter];
+
+        out -= octave_hold_vals[octave];
+        octave_hold_vals[octave] = (float)next_int() / (float)INT32_MAX;
+        octave_hold_vals[octave] /= (float)(10 - octave);
+        out += octave_hold_vals[octave];
+
+        counter++;
+
+        return out;
+    }
+
+    void reseed(uint64_t seed)
+    {
+        rand.s = seed;
+        rand.x = 0;
+        rand.w = 0;
+        counter = 0;
+        out = 0.f;
+        memset(octave_hold_vals, 0, sizeof(octave_hold_vals));
+    }
+
+private:
+    struct middle_square_weyl
+    {
+        uint64_t s;
+        uint64_t x;
+        uint64_t w;
+    };
+
+    int32_t next_int()
+    {
+        rand.x *= rand.x;
+        rand.x += (rand.w += rand.s);
+        rand.x = (rand.x >> 32u) | (rand.x << 32u);
+        return int32_t(rand.x);
+    }
+
+    uint8_t trailing_zeros[256] = { 8,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,5,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,6,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,5,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,7,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,5,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,6,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,5,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0, };
+
+    middle_square_weyl rand;
+    float out;
+    float octave_hold_vals[9];
+    uint8_t counter;
 };
