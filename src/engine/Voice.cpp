@@ -112,65 +112,10 @@ void Voice::setCurrentSampleRate (double newRate)
     israte = 1.f / srate;
 }
 
-
-void Voice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
-{
-    gin::ScratchBuffer buffer(2, numSamples);
-
-    auto note = getCurrentlyPlayingNote();
-    float currentMidiNote = noteSmoother.getCurrentValue() * 127.0f;
-    currentMidiNote += float(note.totalPitchbendInSemitones);
-    //float freq = float(std::min(srate / 2.0, 440.0 * std::pow(2.0, (currentMidiNote - 69.0) / 12.0)));
-
-    auto env_targ = audioProcessor.modulation->getEnvelopeValue(0, id, startSample + numSamples);
-    //auto env_step = (env_targ - env) / numSamples;
-
-    float velmult = vel * audioProcessor.velsense + 1.0f - audioProcessor.velsense;
-
-    auto l = buffer.getWritePointer(0);
-    auto r = buffer.getWritePointer(1);
-
-    for (int i = 0; i < numSamples; ++i)
-    {
-        *l++ *= velmult * env;
-        *r++ *= velmult * env;
-
-        // interpolation
-        env += env_step;
-        if (vel != vel_targ)
-        {
-            vel += vel_step;
-            if (vel_step > 0.f && vel > vel_targ || vel_step < 0.f && vel < vel_targ)
-            {
-                vel = vel_targ;
-                vel_step = 0.f;
-            }
-            velmult = vel * audioProcessor.velsense + 1.0f - audioProcessor.velsense;
-        }
-    }
-
-    // Copy output to synth
-    outputBuffer.addFrom (0, startSample, buffer, 0, 0, numSamples);
-    outputBuffer.addFrom (1, startSample, buffer, 1, 0, numSamples);
-
-    noteSmoother.process(numSamples);
-    env = env_targ;
-
-    if (released)
-        release_elapsed += (float)(numSamples / srate);
-    else
-        attack_elapsed += (float)(numSamples / srate);
-
-    // check if envelope has finished
-    if (released && release_elapsed > audioProcessor.modulation->envs[0].rel)
-    {
-        clearCurrentNote();
-    }
-}
-
 void Voice::startBlock(int startSample, int numSamples)
 {
-    auto env_targ = audioProcessor.modulation->getEnvelopeValue(0, id, startSample + numSamples);
+    (void)startSample;
+    auto env_targ = audioProcessor.modulation->getEnvelopeValue(0, id, numSamples);
     if (fastKill)
         env_targ *= 0.01f; // TODO use a proper fadeout
     env_step = (env_targ - env) / numSamples;
@@ -179,7 +124,6 @@ void Voice::startBlock(int startSample, int numSamples)
 
 void Voice::endBlock(int startSample, int numSamples)
 {
-    // TODO env = env_targ
     (void)startSample;
     noteSmoother.process(numSamples);
 

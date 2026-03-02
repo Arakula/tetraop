@@ -66,9 +66,10 @@ void FmMatrix::setLayout(Layout l)
 void FmMatrix::prepare(float _srate)
 {
     srate = _srate;
+    alpha = 1.f - std::exp(-1.f / (0.002f * srate));
 }
 
-SIMDF FmMatrix::renderSIMD(SIMDF phase)
+inline static SIMDF renderSIMD(SIMDF phase)
 {
     Utils::wrapPhase(phase);
     return mipp::sin(phase * MathConstants<float>::twoPi);
@@ -79,27 +80,27 @@ static inline SIMDF renderUnison(const std::vector<float> table, int size, SIMDF
     static constexpr float almostOne = 1.f - std::numeric_limits<float>::epsilon();
 
     Utils::wrapPhase(phase);
-    auto pos = phase.min(almostOne) * (float)size;
-    auto frac = pos - (pos = pos.trunc());
-    auto posi = mipp::cvt<float, int32_t>(pos);
+    auto posf = phase * float(size);
+    auto posi = posf.trunc();
+    auto frac = posf - posi;
+    auto posint = mipp::cvt<float, int32_t>(posi);
 
-    SIMDF l1 = mipp::gather(&table[0], posi);
-    SIMDF l2 = mipp::gather(&table[0], posi + 1);
+    SIMDF l1 = mipp::gather(&table[0], posint);
+    SIMDF l2 = mipp::gather(&table[0], posint + 1);
 
     return l1 + frac * (l2 - l1);
 }
 
-static inline SIMDF renderWave(const std::vector<float> table, int size, SIMDF phase)
+static inline SIMDF renderWave(const float* table, int size, SIMDF phase)
 {
-    static constexpr float almostOne = 1.f - std::numeric_limits<float>::epsilon();
-
     Utils::wrapPhase(phase);
-    auto pos = phase.min(almostOne) * (float)size;
-    auto frac = pos - (pos = pos.trunc());
-    auto posi = mipp::cvt<float, int32_t>(pos);
+    auto posf = phase * float(size);
+    auto posi = posf.trunc();
+    auto frac = posf - posi;
+    auto posint = mipp::cvt<float, int32_t>(posi);
 
     int p[4];
-    posi.store(p);
+    posint.store(p);
     float f[4];
     frac.store(f);
 
@@ -109,7 +110,7 @@ static inline SIMDF renderWave(const std::vector<float> table, int size, SIMDF p
     return l1 + frac * (l2 - l1);
 }
 
-std::pair<SIMDF, SIMDF> FmMatrix::processUnison(OSC::SIMDOSC& osc, SIMDF phaseOffset)
+static inline std::pair<SIMDF, SIMDF> processUnison(OSC::SIMDOSC& osc, SIMDF phaseOffset)
 {
     alignas(sizeof(SIMDF)) float accL[4] = { 0.f, 0.f, 0.f, 0.f };
     alignas(sizeof(SIMDF)) float accR[4] = { 0.f, 0.f, 0.f, 0.f };
@@ -136,20 +137,55 @@ std::pair<SIMDF, SIMDF> FmMatrix::processUnison(OSC::SIMDOSC& osc, SIMDF phaseOf
     return { mipp::load(accL), mipp::load(accR) };
 }
 
-
-
 // SIMD'ed voices rendering
 void FmMatrix::processBlock(SIMDVox& data, int numSamples)
 {
-    auto& tables = audioProcessor.wavetables[0].tables;
-    auto tableIndex = std::min(tables.size() - 1, int(float(tables.size()) * 0.5f));
-    auto& table = tables.getTable(tableIndex)->tableForNote(0.5f);
-    int size = tables.getTable(tableIndex)->tableSize;
+    bool aon = data.osc[0].level.sum() > 0.f;
+    bool bon = data.osc[1].level.sum() > 0.f;
+    bool con = data.osc[2].level.sum() > 0.f;
+    bool don = data.osc[3].level.sum() > 0.f;
 
+    int mask = (aon << 3) | (bon << 2) | (con << 1) | (don << 0);
+
+    switch (mask)
+    {
+    case 0b0000: _process<false, false, false, false>(data, numSamples); break;
+    case 0b0001: _process<false, false, false, true>(data, numSamples); break;
+    case 0b0010: _process<false, false, true, false>(data, numSamples); break;
+    case 0b0011: _process<false, false, true, true>(data, numSamples); break;
+    case 0b0100: _process<false, true, false, false>(data, numSamples); break;
+    case 0b0101: _process<false, true, false, true>(data, numSamples); break;
+    case 0b0110: _process<false, true, true, false>(data, numSamples); break;
+    case 0b0111: _process<false, true, true, true>(data, numSamples); break;
+    case 0b1000: _process<true, false, false, false>(data, numSamples); break;
+    case 0b1001: _process<true, false, false, true>(data, numSamples); break;
+    case 0b1010: _process<true, false, true, false>(data, numSamples); break;
+    case 0b1011: _process<true, false, true, true>(data, numSamples); break;
+    case 0b1100: _process<true, true, false, false>(data, numSamples); break;
+    case 0b1101: _process<true, true, false, true>(data, numSamples); break;
+    case 0b1110: _process<true, true, true, false>(data, numSamples); break;
+    case 0b1111: _process<true, true, true, true>(data, numSamples); break;
+    }
+}
+
+template<bool AOn, bool BOn, bool COn, bool DOn>
+void FmMatrix::_process(SIMDVox& data, int numSamples)
+{
     auto& A = data.osc[0];
     auto& B = data.osc[1];
     auto& C = data.osc[2];
     auto& D = data.osc[3];
+
+    bool AisMorphing = AOn && std::abs((A.morph - A.morph_targ).sum()) > 1e-4f;
+    bool BisMorphing = BOn && std::abs((B.morph - B.morph_targ).sum()) > 1e-4f;
+    bool CisMorphing = COn && std::abs((C.morph - C.morph_targ).sum()) > 1e-4f;
+    bool DisMorphing = DOn && std::abs((D.morph - D.morph_targ).sum()) > 1e-4f;
+
+    auto& tables = audioProcessor.wavetables[0].tables;
+    auto tableIndex = std::min(tables.size() - 1, int(float(tables.size()) * 0.0f));
+    auto& table = tables.getUnchecked(tableIndex)->tableForNote(data.voice.key[0]);
+    auto ttt = tables.getUnchecked(tableIndex);
+    int size = tables.getUnchecked(tableIndex)->tableSize;
 
     bool AhasUnison = AisOut && A.unison->voices > 1;
     bool BhasUnison = BisOut && B.unison->voices > 1;
@@ -157,32 +193,43 @@ void FmMatrix::processBlock(SIMDVox& data, int numSamples)
     bool DhasUnison = DisOut && D.unison->voices > 1;
 
     SIMDF la, lb, lc, ld;
-    SIMDF offsetA, offsetB, offsetC, offsetD;
-    SIMDF AoutL, AoutR;
-    SIMDF BoutL, BoutR;
-    SIMDF CoutL, CoutR;
-    SIMDF DoutL, DoutR;
+    SIMDF offsetA{}, offsetB{}, offsetC{}, offsetD{};
+    SIMDF AoutL{}, AoutR{};
+    SIMDF BoutL{}, BoutR{};
+    SIMDF CoutL{}, CoutR{};
+    SIMDF DoutL{}, DoutR{};
 
     for (int i = 0; i < numSamples; ++i)
     {
-        la = A.out; lb = B.out;
-        lc = C.out; ld = D.out;
+        la = A.out; lb = B.out; lc = C.out; ld = D.out;
 
         // compute mono outputs
-        offsetA = la * A.feedback + lb * ba           + lc * ca           + ld * da;
-        offsetB = la * ab         + lb * B.feedback   + lc * cb           + ld * db;
-        offsetC = la * ac         + lb * bc           + lc * C.feedback   + ld * dc;
-        offsetD = la * ad         + lb * bd           + lc * cd           + ld * D.feedback;
+        if constexpr (AOn)
+            offsetA = la * A.feedback + lb * ba + lc * ca + ld * da;
+        if constexpr (BOn)
+            offsetB = la * ab + lb * B.feedback + lc * cb + ld * db;
+        if constexpr (COn)
+            offsetC = la * ac + lb * bc + lc * C.feedback + ld * dc;
+        if constexpr (DOn)
+            offsetD = la * ad + lb * bd + lc * cd + ld * D.feedback;
 
-        A.out = renderWave(table, size, A.phase + offsetA) * A.level;
-        B.out = renderWave(table, size, B.phase + offsetB) * B.level;
-        C.out = renderWave(table, size, C.phase + offsetC) * C.level;
-        D.out = renderWave(table, size, D.phase + offsetD) * D.level;
+        // TODO saturate the feedback path
+        //offsetA -= (offsetA * offsetA * offsetA) * 0.333
+        // TODO scale feedback by frequency
 
-        AoutL = AoutR = A.out * AisOut;
-        BoutL = BoutR = B.out * BisOut;
-        CoutL = CoutR = C.out * CisOut;
-        DoutL = DoutR = D.out * DisOut;
+        if constexpr (AOn)
+            A.out = renderWave(table.data(), size, A.phase + offsetA) * A.level;
+        if constexpr (BOn)
+            B.out = renderWave(table.data(), size, B.phase + offsetB) * B.level;
+        if constexpr (COn)
+            C.out = renderWave(table.data(), size, C.phase + offsetC) * C.level;
+        if constexpr (DOn)
+            D.out = renderWave(table.data(), size, D.phase + offsetD) * D.level;
+
+        if constexpr (AOn) AoutL = AoutR = A.out * AisOut;
+        if constexpr (BOn) BoutL = BoutR = B.out * BisOut;
+        if constexpr (COn) CoutL = CoutR = C.out * CisOut;
+        if constexpr (DOn) DoutL = DoutR = D.out * DisOut;
 
         // compute unison
         if (AhasUnison)
@@ -214,15 +261,14 @@ void FmMatrix::processBlock(SIMDVox& data, int numSamples)
         }
 
         // increment phases
-        for (int j = 0; j < MAX_OSCILLATORS; ++j)
-        {
-            auto& osc = data.osc[j];
-            osc.phase += osc.phase_inc;
-            Utils::wrapPhase(osc.phase);
-        }
+        if constexpr (AOn) { A.phase += A.phase_inc; Utils::wrapPhase(A.phase); }
+        if constexpr (BOn) { B.phase += B.phase_inc; Utils::wrapPhase(B.phase); }
+        if constexpr (COn) { C.phase += C.phase_inc; Utils::wrapPhase(C.phase); }
+        if constexpr (DOn) { D.phase += D.phase_inc; Utils::wrapPhase(D.phase); }
 
         // render output
         outL[i] = AoutL * A.gain_l + BoutL * B.gain_l + CoutL * C.gain_l + DoutL * D.gain_l;
         outR[i] = AoutR * A.gain_r + BoutR * B.gain_r + CoutR * C.gain_r + DoutR * D.gain_r;
     }
 }
+

@@ -42,6 +42,8 @@ public:
         SIMDF level;
         SIMDF out;
         SIMDF feedback;
+        SIMDF morph;
+        SIMDF morph_targ;
         SIMDUnison unison[4]; // four lanes of voices
     };
 
@@ -55,6 +57,8 @@ public:
         alignas(sizeof(SIMDF)) float feedback[4];
         alignas(sizeof(SIMDF)) float gain_l[4];
         alignas(sizeof(SIMDF)) float gain_r[4];
+        alignas(sizeof(SIMDF)) float morph[4];
+        alignas(sizeof(SIMDF)) float morph_targ[4];
         UnisonVec unison[4];
     };
 
@@ -77,6 +81,8 @@ public:
     float gain_l = 0.f;
     float gain_r = 0.f;
     float feedback = 0.f;
+    float morph = 0.f;
+    float morph_targ = 0.f;
     int unison_voices = 1;
     int unison_mode = 0;
     float unison_detune = -1.f;
@@ -104,6 +110,8 @@ public:
         vec.gain_l[lane] = gain_l;
         vec.gain_r[lane] = gain_r;
         vec.feedback[lane] = feedback;
+        vec.morph[lane] = morph;
+        vec.morph_targ[lane] = morph;
 
         vec.unison[lane].voices = unison_voices;
         if (!isFMOutput || level <= 0.f)
@@ -132,6 +140,8 @@ public:
         o.gain_l.load(vec.gain_l);
         o.gain_r.load(vec.gain_r);
         o.feedback.load(vec.feedback);
+        o.morph.load(vec.morph);
+        o.morph_targ.load(vec.morph_targ);
 
         for (int lane = 0; lane < 4; ++lane) // for each voice
         {
@@ -161,6 +171,7 @@ public:
         simd.phase.store(vec.phase);
         simd.level.store(vec.level);
         simd.out.store(vec.out);
+        simd.morph.store(vec.morph);
 
         for (int lane = 0; lane < 4; ++lane)
         {
@@ -183,6 +194,7 @@ public:
         phase = vec.phase[lane];
         level = vec.level[lane];
         out = vec.out[lane];
+        morph = vec.out[lane];
 
         if (vec.unison[lane].voices > 1)
         {

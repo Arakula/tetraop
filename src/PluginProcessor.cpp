@@ -56,7 +56,7 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         layout.add(std::make_unique<AudioParameterInt>(prefix + "pitch_semis", prefixnm + "Pitch Semis", -48, 48, 0));
         layout.add(std::make_unique<AudioParameterInt>(prefix + "pitch_fine", prefixnm + "Pitch Fine", -100, 100, 0.f));
         layout.add(std::make_unique<AudioParameterInt>(prefix + "pitch_coarse", prefixnm + "Pitch Coarse", -1.f, 1.f, 0.f));
-        layout.add(std::make_unique<AudioParameterFloat>(prefix + "frame", prefixnm + "Frame", NormalisableRange<float>(0.f, 1.f), 0.f));
+        layout.add(std::make_unique<AudioParameterFloat>(prefix + "morph", prefixnm + "Morph", NormalisableRange<float>(0.f, 1.f), 0.f));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "phase_start", prefixnm + "Phase", 0.f, 1.f, 0.5f));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "phase_rand", prefixnm + "Phase Rand", 0.f, 1.f, 1.f));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "feedback", prefixnm + "Feedback", 0.f, 1.f, 0.f));
@@ -225,6 +225,16 @@ bool TetraOPAudioProcessor::loadWaveTable(gin::Wavetable& table, double sr, cons
                 gin::Wavetable t;
                 loadWavetables(t, sr, buf, reader->sampleRate, size);
 
+                for (int i = 0; i < t.getNumTables(); ++i)
+                {
+                    auto& tables = t.getTable(i)->tables;
+                    auto sz = tables.size();
+                    for (int j = 0; j < sz; ++j)
+                    {
+                        tables[j].push_back(tables[j][0]); // pad table / wrap around
+                    }
+                }
+
                 juce::ScopedLock sl(dspLock);
                 std::swap(t, table);
 
@@ -240,7 +250,17 @@ bool TetraOPAudioProcessor::loadWaveTable(gin::Wavetable& table, double sr, cons
             reader->read(&buf, 0, int(reader->lengthInSamples), 0, true, false);
 
             gin::Wavetable t;
-            loadWavetables(t, sr, buf, reader->sampleRate, 2048);
+            loadWavetables(t, sr, buf, reader->sampleRate, size);
+
+            for (int i = 0; i < t.getNumTables(); ++i)
+            {
+                auto& tables = t.getTable(i)->tables;
+                auto sz = tables.size();
+                for (int j = 0; j < sz; ++j)
+                {
+                    tables[j].push_back(tables[j][0]); // pad table / wrap around
+                }
+            }
 
             juce::ScopedLock sl(dspLock);
             std::swap(t, table);

@@ -105,8 +105,8 @@ class Utils
 public:
     inline static void wrapPhase(SIMDF& p)
     {
-        p -= p.trunc();
-        p.blend(p + 1.f, p >= 0.f);
+        auto frac = p - p.trunc();
+        p = frac.blend(frac + 1.f, p >= 0.f);
     }
 
     inline static SIMDFx2 panToGain(SIMDF& pan)
@@ -166,7 +166,13 @@ public:
         return std::fmax(0.0f, std::fmin(1.0f, norm));
     }
 
-    static inline double lerp(double min, double max, double t) {
+    static inline float lerp(float min, float max, float t) 
+    {
+        return min + (max - min) * t;
+    }
+
+    static inline SIMDF lerp(SIMDF min, SIMDF max, SIMDF t)
+    {
         return min + (max - min) * t;
     }
 

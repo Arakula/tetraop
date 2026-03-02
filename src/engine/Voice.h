@@ -14,6 +14,7 @@ class Voice : public gin::SynthesiserVoice
 public:
     struct SIMDVoice
     {
+        std::array<float, 4> key;
         SIMDF env;
         SIMDF vel_mult;
         SIMDF env_step;
@@ -21,6 +22,7 @@ public:
 
     struct VoiceVec
     {
+        std::array<float, 4> key;
         alignas(sizeof(SIMDF)) float vel_mult[4];
         alignas(sizeof(SIMDF)) float env[4];
         alignas(sizeof(SIMDF)) float env_step[4];
@@ -28,6 +30,7 @@ public:
 
     void stateToVec(VoiceVec& vec, int lane) const
     {
+        vec.key[lane] = key;
         vec.env[lane] = env;
         vec.vel_mult[lane] = vel_mult;
         vec.env_step[lane] = env_step;
@@ -42,6 +45,7 @@ public:
     static SIMDVoice vecToSIMD(VoiceVec& vec)
     {
         SIMDVoice v;
+        v.key = vec.key;
         v.env.load(vec.env);
         v.vel_mult.load(vec.vel_mult);
         v.env_step.load(vec.env_step);
@@ -53,7 +57,6 @@ public:
         VoiceVec vec{};
         simd.vel_mult.store(vec.vel_mult);
         simd.env.store(vec.env);
-        simd.env_step.store(vec.env_step);
         return vec;
     }
 
@@ -88,7 +91,7 @@ public:
     void noteKeyStateChanged() override     {}
 
     void setCurrentSampleRate (double newRate) override;
-    void renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
+    void renderNextBlock(AudioBuffer<float>&, int, int) override {}
     void startBlock(int startSample, int numSamples);
     void endBlock(int startSample, int numSamples);
 

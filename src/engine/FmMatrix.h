@@ -57,12 +57,13 @@ public:
 
     void setLayout(Layout l);
     void prepare(float _srate);
-
-    SIMDF renderSIMD(SIMDF phase);
-    std::pair<SIMDF, SIMDF> processUnison(OSC::SIMDOSC& osc, SIMDF phaseOffset);
     void processBlock(SIMDVox& data, int numSamples);
 
 private:
+    template<bool AOn, bool BOn, bool COn, bool DOn>
+    void _process(SIMDVox& data, int numSamples);
+    float alpha = 0.f; // exponential param smoother coeff
+
 	TetraOPAudioProcessor& audioProcessor;
     float srate;
 

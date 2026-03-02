@@ -66,15 +66,15 @@ void TetraOPAudioProcessorEditor::buildUI()
 
 
     avoices.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    avoices.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 20);
+    avoices.setTextBoxStyle(juce::Slider::TextBoxBelow, true, 60, 20);
     addAndMakeVisible(avoices);
-    avoices.setBounds(30, 100, 60, 60);
+    avoices.setBounds(30, 100, 70, 70);
     avoicesAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.params, "a_unison_voices", avoices);
 
     blevel.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    blevel.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 20);
+    blevel.setTextBoxStyle(juce::Slider::TextBoxBelow, true, 60, 20);
     addAndMakeVisible(blevel);
-    blevel.setBounds(30, 160, 60, 60);
+    blevel.setBounds(30, 180, 70, 70);
     blevelAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.params, "b_level", blevel);
 
 
