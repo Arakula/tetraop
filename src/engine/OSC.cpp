@@ -42,6 +42,7 @@ void OSC::prepareBlock(int startSample, int numSamples)
 	auto unison_st = mod->getPolyValue(prefix + "unison_stereo", voiceId, numSamples);
 	auto unison_sprd = mod->getPolyValue(prefix + "unison_spread", voiceId, numSamples);
 	auto unison_bld = mod->getPolyValue(prefix + "unison_blend", voiceId, numSamples);
+	feedback = mod->getPolyValue(prefix + "feedback", voiceId, numSamples);
 
 	if (unison_v == 1)
 	{

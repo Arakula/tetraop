@@ -41,6 +41,7 @@ public:
         SIMDF freq;
         SIMDF level;
         SIMDF out;
+        SIMDF feedback;
         SIMDUnison unison[4]; // four lanes of voices
     };
 
@@ -51,6 +52,7 @@ public:
         alignas(sizeof(SIMDF)) float freq[4];
         alignas(sizeof(SIMDF)) float level[4];
         alignas(sizeof(SIMDF)) float out[4];
+        alignas(sizeof(SIMDF)) float feedback[4];
         alignas(sizeof(SIMDF)) float gain_l[4];
         alignas(sizeof(SIMDF)) float gain_r[4];
         UnisonVec unison[4];
@@ -74,6 +76,7 @@ public:
     float pan = -2.f;
     float gain_l = 0.f;
     float gain_r = 0.f;
+    float feedback = 0.f;
     int unison_voices = 1;
     int unison_mode = 0;
     float unison_detune = -1.f;
@@ -100,6 +103,7 @@ public:
         vec.out[lane] = out;
         vec.gain_l[lane] = gain_l;
         vec.gain_r[lane] = gain_r;
+        vec.feedback[lane] = feedback;
 
         vec.unison[lane].voices = unison_voices;
         if (!isFMOutput || level <= 0.f)
@@ -127,6 +131,7 @@ public:
         o.out.load(vec.out);
         o.gain_l.load(vec.gain_l);
         o.gain_r.load(vec.gain_r);
+        o.feedback.load(vec.feedback);
 
         for (int lane = 0; lane < 4; ++lane) // for each voice
         {

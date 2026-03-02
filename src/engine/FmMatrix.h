@@ -38,6 +38,11 @@ public:
     std::array<Matrix4x4, kLayouts> matrices{};
     Matrix4x4 matrix{};
 
+    float ab = 0.f; float ac = 0.f; float ad = 0.f;
+    float ba = 0.f; float bc = 0.f; float bd = 0.f;
+    float ca = 0.f; float cb = 0.f; float cd = 0.f;
+    float da = 0.f; float db = 0.f; float dc = 0.f;
+
     std::array<SIMDF, MAX_BLOCKSIZE> outL;
     std::array<SIMDF, MAX_BLOCKSIZE> outR;
 

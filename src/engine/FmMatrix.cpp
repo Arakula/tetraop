@@ -47,6 +47,11 @@ void FmMatrix::setLayout(Layout l)
     layout = l;
     matrix = matrices[layout];
 
+    ab = matrix[0][1]; ac = matrix[0][2]; ad = matrix[0][3];
+    ba = matrix[1][0]; bc = matrix[1][2]; bd = matrix[1][3];
+    ca = matrix[2][0]; cb = matrix[2][1]; cd = matrix[2][3];
+    da = matrix[3][0]; db = matrix[3][1]; dc = matrix[3][2];
+
     auto isoutput = [this](int row) {
         return !matrix[row][0] && !matrix[row][1] && !matrix[row][2] && !matrix[row][3];
     };
@@ -100,39 +105,69 @@ void FmMatrix::processBlock(SIMDVox& data, int numSamples)
 {
     auto& A = data.osc[0];
     auto& B = data.osc[1];
+    auto& C = data.osc[2];
+    auto& D = data.osc[3];
+
+    bool AhasUnison = AisOut && A.unison->voices > 1;
+    bool BhasUnison = BisOut && B.unison->voices > 1;
+    bool ChasUnison = CisOut && C.unison->voices > 1;
+    bool DhasUnison = DisOut && D.unison->voices > 1;
+
     SIMDF la, lb, lc, ld;
-    SIMDF offsetA, offsetB;
-    SIMDF AoutL;
-    SIMDF AoutR;
-    SIMDF BoutL;
-    SIMDF BoutR;
+    SIMDF offsetA, offsetB, offsetC, offsetD;
+    SIMDF AoutL, AoutR;
+    SIMDF BoutL, BoutR;
+    SIMDF CoutL, CoutR;
+    SIMDF DoutL, DoutR;
 
     for (int i = 0; i < numSamples; ++i)
     {
         la = A.out; lb = B.out;
+        lc = C.out; ld = D.out;
 
         // compute mono outputs
-        offsetA = lb * matrix[1][0];
-        offsetB = la * matrix[0][1];
+        offsetA = la * A.feedback + lb * ba           + lc * ca           + ld * da;
+        offsetB = la * ab         + lb * B.feedback   + lc * cb           + ld * db;
+        offsetC = la * ac         + lb * bc           + lc * C.feedback   + ld * dc;
+        offsetD = la * ad         + lb * bd           + lc * cd           + ld * D.feedback;
+
         A.out = renderSIMD(A.phase + offsetA) * A.level;
         B.out = renderSIMD(B.phase + offsetB) * B.level;
+        C.out = renderSIMD(C.phase + offsetC) * C.level;
+        D.out = renderSIMD(D.phase + offsetD) * D.level;
 
         AoutL = AoutR = A.out * AisOut;
         BoutL = BoutR = B.out * BisOut;
+        CoutL = CoutR = C.out * CisOut;
+        DoutL = DoutR = D.out * DisOut;
 
         // compute unison
-        if (AisOut && A.unison->voices > 1)
+        if (AhasUnison)
         {
             auto [uniL, uniR] = processUnison(A, offsetA);
             AoutL = uniL * A.level;
             AoutR = uniR * A.level;
         }
 
-        if (BisOut && B.unison->voices > 1)
+        if (BhasUnison)
         {
             auto [uniL, uniR] = processUnison(B, offsetB);
             BoutL = uniL * B.level;
             BoutR = uniR * B.level;
+        }
+
+        if (ChasUnison)
+        {
+            auto [uniL, uniR] = processUnison(C, offsetC);
+            CoutL = uniL * C.level;
+            CoutR = uniR * C.level;
+        }
+
+        if (DhasUnison)
+        {
+            auto [uniL, uniR] = processUnison(D, offsetD);
+            DoutL = uniL * D.level;
+            DoutR = uniR * D.level;
         }
 
         // increment phases
@@ -144,7 +179,7 @@ void FmMatrix::processBlock(SIMDVox& data, int numSamples)
         }
 
         // render output
-        outL[i] = AoutL * A.gain_l + BoutL * B.gain_l;
-        outR[i] = AoutR * A.gain_r + BoutR * B.gain_r;
+        outL[i] = AoutL * A.gain_l + BoutL * B.gain_l + CoutL * C.gain_l + DoutL * D.gain_l;
+        outR[i] = AoutR * A.gain_r + BoutR * B.gain_r + CoutR * C.gain_r + DoutR * D.gain_r;
     }
 }
