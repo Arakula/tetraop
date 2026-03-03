@@ -193,7 +193,7 @@ void TetraOPAudioProcessor::reloadWavetables()
         if (table.srate != osrate)
         {
             table.name = "Basic Shapes";
-            juce::MemoryBlock block(BinaryData::Basic_Shapes_wt2048, BinaryData::Basic_Shapes_wt2048Size);
+            juce::MemoryBlock block(BinaryData::Analog_PWM_Sub_02_wt2048, BinaryData::Analog_PWM_Sub_02_wt2048Size);
 
             loadWaveTable(table.tables, osrate, block, "flac", 2048);
             table.numTables = table.tables.getNumTables();

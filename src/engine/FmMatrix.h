@@ -18,6 +18,14 @@ struct SIMDVox
 class FmMatrix
 {
 public:
+    struct TablesData 
+    {
+        SIMDF currIndex;
+        SIMDF targIndex;
+        int numTables;
+        std::array<float*, 8> data;
+    };
+
     using Matrix4x4 = std::array<std::array<float, 4>, 4>;
 
     enum Layout {
@@ -60,7 +68,7 @@ public:
     void processBlock(SIMDVox& data, int numSamples);
 
 private:
-    std::array<float*, 8> getTables(SIMDVox& vox, int oscidx, bool isMorphing);
+    TablesData getTables(SIMDVox& vox, int oscidx, bool isMorphing);
 
     template<bool AOn, bool BOn, bool COn, bool DOn>
     void _process(SIMDVox& data, int numSamples);
@@ -76,6 +84,7 @@ private:
     SIMDF cout;
     SIMDF dout;
 
+    bool AmorphStarted = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FmMatrix)
 };

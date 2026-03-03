@@ -91,7 +91,7 @@ static inline SIMDF renderUnison(const std::vector<float> table, int size, SIMDF
     return l1 + frac * (l2 - l1);
 }
 
-static inline SIMDF renderWave(const std::array<float*, 8> tables, int size, SIMDF phase, SIMDF morph)
+static inline SIMDF renderWave(const std::array<float*, 8> tables, int size, SIMDF phase, bool morph)
 {
     Utils::wrapPhase(phase);
     auto posf = phase * float(size);
@@ -107,13 +107,13 @@ static inline SIMDF renderWave(const std::array<float*, 8> tables, int size, SIM
     SIMDF l1 = SIMDF{ tables[0][p[0]],      tables[1][p[1]],        tables[2][p[2]],        tables[3][p[3]] };
     SIMDF l2 = SIMDF{ tables[0][p[0] + 1],  tables[1][p[1] + 1],    tables[2][p[2] + 1],    tables[3][p[3] + 1] };
 
-    if (morph.sum() > 0.f)
+    if (morph)
     {
         SIMDF l3 = SIMDF{ tables[4][p[0]],      tables[5][p[1]],        tables[6][p[2]],        tables[7][p[3]] };
         SIMDF l4 = SIMDF{ tables[4][p[0] + 1],  tables[5][p[1] + 1],    tables[6][p[2] + 1],    tables[7][p[3] + 1] };
 
-        l1 += morph * (l3 - l1);
-        l2 += morph * (l4 - l2);
+        l1 += phase * (l3 - l1);
+        l2 += phase * (l4 - l2);
     }
 
     return l1 + frac * (l2 - l1);
@@ -186,20 +186,20 @@ void FmMatrix::_process(SIMDVox& data, int numSamples)
     auto& C = data.osc[2];
     auto& D = data.osc[3];
 
-    std::array<float*, 8> a_tables{};
-    std::array<float*, 8> b_tables{};
-    std::array<float*, 8> c_tables{};
-    std::array<float*, 8> d_tables{};
+    TablesData a_tables{};
+    TablesData b_tables{};
+    TablesData c_tables{};
+    TablesData d_tables{};
 
     int a_tables_size = 0;
     int b_tables_size = 0;
     int c_tables_size = 0;
     int d_tables_size = 0;
 
-    bool AisMorphing = AOn && std::abs((A.morph - A.morph_targ).sum()) > 1e-4f;
-    bool BisMorphing = BOn && std::abs((B.morph - B.morph_targ).sum()) > 1e-4f;
-    bool CisMorphing = COn && std::abs((C.morph - C.morph_targ).sum()) > 1e-4f;
-    bool DisMorphing = DOn && std::abs((D.morph - D.morph_targ).sum()) > 1e-4f;
+    bool AisMorphing = AOn && std::abs((A.morph - A.morph_targ).sum()) > 1e-3f; // TODO 1e-4
+    bool BisMorphing = BOn && std::abs((B.morph - B.morph_targ).sum()) > 1e-3f;
+    bool CisMorphing = COn && std::abs((C.morph - C.morph_targ).sum()) > 1e-3f;
+    bool DisMorphing = DOn && std::abs((D.morph - D.morph_targ).sum()) > 1e-3f;
 
     if constexpr (AOn)
     {
@@ -254,23 +254,22 @@ void FmMatrix::_process(SIMDVox& data, int numSamples)
 
         if constexpr (AOn)
         {
-            auto amorph = (A.morph - A.morph.trunc()) * AisMorphing;
-            A.out = renderWave(a_tables, a_tables_size, A.phase + offsetA, amorph) * A.level;
+            A.out = renderWave(a_tables.data, a_tables_size, A.phase + offsetA, AisMorphing * AmorphStarted) * A.level;
         }
         if constexpr (BOn)
         {
             auto bmorph = (B.morph - B.morph.trunc()) * BisMorphing;
-            B.out = renderWave(b_tables, b_tables_size, B.phase + offsetB, bmorph) * B.level;
+            B.out = renderWave(b_tables.data, b_tables_size, B.phase + offsetB, BisMorphing) * B.level;
         }
         if constexpr (COn)
         {
             auto cmorph = (C.morph - C.morph.trunc()) * CisMorphing;
-            C.out = renderWave(c_tables, c_tables_size, C.phase + offsetC, cmorph) * C.level;
+            C.out = renderWave(c_tables.data, c_tables_size, C.phase + offsetC, CisMorphing) * C.level;
         }
         if constexpr (DOn)
         {
             auto dmorph = (D.morph - D.morph.trunc()) * DisMorphing;
-            D.out = renderWave(d_tables, d_tables_size, D.phase + offsetD, dmorph) * D.level;
+            D.out = renderWave(d_tables.data, d_tables_size, D.phase + offsetD, DisMorphing) * D.level;
         }
 
         if constexpr (AOn) AoutL = AoutR = A.out * AisOut;
@@ -308,11 +307,29 @@ void FmMatrix::_process(SIMDVox& data, int numSamples)
         }
 
         // increment phases and interpolate
-        if constexpr (AOn) { 
-            A.phase += A.phase_inc; Utils::wrapPhase(A.phase); 
-            A.morph += (A.morph_targ - A.morph) * morphAlpha * AisMorphing;
+        if constexpr (AOn) {
+            A.phase += A.phase_inc;
+
+            if (AisMorphing)
+            {
+                if (A.phase.get(0) >= 1.f)
+                {
+                    if (AmorphStarted) 
+                    {
+                        a_tables.data[0] = a_tables.data[4];
+                        A.morph = mipp::blend(A.morph_targ, A.morph, { 1, 0, 0, 0 });
+                        AmorphStarted = false;
+                    }
+                    else
+                    {
+                        AmorphStarted = true;
+                    }
+                }
+            }
+
+             Utils::wrapPhase(A.phase); 
         }
-        if constexpr (BOn) 
+        if constexpr (BOn)
         { 
             B.phase += B.phase_inc; Utils::wrapPhase(B.phase); 
             B.morph += (B.morph_targ - B.morph) * morphAlpha * BisMorphing;
@@ -335,29 +352,43 @@ void FmMatrix::_process(SIMDVox& data, int numSamples)
 }
 
 // fetches 1 table per voice + 1 morphing table per voice
-std::array<float*, 8> FmMatrix::getTables(SIMDVox& vox, int oscidx, bool isMorphing)
+FmMatrix::TablesData FmMatrix::getTables(SIMDVox& vox, int oscidx, bool isMorphing)
 {
-    std::array<float*, 8> out{};
+    alignas(sizeof(SIMDF)) float currIndex[4]{};
+    alignas(sizeof(SIMDF)) float targIndex[4]{};
 
+    TablesData out{};
     auto& tables = audioProcessor.wavetables[oscidx];
+    out.numTables = tables.numTables;
+
     for (int i = 0; i < SIMD_SZ; ++i)
     {
         auto morph = vox.osc[oscidx].morph.get(i);
-        auto tableIndex = std::min(tables.numTables - 1, int(float(tables.numTables) * morph));
+        auto morphtarg = vox.osc[oscidx].morph_targ.get(i);
+        auto tableIndex = isMorphing
+            ? int(float(tables.numTables - 1) * morph)
+            : int(std::round(morphtarg * (tables.numTables - 1)));
         auto t1 = tables.tables.getUnchecked(tableIndex);
-        out[i] = t1->tableForNote(vox.voice.key[i]).data();
+        out.data[i] = t1->tableForNote(vox.voice.key[i]).data();
+        currIndex[i] = (float)tableIndex;
 
         int t2idx = i + SIMD_SZ;
         if (isMorphing && tableIndex < tables.numTables - 1)
         {
-            auto* t2 = tables.tables.getUnchecked(tableIndex + 1);
-            out[t2idx] = t2->tableForNote(vox.voice.key[i]).data();
+            auto tableIdxTarg = int(std::round(morphtarg * (tables.numTables - 1)));
+            auto* t2 = tables.tables.getUnchecked(tableIdxTarg);
+            out.data[t2idx] = t2->tableForNote(vox.voice.key[i]).data();
+            targIndex[i] = (float)tableIdxTarg;
         }
         else
         {
-            out[t2idx] = out[i];
+            out.data[t2idx] = out.data[i];
+            targIndex[i] = (float)tableIndex;
         }
     }
+
+    out.currIndex.load(currIndex);
+    out.targIndex.load(targIndex);
 
     return out;
 }

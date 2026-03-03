@@ -15,7 +15,7 @@ namespace globals {
 	constexpr int MAX_MODS = 4; // max visible mods like vel ktrack modwheel on the right panel
 	constexpr int EQ_BANDS = 4;
 	constexpr int MAX_UNISON = 16;
-	constexpr float MORPH_SECONDS = 0.002f;
+	constexpr float MORPH_SECONDS = 0.5f;
 
 	// theme colors
 	inline bool themeLoaded = false;

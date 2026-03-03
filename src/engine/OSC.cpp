@@ -40,10 +40,14 @@ void OSC::prepareBlock(int startSample, int numSamples)
 		gain_r = std::sin(MathConstants<float>::halfPi * pan);
 	}
 
-	morph_targ = Utils::snapToGrid(
-		audioProcessor.modulation->getPolyValue(prefix + "morph", voiceId, numSamples),
-		audioProcessor.wavetables->numTables - 1
-	);
+	bool isMorphing = std::abs(morph - morph_targ) > 1e-4;
+	if (!isMorphing)
+	{
+		morph_targ = Utils::snapToGrid(
+			audioProcessor.modulation->getPolyValue(prefix + "morph", voiceId, numSamples),
+			audioProcessor.wavetables->numTables - 1
+		);
+	}
 
 	auto unison_v = (int)mod->getValue(prefix + "unison_voices", true);
 	auto unison_mod = (int)mod->getValue(prefix + "unison_mode", true);
