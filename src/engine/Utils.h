@@ -103,6 +103,18 @@ private:
 class Utils
 {
 public:
+    inline static float snapToGrid(float norm, int grid)
+    {
+        return std::round(norm * grid) / grid;
+    }
+
+    inline static SIMDF round(SIMDF f)
+    {
+        auto i = f.trunc();
+        auto frac = f - i;
+        return mipp::blend(i+1, i, frac.abs() >= 0.5f);
+    }
+
     inline static void wrapPhase(SIMDF& p)
     {
         auto frac = p - p.trunc();

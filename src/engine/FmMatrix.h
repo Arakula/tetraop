@@ -60,9 +60,11 @@ public:
     void processBlock(SIMDVox& data, int numSamples);
 
 private:
+    std::array<float*, 8> getTables(SIMDVox& vox, int oscidx, bool isMorphing);
+
     template<bool AOn, bool BOn, bool COn, bool DOn>
     void _process(SIMDVox& data, int numSamples);
-    float alpha = 0.f; // exponential param smoother coeff
+    float morphAlpha = 0.f; // exponential param smoother coeff
 
 	TetraOPAudioProcessor& audioProcessor;
     float srate;

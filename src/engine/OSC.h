@@ -111,7 +111,7 @@ public:
         vec.gain_r[lane] = gain_r;
         vec.feedback[lane] = feedback;
         vec.morph[lane] = morph;
-        vec.morph_targ[lane] = morph;
+        vec.morph_targ[lane] = morph_targ;
 
         vec.unison[lane].voices = unison_voices;
         if (!isFMOutput || level <= 0.f)
@@ -194,7 +194,7 @@ public:
         phase = vec.phase[lane];
         level = vec.level[lane];
         out = vec.out[lane];
-        morph = vec.out[lane];
+        morph = vec.morph[lane];
 
         if (vec.unison[lane].voices > 1)
         {

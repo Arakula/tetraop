@@ -18,6 +18,10 @@ void OSC::trigger(int note, float srate)
 	auto phase_start = audioProcessor.modulation->getValue(prefix + "phase_start");
 	auto phase_rand = audioProcessor.modulation->getValue(prefix + "phase_rand");
 	unison_phase = Unison::generatePhases(phase_start, phase_rand);
+	morph = morph_targ = Utils::snapToGrid(
+		audioProcessor.modulation->getPolyValue(prefix + "morph", voiceId),
+		audioProcessor.wavetables[id].numTables - 1
+	);
 }
 
 void OSC::prepareBlock(int startSample, int numSamples)
@@ -35,6 +39,11 @@ void OSC::prepareBlock(int startSample, int numSamples)
 		gain_l = std::cos(MathConstants<float>::halfPi * pan);
 		gain_r = std::sin(MathConstants<float>::halfPi * pan);
 	}
+
+	morph_targ = Utils::snapToGrid(
+		audioProcessor.modulation->getPolyValue(prefix + "morph", voiceId, numSamples),
+		audioProcessor.wavetables->numTables - 1
+	);
 
 	auto unison_v = (int)mod->getValue(prefix + "unison_voices", true);
 	auto unison_mod = (int)mod->getValue(prefix + "unison_mode", true);

@@ -66,7 +66,7 @@ void FmMatrix::setLayout(Layout l)
 void FmMatrix::prepare(float _srate)
 {
     srate = _srate;
-    alpha = 1.f - std::exp(-1.f / (0.002f * srate));
+    morphAlpha = 1.f - std::exp(-1.f / (MORPH_SECONDS * srate));
 }
 
 inline static SIMDF renderSIMD(SIMDF phase)
@@ -91,7 +91,7 @@ static inline SIMDF renderUnison(const std::vector<float> table, int size, SIMDF
     return l1 + frac * (l2 - l1);
 }
 
-static inline SIMDF renderWave(const float* table, int size, SIMDF phase)
+static inline SIMDF renderWave(const std::array<float*, 8> tables, int size, SIMDF phase, SIMDF morph)
 {
     Utils::wrapPhase(phase);
     auto posf = phase * float(size);
@@ -104,8 +104,17 @@ static inline SIMDF renderWave(const float* table, int size, SIMDF phase)
     float f[4];
     frac.store(f);
 
-    SIMDF l1 = SIMDF{ table[p[0]], table[p[1]], table[p[2]], table[p[3]] };
-    SIMDF l2 = SIMDF{ table[p[0] + 1], table[p[1] + 1], table[p[2] + 1], table[p[3] + 1] };
+    SIMDF l1 = SIMDF{ tables[0][p[0]],      tables[1][p[1]],        tables[2][p[2]],        tables[3][p[3]] };
+    SIMDF l2 = SIMDF{ tables[0][p[0] + 1],  tables[1][p[1] + 1],    tables[2][p[2] + 1],    tables[3][p[3] + 1] };
+
+    if (morph.sum() > 0.f)
+    {
+        SIMDF l3 = SIMDF{ tables[4][p[0]],      tables[5][p[1]],        tables[6][p[2]],        tables[7][p[3]] };
+        SIMDF l4 = SIMDF{ tables[4][p[0] + 1],  tables[5][p[1] + 1],    tables[6][p[2] + 1],    tables[7][p[3] + 1] };
+
+        l1 += morph * (l3 - l1);
+        l2 += morph * (l4 - l2);
+    }
 
     return l1 + frac * (l2 - l1);
 }
@@ -171,33 +180,63 @@ void FmMatrix::processBlock(SIMDVox& data, int numSamples)
 template<bool AOn, bool BOn, bool COn, bool DOn>
 void FmMatrix::_process(SIMDVox& data, int numSamples)
 {
+    SIMDF tmp;
     auto& A = data.osc[0];
     auto& B = data.osc[1];
     auto& C = data.osc[2];
     auto& D = data.osc[3];
+
+    std::array<float*, 8> a_tables{};
+    std::array<float*, 8> b_tables{};
+    std::array<float*, 8> c_tables{};
+    std::array<float*, 8> d_tables{};
+
+    int a_tables_size = 0;
+    int b_tables_size = 0;
+    int c_tables_size = 0;
+    int d_tables_size = 0;
 
     bool AisMorphing = AOn && std::abs((A.morph - A.morph_targ).sum()) > 1e-4f;
     bool BisMorphing = BOn && std::abs((B.morph - B.morph_targ).sum()) > 1e-4f;
     bool CisMorphing = COn && std::abs((C.morph - C.morph_targ).sum()) > 1e-4f;
     bool DisMorphing = DOn && std::abs((D.morph - D.morph_targ).sum()) > 1e-4f;
 
-    auto& tables = audioProcessor.wavetables[0].tables;
-    auto tableIndex = std::min(tables.size() - 1, int(float(tables.size()) * 0.0f));
-    auto& table = tables.getUnchecked(tableIndex)->tableForNote(data.voice.key[0]);
-    auto ttt = tables.getUnchecked(tableIndex);
-    int size = tables.getUnchecked(tableIndex)->tableSize;
+    if constexpr (AOn)
+    {
+        a_tables = getTables(data, 0, AisMorphing);
+        a_tables_size = audioProcessor.wavetables[0].tableSize;
+    }
+
+    if constexpr (BOn)
+    {
+        b_tables = getTables(data, 1, BisMorphing);
+        b_tables_size = audioProcessor.wavetables[1].tableSize;
+    }
+
+    if constexpr (COn)
+    {
+        c_tables = getTables(data, 2, CisMorphing);
+        c_tables_size = audioProcessor.wavetables[2].tableSize;
+    }
+
+    if constexpr (DOn)
+    {
+        d_tables = getTables(data, 3, DisMorphing);
+        d_tables_size = audioProcessor.wavetables[3].tableSize;
+    }
 
     bool AhasUnison = AisOut && A.unison->voices > 1;
     bool BhasUnison = BisOut && B.unison->voices > 1;
     bool ChasUnison = CisOut && C.unison->voices > 1;
     bool DhasUnison = DisOut && D.unison->voices > 1;
 
+
     SIMDF la, lb, lc, ld;
-    SIMDF offsetA{}, offsetB{}, offsetC{}, offsetD{};
-    SIMDF AoutL{}, AoutR{};
-    SIMDF BoutL{}, BoutR{};
-    SIMDF CoutL{}, CoutR{};
-    SIMDF DoutL{}, DoutR{};
+    SIMDF offsetA(0.f), offsetB(0.f), offsetC(0.f), offsetD(0.f);
+    SIMDF AoutL(0.f), AoutR(0.f);
+    SIMDF BoutL(0.f), BoutR(0.f);
+    SIMDF CoutL(0.f), CoutR(0.f);
+    SIMDF DoutL(0.f), DoutR(0.f);
 
     for (int i = 0; i < numSamples; ++i)
     {
@@ -213,18 +252,26 @@ void FmMatrix::_process(SIMDVox& data, int numSamples)
         if constexpr (DOn)
             offsetD = la * ad + lb * bd + lc * cd + ld * D.feedback;
 
-        // TODO saturate the feedback path
-        //offsetA -= (offsetA * offsetA * offsetA) * 0.333
-        // TODO scale feedback by frequency
-
         if constexpr (AOn)
-            A.out = renderWave(table.data(), size, A.phase + offsetA) * A.level;
+        {
+            auto amorph = (A.morph - A.morph.trunc()) * AisMorphing;
+            A.out = renderWave(a_tables, a_tables_size, A.phase + offsetA, amorph) * A.level;
+        }
         if constexpr (BOn)
-            B.out = renderWave(table.data(), size, B.phase + offsetB) * B.level;
+        {
+            auto bmorph = (B.morph - B.morph.trunc()) * BisMorphing;
+            B.out = renderWave(b_tables, b_tables_size, B.phase + offsetB, bmorph) * B.level;
+        }
         if constexpr (COn)
-            C.out = renderWave(table.data(), size, C.phase + offsetC) * C.level;
+        {
+            auto cmorph = (C.morph - C.morph.trunc()) * CisMorphing;
+            C.out = renderWave(c_tables, c_tables_size, C.phase + offsetC, cmorph) * C.level;
+        }
         if constexpr (DOn)
-            D.out = renderWave(table.data(), size, D.phase + offsetD) * D.level;
+        {
+            auto dmorph = (D.morph - D.morph.trunc()) * DisMorphing;
+            D.out = renderWave(d_tables, d_tables_size, D.phase + offsetD, dmorph) * D.level;
+        }
 
         if constexpr (AOn) AoutL = AoutR = A.out * AisOut;
         if constexpr (BOn) BoutL = BoutR = B.out * BisOut;
@@ -260,11 +307,26 @@ void FmMatrix::_process(SIMDVox& data, int numSamples)
             DoutR = uniR * D.level;
         }
 
-        // increment phases
-        if constexpr (AOn) { A.phase += A.phase_inc; Utils::wrapPhase(A.phase); }
-        if constexpr (BOn) { B.phase += B.phase_inc; Utils::wrapPhase(B.phase); }
-        if constexpr (COn) { C.phase += C.phase_inc; Utils::wrapPhase(C.phase); }
-        if constexpr (DOn) { D.phase += D.phase_inc; Utils::wrapPhase(D.phase); }
+        // increment phases and interpolate
+        if constexpr (AOn) { 
+            A.phase += A.phase_inc; Utils::wrapPhase(A.phase); 
+            A.morph += (A.morph_targ - A.morph) * morphAlpha * AisMorphing;
+        }
+        if constexpr (BOn) 
+        { 
+            B.phase += B.phase_inc; Utils::wrapPhase(B.phase); 
+            B.morph += (B.morph_targ - B.morph) * morphAlpha * BisMorphing;
+        }
+        if constexpr (COn) 
+        { 
+            C.phase += C.phase_inc; Utils::wrapPhase(C.phase); 
+            C.morph += (C.morph_targ - C.morph) * morphAlpha * CisMorphing;
+        }
+        if constexpr (DOn) 
+        { 
+            D.phase += D.phase_inc; Utils::wrapPhase(D.phase); 
+            D.morph += (D.morph_targ - D.morph) * morphAlpha * DisMorphing;
+        }
 
         // render output
         outL[i] = AoutL * A.gain_l + BoutL * B.gain_l + CoutL * C.gain_l + DoutL * D.gain_l;
@@ -272,3 +334,30 @@ void FmMatrix::_process(SIMDVox& data, int numSamples)
     }
 }
 
+// fetches 1 table per voice + 1 morphing table per voice
+std::array<float*, 8> FmMatrix::getTables(SIMDVox& vox, int oscidx, bool isMorphing)
+{
+    std::array<float*, 8> out{};
+
+    auto& tables = audioProcessor.wavetables[oscidx];
+    for (int i = 0; i < SIMD_SZ; ++i)
+    {
+        auto morph = vox.osc[oscidx].morph.get(i);
+        auto tableIndex = std::min(tables.numTables - 1, int(float(tables.numTables) * morph));
+        auto t1 = tables.tables.getUnchecked(tableIndex);
+        out[i] = t1->tableForNote(vox.voice.key[i]).data();
+
+        int t2idx = i + SIMD_SZ;
+        if (isMorphing && tableIndex < tables.numTables - 1)
+        {
+            auto* t2 = tables.tables.getUnchecked(tableIndex + 1);
+            out[t2idx] = t2->tableForNote(vox.voice.key[i]).data();
+        }
+        else
+        {
+            out[t2idx] = out[i];
+        }
+    }
+
+    return out;
+}

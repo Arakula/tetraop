@@ -40,6 +40,8 @@ public:
         String name;
         float srate;
         gin::Wavetable tables;
+        int numTables;
+        int tableSize;
     };
 
     // synth

@@ -95,6 +95,8 @@ public:
 
     juce::Slider avoices;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> avoicesAttachment;
+    juce::Slider amorph;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> amorphAttachment;
     juce::Slider blevel;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> blevelAttachment;
 
