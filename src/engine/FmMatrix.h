@@ -84,7 +84,5 @@ private:
     SIMDF cout;
     SIMDF dout;
 
-    bool AmorphStarted = false;
-
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FmMatrix)
 };
