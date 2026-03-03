@@ -72,7 +72,7 @@ private:
 
     template<bool AOn, bool BOn, bool COn, bool DOn>
     void _process(SIMDVox& data, int numSamples);
-    float morphAlpha = 0.f; // exponential param smoother coeff
+    float morphAlpha = 0.f; // exponential param smoother
 
 	TetraOPAudioProcessor& audioProcessor;
     float srate;

@@ -43,10 +43,7 @@ void OSC::prepareBlock(int startSample, int numSamples)
 	morph_targ = Utils::snapToGrid(
 		audioProcessor.modulation->getPolyValue(prefix + "morph", voiceId, numSamples),
 		audioProcessor.wavetables[id].numTables - 1
-	) + 1e-4f;
-	
-	//if (id == 0)
-	//	DBG("ACTUAL " + String(morph_targ) + " " + String(int(morph_targ * (audioProcessor.wavetables[id].numTables - 1))) + " " + String(morph));
+	) + 1e-4f; // 1e-4 allows floor(tablemorph) to snap correctly
 
 	auto unison_v = (int)mod->getValue(prefix + "unison_voices", true);
 	auto unison_mod = (int)mod->getValue(prefix + "unison_mode", true);

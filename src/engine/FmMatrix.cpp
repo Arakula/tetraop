@@ -177,10 +177,22 @@ void FmMatrix::processBlock(SIMDVox& data, int numSamples)
     }
 }
 
+static inline bool hasCurrTableChanged(OSC::SIMDOSC& osc, FmMatrix::TablesData& tables)
+{
+    auto idx = (osc.morph * (tables.numTables - 1)).trunc();
+    auto msk = ~(idx == tables.currIndex);
+    return !msk.testz();
+}
+
+static inline SIMDF getMorph(OSC::SIMDOSC& osc, FmMatrix::TablesData& tables)
+{
+    auto tablepos = osc.morph * (tables.numTables - 1);
+    return tablepos - tablepos.trunc();
+}
+
 template<bool AOn, bool BOn, bool COn, bool DOn>
 void FmMatrix::_process(SIMDVox& vox, int numSamples)
 {
-    SIMDF tmp;
     auto& A = vox.osc[0];
     auto& B = vox.osc[1];
     auto& C = vox.osc[2];
@@ -196,10 +208,10 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
     int c_tables_size = 0;
     int d_tables_size = 0;
 
-    bool AisMorphing = AOn && std::abs((A.morph - A.morph_targ).sum()) > 1e-4f;
-    bool BisMorphing = BOn && std::abs((B.morph - B.morph_targ).sum()) > 1e-4f;
-    bool CisMorphing = COn && std::abs((C.morph - C.morph_targ).sum()) > 1e-4f;
-    bool DisMorphing = DOn && std::abs((D.morph - D.morph_targ).sum()) > 1e-4f;
+    bool AisMorphing = AOn && (A.morph - A.morph_targ).abs().hmax() > 1e-4f;
+    bool BisMorphing = BOn && (B.morph - B.morph_targ).abs().hmax() > 1e-4f;
+    bool CisMorphing = COn && (C.morph - C.morph_targ).abs().hmax() > 1e-4f;
+    bool DisMorphing = DOn && (D.morph - D.morph_targ).abs().hmax() > 1e-4f;
 
     if constexpr (AOn)
     {
@@ -238,11 +250,16 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
     SIMDF CoutL(0.f), CoutR(0.f);
     SIMDF DoutL(0.f), DoutR(0.f);
 
+    SIMDF a_morph = getMorph(A, a_tables);
+    SIMDF b_morph = getMorph(B, b_tables);
+    SIMDF c_morph = getMorph(C, c_tables);
+    SIMDF d_morph = getMorph(D, d_tables);
+
     for (int i = 0; i < numSamples; ++i)
     {
         la = A.out; lb = B.out; lc = C.out; ld = D.out;
 
-        // compute mono outputs
+        // compute fm offsets
         if constexpr (AOn)
             offsetA = la * A.feedback + lb * ba + lc * ca + ld * da;
         if constexpr (BOn)
@@ -252,34 +269,23 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
         if constexpr (DOn)
             offsetD = la * ad + lb * bd + lc * cd + ld * D.feedback;
 
+        // render mono outputs
         if constexpr (AOn)
-        {
-            auto pos = A.morph * (a_tables.numTables - 1);
-            auto amorph = (pos - pos.trunc());
-            A.out = renderWave(a_tables.data, a_tables_size, A.phase + offsetA, amorph * AisMorphing) * A.level;
-        }
+            A.out = renderWave(a_tables.data, a_tables_size, A.phase + offsetA, a_morph) * A.level;
         if constexpr (BOn)
-        {
-            auto bmorph = (B.morph - B.morph.trunc()) * BisMorphing;
-            B.out = renderWave(b_tables.data, b_tables_size, B.phase + offsetB, BisMorphing) * B.level;
-        }
+            B.out = renderWave(b_tables.data, b_tables_size, B.phase + offsetB, b_morph) * B.level;
         if constexpr (COn)
-        {
-            auto cmorph = (C.morph - C.morph.trunc()) * CisMorphing;
-            C.out = renderWave(c_tables.data, c_tables_size, C.phase + offsetC, CisMorphing) * C.level;
-        }
+            C.out = renderWave(c_tables.data, c_tables_size, C.phase + offsetC, c_morph) * C.level;
         if constexpr (DOn)
-        {
-            auto dmorph = (D.morph - D.morph.trunc()) * DisMorphing;
-            D.out = renderWave(d_tables.data, d_tables_size, D.phase + offsetD, DisMorphing) * D.level;
-        }
+            D.out = renderWave(d_tables.data, d_tables_size, D.phase + offsetD, d_morph) * D.level;
 
         if constexpr (AOn) AoutL = AoutR = A.out * AisOut;
         if constexpr (BOn) BoutL = BoutR = B.out * BisOut;
         if constexpr (COn) CoutL = CoutR = C.out * CisOut;
         if constexpr (DOn) DoutL = DoutR = D.out * DisOut;
 
-        // compute unison
+        // render unison
+        if constexpr (AOn)
         if (AhasUnison)
         {
             auto [uniL, uniR] = processUnison(A, offsetA);
@@ -287,6 +293,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
             AoutR = uniR * A.level;
         }
 
+        if constexpr (BOn)
         if (BhasUnison)
         {
             auto [uniL, uniR] = processUnison(B, offsetB);
@@ -294,6 +301,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
             BoutR = uniR * B.level;
         }
 
+        if constexpr (COn)
         if (ChasUnison)
         {
             auto [uniL, uniR] = processUnison(C, offsetC);
@@ -301,6 +309,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
             CoutR = uniR * C.level;
         }
 
+        if constexpr (DOn)
         if (DhasUnison)
         {
             auto [uniL, uniR] = processUnison(D, offsetD);
@@ -309,33 +318,57 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
         }
 
         // increment phases and interpolate
-        if constexpr (AOn) {
-            if (AisMorphing) {
-                A.morph += (A.morph_targ - A.morph) * morphAlpha;
-                auto idx = (A.morph * (a_tables.numTables - 1)).trunc();
-                auto msk = ~(idx == a_tables.currIndex);
-                if (!msk.testz()) {
-                    a_tables = getTables(vox, 0, AisMorphing);
-                }
-            }
 
+        if constexpr (AOn) 
+        {
+            if (AisMorphing) 
+            {
+                A.morph += (A.morph_targ - A.morph) * morphAlpha;
+                a_morph = getMorph(A, a_tables);
+                if (hasCurrTableChanged(A, a_tables))
+                    a_tables = getTables(vox, 0, AisMorphing);
+            }
             A.phase += A.phase_inc;
             Utils::wrapPhase(A.phase); 
         }
+
         if constexpr (BOn) 
         { 
-            B.phase += B.phase_inc; Utils::wrapPhase(B.phase); 
-            B.morph += (B.morph_targ - B.morph) * morphAlpha * BisMorphing;
+            if (BisMorphing) 
+            {
+                B.morph += (B.morph_targ - B.morph) * morphAlpha;
+                b_morph = getMorph(B, b_tables);
+                if (hasCurrTableChanged(B, b_tables))
+                    b_tables = getTables(vox, 1, BisMorphing);
+            }
+            B.phase += B.phase_inc; 
+            Utils::wrapPhase(B.phase); 
         }
+
         if constexpr (COn) 
         { 
-            C.phase += C.phase_inc; Utils::wrapPhase(C.phase); 
-            C.morph += (C.morph_targ - C.morph) * morphAlpha * CisMorphing;
+            if (CisMorphing) 
+            {
+                C.morph += (C.morph_targ - C.morph) * morphAlpha;
+                c_morph = getMorph(C, c_tables);
+                if (hasCurrTableChanged(C, c_tables))
+                    c_tables = getTables(vox, 2, CisMorphing);
+            }
+            C.phase += C.phase_inc; 
+            Utils::wrapPhase(C.phase); 
         }
+
         if constexpr (DOn) 
-        { 
-            D.phase += D.phase_inc; Utils::wrapPhase(D.phase); 
-            D.morph += (D.morph_targ - D.morph) * morphAlpha * DisMorphing;
+        {
+            if (DisMorphing) 
+            {
+                D.morph += (D.morph_targ - D.morph) * morphAlpha;
+                d_morph = getMorph(D, d_tables);
+                if (hasCurrTableChanged(D, d_tables))
+                    d_tables = getTables(vox, 3, DisMorphing);
+            }
+            D.phase += D.phase_inc; 
+            Utils::wrapPhase(D.phase); 
         }
 
         // render output
