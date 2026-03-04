@@ -161,14 +161,14 @@ void FmMatrix::processBlock(SIMDVox& data, int numSamples)
 
 static inline bool hasCurrTableChanged(OSC::SIMDOSC& osc, FmMatrix::TablesData& tables)
 {
-    auto idx = (osc.morph * (tables.numTables - 1)).trunc();
+    auto idx = (osc.morph * float(tables.numTables - 1)).trunc();
     auto msk = ~(idx == tables.currIndex);
     return !msk.testz();
 }
 
 static inline SIMDF getMorph(OSC::SIMDOSC& osc, FmMatrix::TablesData& tables)
 {
-    auto tablepos = osc.morph.min(1.f) * (tables.numTables - 1);
+    auto tablepos = osc.morph.min(1.f) * float(tables.numTables - 1);
     return tablepos - tablepos.trunc();
 }
 
@@ -351,21 +351,20 @@ FmMatrix::TablesData FmMatrix::getTables(SIMDVox& vox, int oscidx, bool isMorphi
         auto tableIndex = int(float(tables.numTables - 1) * morph);
         auto* t1 = tables.tables.getUnchecked(tableIndex);
         out.data[i] = t1->tableForNote(vox.voice.key[i]).data();
-        currIndex[i] = tableIndex;
+        currIndex[i] = (float)tableIndex;
 
         int t2idx = i + SIMD_SZ;
         if (isMorphing && tableIndex < tables.numTables - 1)
         {
-            auto morphtarg = vox.osc[oscidx].morph_targ.get(i);
             auto tableIdxTarg = std::min(tableIndex + 1, tables.numTables - 1);
             auto* t2 = tables.tables.getUnchecked(tableIdxTarg);
             out.data[t2idx] = t2->tableForNote(vox.voice.key[i]).data();
-            targIndex[i] = tableIdxTarg;
+            targIndex[i] = (float)tableIdxTarg;
         }
         else
         {
             out.data[t2idx] = out.data[i];
-            targIndex[i] = tableIndex;
+            targIndex[i] = (float)tableIndex;
         }
     }
 
