@@ -23,6 +23,7 @@ public:
         SIMDF currIndex;
         SIMDF targIndex;
         int numTables;
+        int size;
         std::array<float*, 8> data;
     };
 

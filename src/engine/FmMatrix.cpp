@@ -75,7 +75,7 @@ inline static SIMDF renderSIMD(SIMDF phase)
     return mipp::sin(phase * MathConstants<float>::twoPi);
 }
 
-static inline SIMDF renderUnison(const std::vector<float> table, int size, SIMDF phase)
+static inline SIMDF renderUnison(const float* table1, const float* table2, const int size, SIMDF phase, const SIMDF morph)
 {
     static constexpr float almostOne = 1.f - std::numeric_limits<float>::epsilon();
 
@@ -85,13 +85,22 @@ static inline SIMDF renderUnison(const std::vector<float> table, int size, SIMDF
     auto frac = posf - posi;
     auto posint = mipp::cvt<float, int32_t>(posi);
 
-    SIMDF l1 = mipp::gather(&table[0], posint);
-    SIMDF l2 = mipp::gather(&table[0], posint + 1);
+    SIMDF l1 = mipp::gather(&table1[0], posint);
+    SIMDF l2 = mipp::gather(&table1[0], posint + 1);
 
-    return l1 + frac * (l2 - l1);
+    if (morph.sum() > 0.f)
+    {
+        SIMDF l3 = mipp::gather(&table2[0], posint);
+        SIMDF l4 = mipp::gather(&table2[0], posint + 1);
+
+        l1 = mipp::fmadd(morph, (l3 - l1), l1);
+        l2 = mipp::fmadd(morph, (l4 - l2), l2);
+    }
+
+    return mipp::fmadd(frac, (l2 - l1), l1);
 }
 
-static inline SIMDF renderWave(const std::array<float*, 8> tables, int size, SIMDF phase, SIMDF morph)
+static inline SIMDF renderWave(const std::array<float*, 8>& tables, const int size, SIMDF phase, const SIMDF morph)
 {
     Utils::wrapPhase(phase);
     auto posf = phase * float(size);
@@ -112,14 +121,20 @@ static inline SIMDF renderWave(const std::array<float*, 8> tables, int size, SIM
         SIMDF l3 = SIMDF{ tables[4][p[0]],      tables[5][p[1]],        tables[6][p[2]],        tables[7][p[3]] };
         SIMDF l4 = SIMDF{ tables[4][p[0] + 1],  tables[5][p[1] + 1],    tables[6][p[2] + 1],    tables[7][p[3] + 1] };
 
-        l1 += morph * (l3 - l1);
-        l2 += morph * (l4 - l2);
+        l1 = mipp::fmadd(morph, (l3 - l1), l1);
+        l2 = mipp::fmadd(morph, (l4 - l2), l2);
     }
 
-    return l1 + frac * (l2 - l1);
+    return mipp::fmadd(frac, (l2 - l1), l1);
 }
 
-static inline std::pair<SIMDF, SIMDF> processUnison(OSC::SIMDOSC& osc, SIMDF phaseOffset)
+static inline std::pair<SIMDF, SIMDF> processUnison(
+    OSC::SIMDOSC& osc, 
+    SIMDF phaseOffset, 
+    std::array<float*, 8>& tables,
+    int size,
+    SIMDF morph
+)
 {
     alignas(sizeof(SIMDF)) float accL[4] = { 0.f, 0.f, 0.f, 0.f };
     alignas(sizeof(SIMDF)) float accR[4] = { 0.f, 0.f, 0.f, 0.f };
@@ -129,10 +144,11 @@ static inline std::pair<SIMDF, SIMDF> processUnison(OSC::SIMDOSC& osc, SIMDF pha
         auto& U = osc.unison[lane];
         int batch = (U.voices + 3) >> 2;
         auto offset = SIMDF(phaseOffset.get(lane));
+        int t2lane = lane + 4;
 
         for (int v = 0; v < batch; ++v) // for each unison voice
         {
-            SIMDF s = renderSIMD(U.phase[v] + offset);
+            SIMDF s = renderUnison(tables[lane], tables[t2lane], size, U.phase[v] + offset, morph);
             s *= U.mask[v];
 
             accL[lane] += (s * U.gain_l[v]).sum();
@@ -203,39 +219,19 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
     TablesData c_tables{};
     TablesData d_tables{};
 
-    int a_tables_size = 0;
-    int b_tables_size = 0;
-    int c_tables_size = 0;
-    int d_tables_size = 0;
-
     bool AisMorphing = AOn && (A.morph - A.morph_targ).abs().hmax() > 1e-4f;
     bool BisMorphing = BOn && (B.morph - B.morph_targ).abs().hmax() > 1e-4f;
     bool CisMorphing = COn && (C.morph - C.morph_targ).abs().hmax() > 1e-4f;
     bool DisMorphing = DOn && (D.morph - D.morph_targ).abs().hmax() > 1e-4f;
 
     if constexpr (AOn)
-    {
         a_tables = getTables(vox, 0, AisMorphing);
-        a_tables_size = audioProcessor.wavetables[0].tableSize;
-    }
-
     if constexpr (BOn)
-    {
         b_tables = getTables(vox, 1, BisMorphing);
-        b_tables_size = audioProcessor.wavetables[1].tableSize;
-    }
-
     if constexpr (COn)
-    {
         c_tables = getTables(vox, 2, CisMorphing);
-        c_tables_size = audioProcessor.wavetables[2].tableSize;
-    }
-
     if constexpr (DOn)
-    {
         d_tables = getTables(vox, 3, DisMorphing);
-        d_tables_size = audioProcessor.wavetables[3].tableSize;
-    }
 
     bool AhasUnison = AisOut && A.unison->voices > 1;
     bool BhasUnison = BisOut && B.unison->voices > 1;
@@ -271,13 +267,13 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
 
         // render mono outputs
         if constexpr (AOn)
-            A.out = renderWave(a_tables.data, a_tables_size, A.phase + offsetA, a_morph) * A.level;
+            A.out = renderWave(a_tables.data, a_tables.size, A.phase + offsetA, a_morph) * A.level;
         if constexpr (BOn)
-            B.out = renderWave(b_tables.data, b_tables_size, B.phase + offsetB, b_morph) * B.level;
+            B.out = renderWave(b_tables.data, b_tables.size, B.phase + offsetB, b_morph) * B.level;
         if constexpr (COn)
-            C.out = renderWave(c_tables.data, c_tables_size, C.phase + offsetC, c_morph) * C.level;
+            C.out = renderWave(c_tables.data, c_tables.size, C.phase + offsetC, c_morph) * C.level;
         if constexpr (DOn)
-            D.out = renderWave(d_tables.data, d_tables_size, D.phase + offsetD, d_morph) * D.level;
+            D.out = renderWave(d_tables.data, d_tables.size, D.phase + offsetD, d_morph) * D.level;
 
         if constexpr (AOn) AoutL = AoutR = A.out * AisOut;
         if constexpr (BOn) BoutL = BoutR = B.out * BisOut;
@@ -288,7 +284,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
         if constexpr (AOn)
         if (AhasUnison)
         {
-            auto [uniL, uniR] = processUnison(A, offsetA);
+            auto [uniL, uniR] = processUnison(A, offsetA, a_tables.data, a_tables.size, a_morph);
             AoutL = uniL * A.level;
             AoutR = uniR * A.level;
         }
@@ -296,7 +292,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
         if constexpr (BOn)
         if (BhasUnison)
         {
-            auto [uniL, uniR] = processUnison(B, offsetB);
+            auto [uniL, uniR] = processUnison(B, offsetB, b_tables.data, b_tables.size, b_morph);
             BoutL = uniL * B.level;
             BoutR = uniR * B.level;
         }
@@ -304,7 +300,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
         if constexpr (COn)
         if (ChasUnison)
         {
-            auto [uniL, uniR] = processUnison(C, offsetC);
+            auto [uniL, uniR] = processUnison(C, offsetC, c_tables.data, c_tables.size, c_morph);
             CoutL = uniL * C.level;
             CoutR = uniR * C.level;
         }
@@ -312,7 +308,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
         if constexpr (DOn)
         if (DhasUnison)
         {
-            auto [uniL, uniR] = processUnison(D, offsetD);
+            auto [uniL, uniR] = processUnison(D, offsetD, d_tables.data, d_tables.size, d_morph);
             DoutL = uniL * D.level;
             DoutR = uniR * D.level;
         }
@@ -386,6 +382,7 @@ FmMatrix::TablesData FmMatrix::getTables(SIMDVox& vox, int oscidx, bool isMorphi
     TablesData out{};
     auto& tables = audioProcessor.wavetables[oscidx];
     out.numTables = tables.numTables;
+    out.size = tables.tableSize;
 
     for (int i = 0; i < SIMD_SZ; ++i)
     {
