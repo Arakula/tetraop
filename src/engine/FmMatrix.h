@@ -47,10 +47,10 @@ public:
     std::array<Matrix4x4, kLayouts> matrices{};
     Matrix4x4 matrix{};
 
-    float ab = 0.f; float ac = 0.f; float ad = 0.f;
-    float ba = 0.f; float bc = 0.f; float bd = 0.f;
-    float ca = 0.f; float cb = 0.f; float cd = 0.f;
-    float da = 0.f; float db = 0.f; float dc = 0.f;
+    SIMDF ab = 0.f; SIMDF ac = 0.f; SIMDF ad = 0.f;
+    SIMDF ba = 0.f; SIMDF bc = 0.f; SIMDF bd = 0.f;
+    SIMDF ca = 0.f; SIMDF cb = 0.f; SIMDF cd = 0.f;
+    SIMDF da = 0.f; SIMDF db = 0.f; SIMDF dc = 0.f;
 
     std::array<SIMDF, MAX_BLOCKSIZE> outL;
     std::array<SIMDF, MAX_BLOCKSIZE> outR;

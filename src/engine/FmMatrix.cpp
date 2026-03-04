@@ -257,13 +257,13 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
 
         // compute fm offsets
         if constexpr (AOn)
-            offsetA = la * A.feedback + lb * ba + lc * ca + ld * da;
+            offsetA = la.fmadd(A.feedback, lb.fmadd(ba, lc.fmadd(ca, ld * da)));
         if constexpr (BOn)
-            offsetB = la * ab + lb * B.feedback + lc * cb + ld * db;
+            offsetB = la.fmadd(ab, lb.fmadd(B.feedback, lc.fmadd(cb, ld * db)));
         if constexpr (COn)
-            offsetC = la * ac + lb * bc + lc * C.feedback + ld * dc;
+            offsetC = la.fmadd(ac, lb.fmadd(bc, lc.fmadd(C.feedback, ld * dc)));
         if constexpr (DOn)
-            offsetD = la * ad + lb * bd + lc * cd + ld * D.feedback;
+            offsetD = la.fmadd(ad, lb.fmadd(bd, lc.fmadd(cd, ld * D.feedback)));
 
         // render mono outputs
         if constexpr (AOn)
@@ -319,7 +319,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
         {
             if (AisMorphing) 
             {
-                A.morph += (A.morph_targ - A.morph) * morphAlpha;
+                A.morph = (A.morph_targ - A.morph).fmadd(morphAlpha, A.morph);
                 a_morph = getMorph(A, a_tables);
                 if (hasCurrTableChanged(A, a_tables))
                     a_tables = getTables(vox, 0, AisMorphing);
@@ -332,7 +332,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
         { 
             if (BisMorphing) 
             {
-                B.morph += (B.morph_targ - B.morph) * morphAlpha;
+                B.morph = (B.morph_targ - B.morph).fmadd(morphAlpha, B.morph);
                 b_morph = getMorph(B, b_tables);
                 if (hasCurrTableChanged(B, b_tables))
                     b_tables = getTables(vox, 1, BisMorphing);
@@ -345,7 +345,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
         { 
             if (CisMorphing) 
             {
-                C.morph += (C.morph_targ - C.morph) * morphAlpha;
+                C.morph = (C.morph_targ - C.morph).fmadd(morphAlpha, C.morph);
                 c_morph = getMorph(C, c_tables);
                 if (hasCurrTableChanged(C, c_tables))
                     c_tables = getTables(vox, 2, CisMorphing);
@@ -358,7 +358,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
         {
             if (DisMorphing) 
             {
-                D.morph += (D.morph_targ - D.morph) * morphAlpha;
+                D.morph = (D.morph_targ - D.morph).fmadd(morphAlpha, D.morph);
                 d_morph = getMorph(D, d_tables);
                 if (hasCurrTableChanged(D, d_tables))
                     d_tables = getTables(vox, 3, DisMorphing);
@@ -368,8 +368,8 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
         }
 
         // render output
-        outL[i] = AoutL * A.gain_l + BoutL * B.gain_l + CoutL * C.gain_l + DoutL * D.gain_l;
-        outR[i] = AoutR * A.gain_r + BoutR * B.gain_r + CoutR * C.gain_r + DoutR * D.gain_r;
+        outL[i] = AoutL.fmadd(A.gain_l, BoutL.fmadd(B.gain_l, CoutL.fmadd(C.gain_l, DoutL * D.gain_l)));
+        outR[i] = AoutR.fmadd(A.gain_r, BoutR.fmadd(B.gain_r, CoutR.fmadd(C.gain_r, DoutR * D.gain_r)));
     }
 }
 
