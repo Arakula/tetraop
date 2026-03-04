@@ -21,7 +21,7 @@ void OSC::trigger(int note, float srate)
 	morph = morph_targ = Utils::snapToGrid(
 		audioProcessor.modulation->getPolyValue(prefix + "morph", voiceId),
 		audioProcessor.wavetables[id].numTables - 1
-	);
+	) + 1e-4f; // 1e-4 allows floor(tablemorph) to snap correctly
 }
 
 void OSC::prepareBlock(int startSample, int numSamples)

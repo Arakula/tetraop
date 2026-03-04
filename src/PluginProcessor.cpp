@@ -155,16 +155,9 @@ TetraOPAudioProcessor::TetraOPAudioProcessor()
     params.addParameterListener("mono", this);
     params.addParameterListener("mpe", this);
 
-    //auto& tree = apvts.state; // ValueTree
-    //for (int i = 0; i < tree.getNumChildren(); ++i)
+    //for (int i = 0; i < MAX_OSCILLATORS; ++i)
     //{
-    //    auto paramNode = tree.getChild(i);
-    //
-    //    // Each node should have a "id" property
-    //    auto paramID = paramNode.getProperty("id").toString();
-    //    auto paramName = paramNode.getProperty("name").toString();
-    //
-    //    DBG("Parameter ID: " << paramID << ", Name: " << paramName);
+    //    wavetables[i].mode = WaveMode::Sine;
     //}
 
     loadSettings();
@@ -193,7 +186,7 @@ void TetraOPAudioProcessor::reloadWavetables()
         if (table.srate != osrate)
         {
             table.name = "Basic Shapes";
-            juce::MemoryBlock block(BinaryData::Analog_PWM_Sub_02_wt2048, BinaryData::Analog_PWM_Sub_02_wt2048Size);
+            juce::MemoryBlock block(BinaryData::Basic_Shapes_wt2048, BinaryData::Basic_Shapes_wt2048Size);
 
             loadWaveTable(table.tables, osrate, block, "flac", 2048);
             table.numTables = table.tables.getNumTables();
@@ -235,7 +228,7 @@ bool TetraOPAudioProcessor::loadWaveTable(gin::Wavetable& table, double sr, cons
                     for (int j = 0; j < ntables; ++j)
                     {
                         auto& table = tables[j];
-                        int tablesz = table.size();
+                        size_t tablesz = table.size();
                         float y0 = table[tablesz - 1];
                         float y1 = table[0];
                         float y2 = table[1];
@@ -264,13 +257,23 @@ bool TetraOPAudioProcessor::loadWaveTable(gin::Wavetable& table, double sr, cons
             gin::Wavetable t;
             loadWavetables(t, sr, buf, reader->sampleRate, size);
 
+            // pad tables for cubic interpolation
             for (int i = 0; i < t.getNumTables(); ++i)
             {
                 auto& tables = t.getTable(i)->tables;
-                auto sz = tables.size();
-                for (int j = 0; j < sz; ++j)
+                auto ntables = tables.size();
+                for (int j = 0; j < ntables; ++j)
                 {
-                    tables[j].push_back(tables[j][0]); // pad table / wrap around
+                    auto& table = tables[j];
+                    size_t tablesz = table.size();
+                    float y0 = table[tablesz - 1];
+                    float y1 = table[0];
+                    float y2 = table[1];
+                    table.resize(tablesz + 3);
+                    memmove(&table[1], &table[0], tablesz * sizeof(float));
+                    table[0] = y0;
+                    table[tablesz + 1] = y1;
+                    table[tablesz + 2] = y2;
                 }
             }
 
