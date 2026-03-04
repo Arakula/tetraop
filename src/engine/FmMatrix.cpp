@@ -75,43 +75,16 @@ inline static SIMDF renderSIMD(SIMDF phase)
     return mipp::sin(phase * MathConstants<float>::twoPi);
 }
 
-static inline SIMDF renderUnison(const float* table1, const float* table2, const int size, SIMDF phase, const SIMDF morph)
-{
-    static constexpr float almostOne = 1.f - std::numeric_limits<float>::epsilon();
-
-    Utils::wrapPhase(phase);
-    auto posf = phase * float(size);
-    auto posi = posf.trunc();
-    auto frac = posf - posi;
-    auto posint = mipp::cvt<float, int32_t>(posi);
-
-    SIMDF l1 = mipp::gather(&table1[0], posint);
-    SIMDF l2 = mipp::gather(&table1[0], posint + 1);
-
-    if (morph.sum() > 0.f)
-    {
-        SIMDF l3 = mipp::gather(&table2[0], posint);
-        SIMDF l4 = mipp::gather(&table2[0], posint + 1);
-
-        l1 = mipp::fmadd(morph, (l3 - l1), l1);
-        l2 = mipp::fmadd(morph, (l4 - l2), l2);
-    }
-
-    return mipp::fmadd(frac, (l2 - l1), l1);
-}
-
-static inline SIMDF renderWave(const std::array<float*, 8>& tables, const int size, SIMDF phase, const SIMDF morph)
+static inline SIMDF renderWaveLinear(const std::array<float*, 8>& tables, const int size, SIMDF phase, const SIMDF morph)
 {
     Utils::wrapPhase(phase);
     auto posf = phase * float(size);
     auto posi = posf.trunc();
     auto frac = posf - posi;
-    auto posint = mipp::cvt<float, int32_t>(posi);
+    auto posint = mipp::cvt<float, int32_t>(posi) + 1; // tables are padded for cubic interpolation, add 1
 
     int p[4];
     posint.store(p);
-    float f[4];
-    frac.store(f);
 
     SIMDF l1 = SIMDF{ tables[0][p[0]],      tables[1][p[1]],        tables[2][p[2]],        tables[3][p[3]] };
     SIMDF l2 = SIMDF{ tables[0][p[0] + 1],  tables[1][p[1] + 1],    tables[2][p[2] + 1],    tables[3][p[3] + 1] };
@@ -126,6 +99,68 @@ static inline SIMDF renderWave(const std::array<float*, 8>& tables, const int si
     }
 
     return mipp::fmadd(frac, (l2 - l1), l1);
+}
+
+static inline SIMDF renderWave(const std::array<float*, 8>& tables, const int size, SIMDF phase, const SIMDF morph)
+{
+    Utils::wrapPhase(phase);
+    auto posf = phase * float(size);
+    auto posi = posf.trunc();
+    auto t = posf - posi;
+    auto t2 = t * t;
+    auto t3 = t2 * t;
+    auto posint = mipp::cvt<float, int32_t>(posi) + 1; // tables are padded for cubic interpolation, add 1
+
+    int p[4];
+    posint.store(p);
+
+    SIMDF y0 = SIMDF{ tables[0][p[0] - 1], tables[1][p[1] - 1], tables[2][p[2] - 1], tables[3][p[3] - 1] };
+    SIMDF y1 = SIMDF{ tables[0][p[0]],     tables[1][p[1]],     tables[2][p[2]],     tables[3][p[3]] };
+    SIMDF y2 = SIMDF{ tables[0][p[0] + 1], tables[1][p[1] + 1], tables[2][p[2] + 1], tables[3][p[3] + 1] };
+    SIMDF y3 = SIMDF{ tables[0][p[0] + 2], tables[1][p[1] + 2], tables[2][p[2] + 2], tables[3][p[3] + 2] };
+
+    if (morph.sum() > 0.f)
+    {
+        SIMDF y02 = SIMDF{ tables[4][p[0] - 1], tables[5][p[1] - 1], tables[6][p[2] - 1], tables[7][p[3] - 1] };
+        SIMDF y12 = SIMDF{ tables[4][p[0]],     tables[5][p[1]],     tables[6][p[2]],     tables[7][p[3]] };
+        SIMDF y22 = SIMDF{ tables[4][p[0] + 1], tables[5][p[1] + 1], tables[6][p[2] + 1], tables[7][p[3] + 1] };
+        SIMDF y32 = SIMDF{ tables[4][p[0] + 2], tables[5][p[1] + 2], tables[6][p[2] + 2], tables[7][p[3] + 2] };
+
+        y0 = mipp::fmadd(morph, (y02 - y0), y0);
+        y1 = mipp::fmadd(morph, (y12 - y1), y1);
+        y2 = mipp::fmadd(morph, (y22 - y2), y2);
+        y3 = mipp::fmadd(morph, (y32 - y3), y3);
+    }
+
+    auto c1 = y0.fmadd(-0.5f, y1.fmadd(1.5f, (-y2).fmadd(1.5f, y3 * 0.5f)));
+    auto c2 = y0 + (-y1).fmadd(2.5f, y2.fmadd(2.f, -y3 * 0.5f));
+    auto c3 = y0.fmadd(-0.5f, y2 * 0.5f);
+    return c1.fmadd(t3, c2.fmadd(t2, c3.fmadd(t, y1)));
+}
+
+static inline SIMDF renderUnison(const float* table1, const float* table2, const int size, SIMDF phase, const SIMDF morph)
+{
+    static constexpr float almostOne = 1.f - std::numeric_limits<float>::epsilon();
+
+    Utils::wrapPhase(phase);
+    auto posf = phase * float(size);
+    auto posi = posf.trunc();
+    auto t = posf - posi;
+    auto posint = mipp::cvt<float, int32_t>(posi);
+
+    SIMDF l1 = mipp::gather(&table1[0], posint);
+    SIMDF l2 = mipp::gather(&table1[0], posint + 1);
+
+    if (morph.sum() > 0.f)
+    {
+        SIMDF l3 = mipp::gather(&table2[0], posint);
+        SIMDF l4 = mipp::gather(&table2[0], posint + 1);
+
+        l1 = mipp::fmadd(morph, (l3 - l1), l1);
+        l2 = mipp::fmadd(morph, (l4 - l2), l2);
+    }
+
+    return mipp::fmadd(t, (l2 - l1), l1);
 }
 
 static inline std::pair<SIMDF, SIMDF> processUnison(

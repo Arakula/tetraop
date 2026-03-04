@@ -227,13 +227,23 @@ bool TetraOPAudioProcessor::loadWaveTable(gin::Wavetable& table, double sr, cons
                 gin::Wavetable t;
                 loadWavetables(t, sr, buf, reader->sampleRate, size);
 
+                // pad tables for cubic interpolation
                 for (int i = 0; i < t.getNumTables(); ++i)
                 {
                     auto& tables = t.getTable(i)->tables;
-                    auto sz = tables.size();
-                    for (int j = 0; j < sz; ++j)
+                    auto ntables = tables.size();
+                    for (int j = 0; j < ntables; ++j)
                     {
-                        tables[j].push_back(tables[j][0]); // pad table / wrap around
+                        auto& table = tables[j];
+                        int tablesz = table.size();
+                        float y0 = table[tablesz - 1];
+                        float y1 = table[0];
+                        float y2 = table[1];
+                        table.resize(tablesz + 3);
+                        memmove(&table[1], &table[0], tablesz * sizeof(float));
+                        table[0] = y0;
+                        table[tablesz + 1] = y1;
+                        table[tablesz + 2] = y2;
                     }
                 }
 
