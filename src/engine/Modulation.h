@@ -37,8 +37,9 @@ public:
 	{
 		juce::String id;
 		int connections = 0;
-		std::atomic<float> norm { 0.f };
-    	float value { 0.f };
+		std::atomic<float> modulatedNorm{ 0.f };
+		float norm {};
+    	float value {};
 		float smoothedNorm{};
 		float smoothedValue{};
 		juce::NormalisableRange<float> range{};
@@ -85,7 +86,7 @@ public:
 	bool isConnected(const juce::String& param);
 	bool isSrcConnected(const juce::String& src);
 	float getValue(const juce::String& param, bool rawValue = false, int blockOffset = 0, bool smooth = true);
-	float getNorm(const juce::String& param);
+	float getModulatedNorm(const juce::String& param);
 	float getPolyValue(const juce::String& param, int voiceId, int blockOffset = 0, bool smooth = true);
 	float getEnvelopeValue(int envid, int voiceId, int blockOffset = 0);
 	float getKeyTrackFor(const juce::String& param);
@@ -144,6 +145,8 @@ private:
 	std::unordered_map<juce::String, Param> params;
 	std::array<Pattern, MAX_MODULATIONS + 1> curvemaps{}; // modulation custom curve mappings, 0 is not used
 	uint64_t start_ts; // used to seed random generated numbers
+	std::unordered_set<juce::String> smoothedParams; // parameters with smoothing active
+	float timeElapsedSinceUIupdate = 0.f;
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Modulation)
 };

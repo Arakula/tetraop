@@ -124,7 +124,7 @@ void TetraOPAudioProcessorEditor::timerCallback()
         if (modulatedParams.find(conn.dst) != modulatedParams.end()) {
             auto param = modulatedParams[conn.dst];
             if (param->isShowing()) {
-                auto val = audioProcessor.modulation->getNorm(conn.dst);
+                auto val = audioProcessor.modulation->getModulatedNorm(conn.dst);
                 if (param->modValue != val || param->voiceActive != voiceActive) { // save on repaints
                     param->modValue = val;
                     param->voiceActive = voiceActive;
