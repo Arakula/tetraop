@@ -53,12 +53,13 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         layout.add(std::make_unique<AudioParameterBool>(prefix + "fixed", prefixnm + "Fixed", false));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "level", prefixnm + "Level", 0.f, 1.f, i == 0 ? 1.f : 0.f));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "pan", prefixnm + "Pan", 0.f, 1.f, 0.5f));
-        layout.add(std::make_unique<AudioParameterInt>(prefix + "pitch_semis", prefixnm + "Pitch Semis", -48, 48, 0));
-        layout.add(std::make_unique<AudioParameterInt>(prefix + "pitch_fine", prefixnm + "Pitch Fine", -100, 100, 0.f));
+        layout.add(std::make_unique<AudioParameterFloat>(prefix + "pitch_semis", prefixnm + "Pitch Semis", -48.f, 48.f, 0.f));
+        layout.add(std::make_unique<AudioParameterInt>(prefix + "pitch_cents", prefixnm + "Pitch Cents", -100, 100, 0.f));
         layout.add(std::make_unique<AudioParameterInt>(prefix + "pitch_coarse", prefixnm + "Pitch Coarse", -1.f, 1.f, 0.f));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "morph", prefixnm + "Morph", NormalisableRange<float>(0.f, 1.f), 0.f));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "phase_start", prefixnm + "Phase", 0.f, 1.f, 0.5f));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "phase_rand", prefixnm + "Phase Rand", 0.f, 1.f, 1.f));
+        layout.add(std::make_unique<AudioParameterFloat>(prefix + "phase_dist", prefixnm + "Phase Dist", 0.f, 1.f, 0.f));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "feedback", prefixnm + "Feedback", 0.f, 1.f, 0.f));
         layout.add(std::make_unique<AudioParameterInt>(prefix + "unison_voices", prefixnm + "Unison Voices", 1, MAX_UNISON, 1));
         layout.add(std::make_unique<AudioParameterChoice>(prefix + "unison_mode", prefixnm + "Unison Mode", StringArray{ "Unison", "Gaussian", "Alternate", "5ths", "Sub" }, 0));
@@ -68,7 +69,7 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "unison_blend", prefixnm + "Unison Blend", 0.f, 1.f, 1.f));
     }
 
-    for (int i = 0; i < MAX_ENVELOPES; ++i) 
+    for (int i = 0; i < MAX_ENVELOPES; ++i)
     {
         layout.add(std::make_unique<AudioParameterChoice>("env" + juce::String(i + 1) + "_mode", "Env" + juce::String(i + 1) + " Mode", StringArray{ "ADSR", "AHD", "DADSR", "DAHDSR" }, 0));
         layout.add(std::make_unique<AudioParameterFloat>("env" + juce::String(i + 1) + "_del", "Env" + juce::String(i + 1) + " Delay", NormalisableRange<float>(0.0f, 5.f, 0.00001f, 0.3f), 0.f));
@@ -227,16 +228,16 @@ bool TetraOPAudioProcessor::loadWaveTable(gin::Wavetable& table, double sr, cons
                     auto ntables = tables.size();
                     for (int j = 0; j < ntables; ++j)
                     {
-                        auto& table = tables[j];
-                        size_t tablesz = table.size();
-                        float y0 = table[tablesz - 1];
-                        float y1 = table[0];
-                        float y2 = table[1];
-                        table.resize(tablesz + 3);
-                        memmove(&table[1], &table[0], tablesz * sizeof(float));
-                        table[0] = y0;
-                        table[tablesz + 1] = y1;
-                        table[tablesz + 2] = y2;
+                        auto& tbl = tables[j];
+                        size_t tablesz = tbl.size();
+                        float y0 = tbl[tablesz - 1];
+                        float y1 = tbl[0];
+                        float y2 = tbl[1];
+                        tbl.resize(tablesz + 3);
+                        memmove(&tbl[1], &tbl[0], tablesz * sizeof(float));
+                        tbl[0] = y0;
+                        tbl[tablesz + 1] = y1;
+                        tbl[tablesz + 2] = y2;
                     }
                 }
 
@@ -264,16 +265,16 @@ bool TetraOPAudioProcessor::loadWaveTable(gin::Wavetable& table, double sr, cons
                 auto ntables = tables.size();
                 for (int j = 0; j < ntables; ++j)
                 {
-                    auto& table = tables[j];
-                    size_t tablesz = table.size();
-                    float y0 = table[tablesz - 1];
-                    float y1 = table[0];
-                    float y2 = table[1];
-                    table.resize(tablesz + 3);
-                    memmove(&table[1], &table[0], tablesz * sizeof(float));
-                    table[0] = y0;
-                    table[tablesz + 1] = y1;
-                    table[tablesz + 2] = y2;
+                    auto& tbl = tables[j];
+                    size_t tablesz = tbl.size();
+                    float y0 = tbl[tablesz - 1];
+                    float y1 = tbl[0];
+                    float y2 = tbl[1];
+                    tbl.resize(tablesz + 3);
+                    memmove(&tbl[1], &tbl[0], tablesz * sizeof(float));
+                    tbl[0] = y0;
+                    tbl[tablesz + 1] = y1;
+                    tbl[tablesz + 2] = y2;
                 }
             }
 
@@ -290,7 +291,7 @@ bool TetraOPAudioProcessor::loadWaveTable(gin::Wavetable& table, double sr, cons
 void TetraOPAudioProcessor::loadSettings ()
 {
     if (auto* file = settings.getUserSettings()) {
-        scale = (float)file->getDoubleValue("scale", 1.f);
+        //scale = (float)file->getDoubleValue("scale", 1.f);
         tuningFileName = file->getValue("tuningFileName", "");
         tuningFileFormat = file->getValue("tuningFileFormat", "");
         tuningFileString = file->getValue("tuningFileString", "");

@@ -71,7 +71,7 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
             for (int o = 0; o < MAX_OSCILLATORS; ++o)
             {
                 activeVoices[i + lane]->osc[o].prepareBlock(startSample, numSamples);
-                activeVoices[i + lane]->osc[o].stateToVec(oscVec[o], lane, fm->isOut[o]);
+                activeVoices[i + lane]->osc[o].stateToVec(oscVec[o], lane, fm->isOut[o], numSamples);
             }
         }
         // convert arrays to SIMD

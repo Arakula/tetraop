@@ -8,7 +8,7 @@ TetraOPAudioProcessorEditor::TetraOPAudioProcessorEditor(TetraOPAudioProcessor& 
     : AudioProcessorEditor(p)
     , audioProcessor(p)
 {
-    setSize(600, 575);
+    setSize(1000, 575);
     Desktop::getInstance().setGlobalScaleFactor(audioProcessor.scale);
     startTimerHz(60);
 
@@ -62,29 +62,21 @@ void TetraOPAudioProcessorEditor::buildUI()
             audioProcessor.saveSettings();
         };
 
+    oscA = std::make_unique<OSCPanel>(*this, 0);
+    addAndMakeVisible(oscA.get());
+    oscA->setBounds(PANEL_PAD, PANEL_PAD, KNOB_WIDTH * 4 + KNOB_WIDTH_SM * 3, KNOB_HEIGHT * 2 + PANEL_HEADER_HEIGHT + 7);
 
+    oscB = std::make_unique<OSCPanel>(*this, 1);
+    addAndMakeVisible(oscB.get());
+    oscB->setBounds(oscA->getBounds().translated(oscA->getWidth() + PANEL_PAD, 0));
 
+    oscC = std::make_unique<OSCPanel>(*this, 2);
+    addAndMakeVisible(oscC.get());
+    oscC->setBounds(oscA->getBounds().translated(0, oscA->getHeight() + PANEL_PAD));
 
-    avoices.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    avoices.setTextBoxStyle(juce::Slider::TextBoxBelow, true, 60, 20);
-    addAndMakeVisible(avoices);
-    avoices.setBounds(30, 100, 70, 70);
-    avoicesAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.params, "a_unison_voices", avoices);
-
-    amorph.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    amorph.setTextBoxStyle(juce::Slider::TextBoxBelow, true, 60, 20);
-    addAndMakeVisible(amorph);
-    amorph.setBounds(30 + 70, 100, 70, 70);
-    amorphAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.params, "a_morph", amorph);
-
-    blevel.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    blevel.setTextBoxStyle(juce::Slider::TextBoxBelow, true, 60, 20);
-    addAndMakeVisible(blevel);
-    blevel.setBounds(30, 180, 70, 70);
-    blevelAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.params, "b_level", blevel);
-
-
-
+    oscD = std::make_unique<OSCPanel>(*this, 3);
+    addAndMakeVisible(oscD.get());
+    oscD->setBounds(oscA->getBounds().translated(oscA->getWidth() + PANEL_PAD, oscA->getHeight() + PANEL_PAD));
 
     juce::Desktop::getInstance().addGlobalMouseListener(this);
     audioProcessor.modulation->UIDirty.store(true); // refresh connections on startup
@@ -361,8 +353,8 @@ void TetraOPAudioProcessorEditor::paint(Graphics& g)
     g.fillAll(COLOR_BACKGROUND());
     g.setFont(FontOptions(16.f));
     g.setColour(Colours::white);
-    g.drawText(String("CPU ") + String(audioProcessor.synth->getCpuUsage()), Rectangle<int>(20, 20, 100, 60), Justification::centred);
-    g.drawText(String("V ") + String(audioProcessor.synth->getNumActiveVoices()), Rectangle<int>(20 + 100, 20, 100, 60), Justification::centred);
+    g.drawText(String("CPU ") + String(audioProcessor.synth->getCpuUsage()), Rectangle<int>(20, 20 + 400, 100, 60), Justification::centred);
+    g.drawText(String("V ") + String(audioProcessor.synth->getNumActiveVoices()), Rectangle<int>(20 + 100, 20 + 400, 100, 60), Justification::centred);
 }
 
 void TetraOPAudioProcessorEditor::showParamContextMenu(ModulatedParam* param)

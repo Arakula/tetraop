@@ -13,6 +13,7 @@
 #include "Globals.h"
 #include "PluginProcessor.h"
 #include "ui/ModulatedParam.h"
+#include "ui/panels/OSCPanel.h"
 #include "ui/panels/AboutDialog.h"
 #include "ui/CustomLookAndFeel.h"
 //#include "ui/widgets/Modulator.h"
@@ -92,20 +93,11 @@ public:
     void mouseUp(const juce::MouseEvent& e) override;
 
 
-
-    juce::Slider avoices;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> avoicesAttachment;
-    juce::Slider amorph;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> amorphAttachment;
-    juce::Slider blevel;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> blevelAttachment;
-
-
-
-
-
-
     // Panels
+    std::unique_ptr<OSCPanel> oscA;
+    std::unique_ptr<OSCPanel> oscB;
+    std::unique_ptr<OSCPanel> oscC;
+    std::unique_ptr<OSCPanel> oscD;
     std::unique_ptr<AboutDialog> aboutDialog;
 
     std::unique_ptr<CustomLookAndFeel> customLookAndFeel;

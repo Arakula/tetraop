@@ -40,6 +40,7 @@ public:
         SIMDF gain_r;
         SIMDF freq;
         SIMDF level;
+        SIMDF level_step;
         SIMDF out;
         SIMDF feedback;
         SIMDF morph;
@@ -53,6 +54,7 @@ public:
         alignas(sizeof(SIMDF)) float phase_inc[4];
         alignas(sizeof(SIMDF)) float freq[4];
         alignas(sizeof(SIMDF)) float level[4];
+        alignas(sizeof(SIMDF)) float level_step[4];
         alignas(sizeof(SIMDF)) float out[4];
         alignas(sizeof(SIMDF)) float feedback[4];
         alignas(sizeof(SIMDF)) float gain_l[4];
@@ -76,6 +78,7 @@ public:
     float freq = 1000.f;
     float phase_inc = 0.f;
     float level = 0.f;
+    float level_targ = 0.f;
     float out = 0.f;
     float pan = -2.f;
     float gain_l = 0.f;
@@ -100,12 +103,13 @@ public:
     void prepareBlock(int startSample, int numSamples);
     void recalcUnison();
 
-    void stateToVec(OSCVec& vec, int lane, bool isFMOutput) const
+    void stateToVec(OSCVec& vec, int lane, bool isFMOutput, int numSamples) const
     {
         vec.phase[lane] = phase;
         vec.phase_inc[lane] = phase_inc;
         vec.freq[lane] = freq;
         vec.level[lane] = level;
+        vec.level_step[lane] = (level_targ - level) / numSamples;
         vec.out[lane] = out;
         vec.gain_l[lane] = gain_l;
         vec.gain_r[lane] = gain_r;
@@ -114,7 +118,7 @@ public:
         vec.morph_targ[lane] = morph_targ;
 
         vec.unison[lane].voices = unison_voices;
-        if (!isFMOutput || level <= 0.f)
+        if (! isFMOutput || (level <= 1e-5f && level_targ < 1e-5f))
         {
             vec.unison[lane].voices = 1; // optimization, disable unison if its not processed
         }
@@ -136,6 +140,7 @@ public:
         o.phase_inc.load(vec.phase_inc);
         o.freq.load(vec.freq);
         o.level.load(vec.level);
+        o.level_step.load(vec.level_step);
         o.out.load(vec.out);
         o.gain_l.load(vec.gain_l);
         o.gain_r.load(vec.gain_r);
@@ -165,7 +170,7 @@ public:
         return o;
     }
 
-    static OSCVec SIMDToVec(SIMDOSC simd)
+    static OSCVec SIMDToVec(SIMDOSC& simd)
     {
         OSCVec vec{};
         simd.phase.store(vec.phase);

@@ -7,15 +7,15 @@ CustomLookAndFeel::CustomLookAndFeel()
     setColour(TooltipWindow::outlineColourId, Colours::transparentBlack);
     setColour(ScrollBar::thumbColourId, Colours::white);
 
-    ubuntu = Typeface::createSystemTypefaceFor(BinaryData::UbuntuMedium_ttf, BinaryData::UbuntuMedium_ttfSize);
-    setDefaultSansSerifTypeface(ubuntu);
+    defaultFont = Typeface::createSystemTypefaceFor(BinaryData::PlayRegular_ttf, BinaryData::PlayRegular_ttfSize);
+    setDefaultSansSerifTypeface(defaultFont);
     this->setDefaultLookAndFeel(this);
 }
 
 Typeface::Ptr CustomLookAndFeel::getTypefaceForFont(const Font& font)
 {
     (void)font;
-    return ubuntu;
+    return defaultFont;
 }
 
 void CustomLookAndFeel::drawTooltip(juce::Graphics& g, const juce::String& text, int width, int height)

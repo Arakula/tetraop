@@ -131,10 +131,10 @@ static inline std::pair<SIMDF, SIMDF> processUnison(
 // SIMD'ed voices rendering
 void FmMatrix::processBlock(SIMDVox& data, int numSamples)
 {
-    bool aon = data.osc[0].level.sum() > 0.f;
-    bool bon = data.osc[1].level.sum() > 0.f;
-    bool con = data.osc[2].level.sum() > 0.f;
-    bool don = data.osc[3].level.sum() > 0.f;
+    bool aon = data.osc[0].level.sum() > 1e-5 || data.osc[0].level_step.sum() > 1e-5;
+    bool bon = data.osc[1].level.sum() > 1e-5 || data.osc[1].level_step.sum() > 1e-5;
+    bool con = data.osc[2].level.sum() > 1e-5 || data.osc[2].level_step.sum() > 1e-5;
+    bool don = data.osc[3].level.sum() > 1e-5 || data.osc[3].level_step.sum() > 1e-5;
 
     int mask = (aon << 3) | (bon << 2) | (con << 1) | (don << 0);
 
@@ -285,6 +285,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
                 if (hasCurrTableChanged(A, a_tables))
                     a_tables = getTables(vox, 0, AisMorphing);
             }
+            A.level += A.level_step;
             A.phase += A.phase_inc;
             Utils::wrapPhase(A.phase); 
         }
@@ -298,6 +299,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
                 if (hasCurrTableChanged(B, b_tables))
                     b_tables = getTables(vox, 1, BisMorphing);
             }
+            B.level += B.level_step;
             B.phase += B.phase_inc; 
             Utils::wrapPhase(B.phase); 
         }
@@ -311,6 +313,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
                 if (hasCurrTableChanged(C, c_tables))
                     c_tables = getTables(vox, 2, CisMorphing);
             }
+            C.level += C.level_step;
             C.phase += C.phase_inc; 
             Utils::wrapPhase(C.phase); 
         }
@@ -324,6 +327,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
                 if (hasCurrTableChanged(D, d_tables))
                     d_tables = getTables(vox, 3, DisMorphing);
             }
+            D.level += D.level_step;
             D.phase += D.phase_inc; 
             Utils::wrapPhase(D.phase); 
         }

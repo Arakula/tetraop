@@ -11,26 +11,29 @@ OSC::OSC(int _id, int _voiceId, TetraOPAudioProcessor& p)
 
 void OSC::trigger(int note, float srate)
 {
+	auto& mod = audioProcessor.modulation;
 	phase = 0.f;
 	freq = 440.0f * std::pow(2.0f, (note - 69) / 12.0f);
 	phase_inc = freq / srate;
 	out = 0.f;
-	auto phase_start = audioProcessor.modulation->getValue(prefix + "phase_start");
-	auto phase_rand = audioProcessor.modulation->getValue(prefix + "phase_rand");
+	auto phase_start = mod->getValue(prefix + "phase_start");
+	auto phase_rand = mod->getValue(prefix + "phase_rand");
 	unison_phase = Unison::generatePhases(phase_start, phase_rand);
 	morph = morph_targ = Utils::snapToGrid(
-		audioProcessor.modulation->getPolyValue(prefix + "morph", voiceId),
+		mod->getPolyValue(prefix + "morph", voiceId),
 		audioProcessor.wavetables[id].numTables - 1
 	) + 1e-4f; // 1e-4 allows floor(tablemorph) to snap correctly
+	isOn = mod->getValue(prefix + "on");
+	level = level_targ = mod->getPolyValue(prefix + "level", voiceId, 0) * isOn;
 }
 
 void OSC::prepareBlock(int startSample, int numSamples)
 {
 	(void)startSample;
 	auto& mod = audioProcessor.modulation;
-	isOn = mod->getValue(prefix + "level");
-	level = mod->getPolyValue(prefix + "level", voiceId, numSamples) * isOn;
-	if (level <= 0.f) return;
+	isOn = mod->getValue(prefix + "on");
+	level_targ = mod->getPolyValue(prefix + "level", voiceId, numSamples) * isOn;
+	if (level < 1e-4 && level_targ < 1e-4) return;
 
 	auto pan_targ = mod->getPolyValue(prefix + "pan", voiceId, numSamples);
 	if (pan != pan_targ)

@@ -32,5 +32,5 @@ public:
 
 
 private:
-    juce::Typeface::Ptr ubuntu;
+    juce::Typeface::Ptr defaultFont;
 };
