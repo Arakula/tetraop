@@ -23,7 +23,12 @@ public:
     void handleMidiEvent (const juce::MidiMessage& m) override;
 
 private:
-	TetraOPAudioProcessor& audioProcessor;
+    Voice::VoiceVec voiceVec{};
+    OSC::OSCVec oscVec[MAX_OSCILLATORS]{};
+    Voice::VoiceVec voiceVecOutTemp{};
+    OSC::OSCVec oscVecOutTemp[MAX_OSCILLATORS]{};
+    SIMDVox vox{};
 
+	TetraOPAudioProcessor& audioProcessor;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Synth)
 };

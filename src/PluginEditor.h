@@ -21,6 +21,32 @@
 
 using namespace globals;
 
+class TMP 
+    : public juce::Component
+    , private juce::Timer
+{
+public:
+    TetraOPAudioProcessor& audioProcessor;
+    TMP(TetraOPAudioProcessor& p) : audioProcessor(p) 
+    {
+        startTimerHz(30);
+    };
+
+    void timerCallback() override
+    {
+        repaint();
+    }
+
+    void paint(Graphics& g) override
+    {
+        auto b = getLocalBounds();
+        g.setFont(FontOptions(16.f));
+        g.setColour(Colours::white);
+        g.drawText(String("CPU ") + String(audioProcessor.synth->getCpuUsage()), b, Justification::centredLeft);
+        g.drawText(String("V ") + String(audioProcessor.synth->getNumActiveVoices()), b, Justification::centredRight);
+    }
+};
+
 class ResizeCorner : public juce::Component
 {
 public:
@@ -109,6 +135,7 @@ public:
     std::unique_ptr<ResizeCorner> resizeCorner;
 
     TooltipWindow tooltipWindow;
+    std::unique_ptr<TMP> tmp;
 
     bool resizing = false;
     float resizeStart = 1.f;

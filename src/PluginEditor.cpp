@@ -78,6 +78,10 @@ void TetraOPAudioProcessorEditor::buildUI()
     addAndMakeVisible(oscD.get());
     oscD->setBounds(oscA->getBounds().translated(oscA->getWidth() + PANEL_PAD, oscA->getHeight() + PANEL_PAD));
 
+    tmp = std::make_unique<TMP>(audioProcessor);
+    addAndMakeVisible(tmp.get());
+    tmp->setBounds(100, 400, 100, 20);
+
     juce::Desktop::getInstance().addGlobalMouseListener(this);
     audioProcessor.modulation->UIDirty.store(true); // refresh connections on startup
 }
@@ -110,7 +114,6 @@ void TetraOPAudioProcessorEditor::loadTheme() const
 
 void TetraOPAudioProcessorEditor::timerCallback()
 {
-    repaint();
     /*
     if (isDragDropModulation) {
         dragDropOverlay->repaint();
@@ -351,10 +354,6 @@ void TetraOPAudioProcessorEditor::parameterChanged(const juce::String& parameter
 void TetraOPAudioProcessorEditor::paint(Graphics& g)
 {
     g.fillAll(COLOR_BACKGROUND());
-    g.setFont(FontOptions(16.f));
-    g.setColour(Colours::white);
-    g.drawText(String("CPU ") + String(audioProcessor.synth->getCpuUsage()), Rectangle<int>(20, 20 + 400, 100, 60), Justification::centred);
-    g.drawText(String("V ") + String(audioProcessor.synth->getNumActiveVoices()), Rectangle<int>(20 + 100, 20 + 400, 100, 60), Justification::centred);
 }
 
 void TetraOPAudioProcessorEditor::showParamContextMenu(ModulatedParam* param)

@@ -52,19 +52,19 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
     size_t numActive = activeVoices.size();
 
     for (auto& voice : activeVoices)
-    {
         voice->startBlock(startSample, numSamples);
-    }
 
     // process voices in batches
     for (size_t i = 0; i < numActive; i += W)
     {
         size_t batchSize = std::min(W, numActive - i);
-        SIMDVox vox;
+
+        // clear memory used to batch data into SIMD lanes
+        std::memset(&voiceVec, 0, sizeof(voiceVec));
+        for (int o = 0; o < MAX_OSCILLATORS; ++o)
+            std::memset(&oscVec[o], 0, sizeof(oscVec[o]));
 
         // fetch data into arrays
-        Voice::VoiceVec voiceVec{};
-        OSC::OSCVec oscVec[MAX_OSCILLATORS] = {};
         for (int lane = 0; lane < batchSize; ++lane)
         {
             activeVoices[i + lane]->stateToVec(voiceVec, lane);
@@ -91,21 +91,17 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
         }
 
         // update voices state
-        Voice::VoiceVec voiceVecOut{};
-        OSC::OSCVec oscVecOut[4] = {};
-        voiceVecOut = Voice::SIMDToVec(vox.voice);
+        voiceVecOutTemp = Voice::SIMDToVec(vox.voice);
         for (int o = 0; o < MAX_OSCILLATORS; ++o)
-            oscVecOut[o] = OSC::SIMDToVec(vox.osc[o]);
+            oscVecOutTemp[o] = OSC::SIMDToVec(vox.osc[o]);
         for (int lane = 0; lane < batchSize; ++lane)
         {
-            activeVoices[i + lane]->vecToState(voiceVecOut, lane);
+            activeVoices[i + lane]->vecToState(voiceVecOutTemp, lane);
             for (int o = 0; o < MAX_OSCILLATORS; ++o)
-                activeVoices[i + lane]->osc[o].vecToState(oscVecOut[o], lane);
+                activeVoices[i + lane]->osc[o].vecToState(oscVecOutTemp[o], lane);
         }
     }
 
     for (auto& voice : activeVoices)
-    {
         voice->endBlock(startSample, numSamples);
-    }
 }
