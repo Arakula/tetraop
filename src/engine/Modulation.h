@@ -12,6 +12,7 @@
 #include "../dsp/LFO.h"
 #include "../dsp/RandGen.h"
 #include "Voice.h"
+#include "Utils.h"
 
 class TetraOPAudioProcessor;
 using namespace globals;
@@ -37,8 +38,11 @@ public:
 		juce::String id;
 		int connections = 0;
 		std::atomic<float> norm { 0.f };
-    	std::atomic<float> value { 0.f };
+    	float value { 0.f };
+		float smoothedNorm{};
+		float smoothedValue{};
 		juce::NormalisableRange<float> range{};
+		RCFilterBlock smoother;
 	};
 	struct Modulator
 	{
@@ -67,19 +71,22 @@ public:
 	~Modulation() {}
 	void parameterChanged(const juce::String& paramId, float value) override;
 
+	void prepare();
 	void tick(double srate, int nsamples, float secondsPerBeat);
 	void subTick(); // intrablock update
 	void tickConnections();
 	void tickMacros();
+	void finishBlock(int nsamples);
+	void resetSmooth(const juce::String& pname);
 	void connect(const juce::String& src, const juce::String& dst, int sliderId = 0);
 	void disconnect(const juce::String& src, const juce::String& dst);
 	void disconnectSelectedMod(const juce::String& dst);
 	void changeConnection(const juce::String& src, const juce::String& dst, const juce::String newsrc, const juce::String newdst);
 	bool isConnected(const juce::String& param);
 	bool isSrcConnected(const juce::String& src);
-	float getValue(const juce::String& param, bool rawValue = false, int blockOffset = 0, float srate = 0.f);
+	float getValue(const juce::String& param, bool rawValue = false, int blockOffset = 0, bool smooth = true);
 	float getNorm(const juce::String& param);
-	float getPolyValue(const juce::String& param, int voiceId, int blockOffset = 0);
+	float getPolyValue(const juce::String& param, int voiceId, int blockOffset = 0, bool smooth = true);
 	float getEnvelopeValue(int envid, int voiceId, int blockOffset = 0);
 	float getKeyTrackFor(const juce::String& param);
 	float getKeyTrackOffsetFor(const juce::String& param, int note);

@@ -17,8 +17,16 @@ Modulation::Modulation(TetraOPAudioProcessor& p)
 void Modulation::parameterChanged(const juce::String& paramId, float value)
 {
     auto& param = params[paramId];
-    param.value.store(value);
+    param.value = value;
     param.norm.store(param.range.convertTo0to1(value));
+}
+
+void Modulation::prepare()
+{
+    for (auto& [name, param] : params)
+    {
+        param.smoother.setup(PARAM_SMOOTHER_RESISTANCE, audioProcessor.osrate);
+    }
 }
 
 static float getRateBeats(int sync, LFO::SyncMode mode)
@@ -317,6 +325,31 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
     tickMacros();
 }
 
+void Modulation::finishBlock(int nsamples)
+{
+    auto dt = nsamples / audioProcessor.osrate;
+    for (auto& [name, param] : params)
+    {
+        if (param.smoothedNorm != param.norm)
+        {
+            param.smoothedNorm = param.smoother.process(param.norm.load(), dt);
+            param.smoothedValue = param.range.convertFrom0to1(param.smoothedNorm);
+        }
+    }
+}
+
+void Modulation::resetSmooth(const juce::String& pname)
+{
+    auto it = params.find(pname);
+    if (it != params.end())
+    {
+        auto& param = it->second;
+        param.smoothedNorm = param.norm.load();
+        param.smoothedValue = param.value;
+        param.smoother.reset(param.smoothedNorm);
+    }
+}
+
 /*
 * Public connect method, locks behind a mutex
 */
@@ -538,8 +571,12 @@ Modulation::Param& Modulation::getParam(const juce::String& pname)
 
         auto* param = audioProcessor.params.getParameter(pname);
         entry.norm.store(param->getValue());
-        entry.value.store(audioProcessor.params.getRawParameterValue(pname)->load());
+        entry.value = audioProcessor.params.getRawParameterValue(pname)->load();
         entry.range = param->getNormalisableRange();
+        entry.smoother.setup(PARAM_SMOOTHER_RESISTANCE, audioProcessor.osrate);
+        entry.smoother.reset(entry.norm.load());
+        entry.smoothedNorm = entry.norm.load();
+        entry.smoothedValue = entry.value;
 
         audioProcessor.params.addParameterListener(pname, this);
         return entry;
@@ -550,25 +587,25 @@ Modulation::Param& Modulation::getParam(const juce::String& pname)
     }
 }
 
-/**
- * Thread safe get modulated value
- */
-float Modulation::getValue(const juce::String& pname, bool rawValue, int blockOffset, float srate)
+float Modulation::getValue(const juce::String& pname, bool rawValue, int blockOffset, bool smooth)
 {
     if (rawValue)
     {
-        return getParam(pname).value.load();
+        return getParam(pname).value;
     }
     else
     {
+        auto& param = getParam(pname);
         auto it = destinations.find(pname);
         if (it != destinations.end())
         {
-            float offset = calculateOffset(it->second, lastUsedVoice, blockOffset, srate);
-            auto& param = getParam(pname);
-            return param.range.convertFrom0to1(std::clamp(param.norm.load() + offset, 0.f, 1.f));
+            float offset = calculateOffset(it->second, lastUsedVoice, blockOffset);
+            auto norm = smooth ? param.smoothedNorm : param.norm.load();
+            return param.range.convertFrom0to1(std::clamp(norm + offset, 0.f, 1.f));
         }
-        return getParam(pname).value.load();
+        return smooth
+            ? param.smoothedValue
+            : param.value;
     }
 }
 
@@ -583,17 +620,19 @@ float Modulation::getNorm(const juce::String& param)
 /**
  * Recalculate value for a specific voice
  */
-float Modulation::getPolyValue(const juce::String& pname, int voiceId, int blockOffset)
+float Modulation::getPolyValue(const juce::String& pname, int voiceId, int blockOffset, bool smooth)
 {
     auto it = destinations.find(pname);
     if (it != destinations.end()) 
     {
         float offset = calculateOffset(it->second, voiceId, blockOffset);
         auto& param = getParam(pname);
-        auto norm = param.norm.load();
+        auto norm = smooth ? param.smoothedNorm : param.norm.load();
         return param.range.convertFrom0to1(std::clamp(norm + offset, 0.f, 1.f));
     }
-    return getParam(pname).value.load();
+    return smooth
+        ? getParam(pname).smoothedValue
+        : getParam(pname).value;
 }
 
 float Modulation::getEnvelopeValue(int envid, int voiceId, int blockOffset)

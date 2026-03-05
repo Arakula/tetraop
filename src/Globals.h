@@ -17,6 +17,7 @@ namespace globals {
 	constexpr int MAX_UNISON = 16;
 	constexpr float MORPH_SECONDS = 0.005f;
 	constexpr float DB2LOG = 0.11512925464970228420089957273422f;
+	constexpr float PARAM_SMOOTHER_RESISTANCE = 0.05f;
 
 	// Theme vars
 	constexpr int PANEL_PAD = 2;

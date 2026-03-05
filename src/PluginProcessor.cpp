@@ -451,6 +451,7 @@ void TetraOPAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBloc
     iosrate = 1.f / osrate;
     synth->setCurrentPlaybackSampleRate(sampleRate);
     synth->prepare();
+    modulation->prepare();
 
     reloadWavetables();
 }
@@ -552,6 +553,7 @@ void TetraOPAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
         synth->renderNextBlock(buffer, midiMessages, pos, thisBlock);
         pos += thisBlock;
         todo -= thisBlock;
+        modulation->finishBlock(thisBlock);
     }
     synth->endBlock(numSamples);
 

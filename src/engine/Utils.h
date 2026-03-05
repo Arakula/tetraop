@@ -283,7 +283,7 @@ public:
     double r = 1.0f;
     double state = 0.0f;
     float output = 0.f;
-    float eps = 1e-6f;
+    float eps = 1e-5f;
 
     void setup(float resistance, float _srate)
     {
@@ -316,6 +316,7 @@ public:
     float output = 0.0f;
     float srate;
     float resistance = 0.f;
+    float eps = 1e-5f;
 
     void setup(float _resistance, float _srate)
     {
@@ -335,6 +336,9 @@ public:
             float alpha = 1.f - std::exp(-k * dt);
             state += alpha * (input - state);
         }
+
+        if (std::abs(state - input) < eps)
+            state = input;
 
         output = state;
         return output;
