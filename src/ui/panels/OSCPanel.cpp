@@ -10,7 +10,8 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 	pan = std::make_unique<Rotary>(e, prefix + "pan", "Pan", Rotary::Pan, true);
 	phase = std::make_unique<Rotary>(editor, prefix + "phase_start", "Phase", Rotary::float2);
 	rand = std::make_unique<Rotary>(editor, prefix + "phase_rand", "Rand", Rotary::Percent);
-	morph = std::make_unique<Rotary>(editor, prefix + "morph", "Frame", Rotary::float3);
+	auto rotaryFormat = oscId == 0 ? Rotary::OSCMorphA : oscId == 1 ? Rotary::OSCMorphB : oscId == 2 ? Rotary::OSCMorphC : Rotary::OSCMorphD;
+	morph = std::make_unique<Rotary>(editor, prefix + "morph", "Frame", rotaryFormat);
 	dist = std::make_unique<Rotary>(editor, prefix + "phase_dist", "Dist", Rotary::Percent);
 	detune = std::make_unique<Rotary>(editor, prefix + "unison_detune", "Det", Rotary::Percent);
 	blend = std::make_unique<Rotary>(editor, prefix + "unison_blend", "Blend", Rotary::Percent);
@@ -46,7 +47,8 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 	addAndMakeVisible(semis.get());
 	addAndMakeVisible(cents.get());
 
-	
+	waveDisplay = std::make_unique<WaveDisplay>(editor, oscId);
+	addAndMakeVisible(waveDisplay.get());
 }
 
 OSCPanel::~OSCPanel()
@@ -63,8 +65,6 @@ void OSCPanel::paint(Graphics& g)
 {
 	auto b = getLocalBounds().toFloat();
 	UIUtils::drawPanel(g, b, true);
-	auto viewport = Rectangle<int>(KNOB_WIDTH * 2, PANEL_HEADER_HEIGHT + 5, KNOB_WIDTH_SM * 3, KNOB_HEIGHT + 8)
-		.toFloat().translated(0.5f, 0.5f).reduced(2.f, 0.f);
 	UIUtils::drawBevel(g, viewport, 5.f, Colours::black);
 
 	g.setColour(COLOR_BACKGROUND());
@@ -98,6 +98,11 @@ void OSCPanel::resized()
 		.withBottomY(rand->getBottom()).translated(KNOB_WIDTH, 0));
 	blend->setBounds(detune->getBounds().translated(KNOB_WIDTH_SM, 0));
 	wide->setBounds(blend->getBounds().translated(KNOB_WIDTH_SM, 0));
+
+	viewport = Rectangle<int>(KNOB_WIDTH * 2, PANEL_HEADER_HEIGHT + 5, KNOB_WIDTH_SM * 3, KNOB_HEIGHT + 8)
+		.toFloat().translated(0.5f, 0.5f).reduced(2.f, 0.f);
+
+	waveDisplay->setBounds(viewport.withTrimmedBottom(20.f).reduced(2.f).toNearestInt());
 }
 
 void OSCPanel::toggleUIComponents()

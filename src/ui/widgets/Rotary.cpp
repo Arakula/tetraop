@@ -244,8 +244,18 @@ void Rotary::drawRotary(juce::Graphics& g, float slider_pos) {
     g.setGradientFill(grad1);
     g.fillEllipse(circle);
     g.setColour(COLOR_KNOB());
-    g.fillEllipse(circle.reduced(2));
-
+    auto innerc = circle.reduced(2);
+    g.fillEllipse(innerc);
+    juce::ColourGradient grad2(
+        Colours::black.withAlpha(0.12f),
+        innerc.getX(), innerc.getY(),
+        Colours::white.withAlpha(0.12f),
+        innerc.getX(), innerc.getBottom(),
+        false
+    );
+    grad2.addColour(0.27, Colours::black.withAlpha(0.12f));
+    g.setGradientFill(grad2);
+    g.fillEllipse(innerc);
 
     // draw outer arc
     if (drawArc) {
@@ -267,7 +277,7 @@ void Rotary::drawRotary(juce::Graphics& g, float slider_pos) {
 
     // draw handle
     juce::Path handle;
-    handle.addRoundedRectangle(-1.f, -radius+2.f, 2.f, isSmall ? 10.f : 12.f, 1.f);
+    handle.addRoundedRectangle(-1.f, -radius+2.f, 2.f, isSmall ? 8.f : 12.f, 1.f);
     g.setColour(COLOR_KNOB_HANDLE());
     g.fillPath (handle, juce::AffineTransform::rotation (angle).translated(bounds.getWidth() / 2.0f, bounds.getHeight() / 2.0f + yoffset));
 
@@ -487,6 +497,18 @@ void Rotary::drawLabel(juce::Graphics& g, float slider_val)
             if (slider_val == 6) text = "1/32";
             if (slider_val == 7) text = "1/64";
             if (slider_val == 8) text = "1/128";
+        }
+        else if (format == Format::OSCMorphA) {
+            text = String(std::round((editor.audioProcessor.wavetables[0].numTables - 1) * slider_val) + 1);
+        }
+        else if (format == Format::OSCMorphB) {
+            text = String(std::round((editor.audioProcessor.wavetables[1].numTables - 1) * slider_val) + 1);
+        }
+        else if (format == Format::OSCMorphC) {
+            text = String(std::round((editor.audioProcessor.wavetables[2].numTables - 1) * slider_val) + 1);
+        }
+        else if (format == Format::OSCMorphD) {
+            text = String(std::round((editor.audioProcessor.wavetables[3].numTables - 1) * slider_val) + 1);
         }
     }
 

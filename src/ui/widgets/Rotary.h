@@ -36,6 +36,10 @@ public:
         TremoloTempo,
         Pan,
         Integer,
+        OSCMorphA,
+        OSCMorphB,
+        OSCMorphC,
+        OSCMorphD,
     };
     float radius = KNOB_RADIUS;
     float yoffset = KNOB_YOFFSET;
