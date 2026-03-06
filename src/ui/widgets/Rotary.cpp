@@ -499,16 +499,24 @@ void Rotary::drawLabel(juce::Graphics& g, float slider_val)
             if (slider_val == 8) text = "1/128";
         }
         else if (format == Format::OSCMorphA) {
-            text = String(std::round((editor.audioProcessor.wavetables[0].numTables - 1) * slider_val) + 1);
+            auto ntables = editor.audioProcessor.wavetables[0].numTables;
+            auto idx = std::min(ntables - 1, int(float(ntables)* slider_val)) + 1;
+            text = String(idx);
         }
         else if (format == Format::OSCMorphB) {
-            text = String(std::round((editor.audioProcessor.wavetables[1].numTables - 1) * slider_val) + 1);
+            auto ntables = editor.audioProcessor.wavetables[1].numTables;
+            auto idx = std::min(ntables - 1, int(float(ntables) * slider_val)) + 1;
+            text = String(idx);
         }
         else if (format == Format::OSCMorphC) {
-            text = String(std::round((editor.audioProcessor.wavetables[2].numTables - 1) * slider_val) + 1);
+            auto ntables = editor.audioProcessor.wavetables[2].numTables;
+            auto idx = std::min(ntables - 1, int(float(ntables) * slider_val)) + 1;
+            text = String(idx);
         }
         else if (format == Format::OSCMorphD) {
-            text = String(std::round((editor.audioProcessor.wavetables[3].numTables - 1) * slider_val) + 1);
+            auto ntables = editor.audioProcessor.wavetables[3].numTables;
+            auto idx = std::min(ntables - 1, int(float(ntables) * slider_val)) + 1;
+            text = String(idx);
         }
     }
 

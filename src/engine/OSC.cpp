@@ -19,10 +19,9 @@ void OSC::trigger(int note, float srate)
 	auto phase_start = mod->getValue(prefix + "phase_start");
 	auto phase_rand = mod->getValue(prefix + "phase_rand");
 	unison_phase = Unison::generatePhases(phase_start, phase_rand);
-	morph = morph_targ = Utils::snapToGrid(
-		mod->getPolyValue(prefix + "morph", voiceId),
-		audioProcessor.wavetables[id].numTables - 1
-	) + 1e-4f; // 1e-4 allows floor(tablemorph) to snap correctly
+	auto ntables = audioProcessor.wavetables[id].numTables;
+	auto idx = std::min(ntables - 1, int(float(ntables) * mod->getPolyValue(prefix + "morph", voiceId)));
+	morph = morph_targ = idx / (float)ntables + 1e-4; // 1e-4 so that morph lerps to floor(morph) == tableIndex
 	isOn = mod->getValue(prefix + "on");
 	level = level_targ = mod->getPolyValue(prefix + "level", voiceId, 0) * isOn;
 }
@@ -43,10 +42,9 @@ void OSC::prepareBlock(int startSample, int numSamples)
 		gain_r = std::sin(MathConstants<float>::halfPi * pan);
 	}
 
-	morph_targ = Utils::snapToGrid(
-		audioProcessor.modulation->getPolyValue(prefix + "morph", voiceId, numSamples),
-		audioProcessor.wavetables[id].numTables - 1
-	) + 1e-4f; // 1e-4 allows floor(tablemorph) to snap correctly
+	auto ntables = audioProcessor.wavetables[id].numTables;
+	auto idx = std::min(ntables - 1, int(float(ntables) * mod->getPolyValue(prefix + "morph", voiceId)));
+	morph_targ = idx / (float)ntables + 1e-4; // 1e-4 so that morph lerps to floor(morph) == tableIndex
 
 	auto unison_v = (int)mod->getValue(prefix + "unison_voices", true);
 	auto unison_mod = (int)mod->getValue(prefix + "unison_mode", true);

@@ -1,14 +1,11 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include <functional>
-#include <juce_gui_basics/juce_gui_basics.h>
-#include "../ModulatedParam.h"
 #include "../../Globals.h"
+#include "WavetableDisplay.h"
 
 class TetraOPAudioProcessorEditor;
 using namespace globals;
-
 
 class WaveDisplay 
     : public juce::Component 
@@ -23,6 +20,7 @@ public:
     void paint(juce::Graphics& g) override;
     void drawWaveform(juce::Graphics& g);
     void toggleUIComponents();
+    void resized() override;
 
 private:
     bool isOn = false;
@@ -30,4 +28,5 @@ private:
     int oscId;
     TetraOPAudioProcessorEditor& editor;
     int mode = 0; // waveform, wavetable, oscilloscope
+    WavetableDisplay wtdisplay;
 };

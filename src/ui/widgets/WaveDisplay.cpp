@@ -9,6 +9,19 @@ WaveDisplay::WaveDisplay(TetraOPAudioProcessorEditor& e, int _oscId)
     editor.audioProcessor.params.addParameterListener(prefix + "on", this);
     editor.audioProcessor.params.addParameterListener(prefix + "morph", this);
     isOn = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "on")->load();
+
+    addAndMakeVisible(wtdisplay);
+    wtdisplay.setWavetables(&editor.audioProcessor.wavetables[oscId].tables);
+    wtdisplay.setColour(WavetableDisplay::ColourIds::activeWaveColourId, COLOR_ACTIVE());
+    wtdisplay.setColour(WavetableDisplay::ColourIds::waveColourId, COLOR_ACTIVE().darker(0.5f).withAlpha(0.5f));
+    wtdisplay.setColour(WavetableDisplay::ColourIds::lineColourId, Colours::transparentBlack);
+    wtdisplay.setColour(WavetableDisplay::ColourIds::phaseWaveColourId, Colours::red);
+    wtdisplay.setColour(WavetableDisplay::ColourIds::backgroundColourId, Colours::transparentBlack);
+
+    gin::WTOscillator::Params p;
+    auto morph = editor.audioProcessor.params.getRawParameterValue(prefix + "morph")->load();
+    p.position = morph;
+    wtdisplay.setParams(p);
 }
 
 WaveDisplay::~WaveDisplay()
@@ -24,8 +37,13 @@ void WaveDisplay::parameterChanged(const juce::String& parameterID, float newVal
 
     if (parameterID == prefix + "morph")
     {
-        mode = 1;
-        toggleUIComponents();
+        gin::WTOscillator::Params p;
+        auto morph = editor.audioProcessor.params.getRawParameterValue(prefix + "morph")->load();
+        p.position = morph;
+        wtdisplay.setParams(p);
+
+        //mode = 1;
+        //toggleUIComponents();
     }
 
     juce::MessageManager::callAsync([this] { repaint(); });
@@ -36,6 +54,11 @@ void WaveDisplay::paint(Graphics& g)
     if (!isOn) return;
 
     //drawWaveform(g);
+}
+
+void WaveDisplay::resized()
+{
+    wtdisplay.setBounds(getLocalBounds());
 }
 
 void WaveDisplay::toggleUIComponents()

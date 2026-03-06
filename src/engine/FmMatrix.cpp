@@ -96,7 +96,7 @@ static inline SIMDF renderUnison(const float* table1, const float* table2, const
 
 static inline std::pair<SIMDF, SIMDF> processUnison(
     OSC::SIMDOSC& osc, 
-    SIMDF phaseOffset, 
+    SIMDF phaseOffset,
     std::array<float*, 8>& tables,
     int size,
     SIMDF morph
@@ -159,16 +159,17 @@ void FmMatrix::processBlock(SIMDVox& data, int numSamples)
     }
 }
 
+// checks if global morph position is at a different index from tables.currIndex
 static inline bool hasCurrTableChanged(OSC::SIMDOSC& osc, FmMatrix::TablesData& tables)
 {
-    auto idx = (osc.morph * float(tables.numTables - 1)).trunc();
+    auto idx = (osc.morph * tables.numTables).trunc().min(tables.numTables - 1);
     auto msk = ~(idx == tables.currIndex);
     return !msk.testz();
 }
 
 static inline SIMDF getMorph(OSC::SIMDOSC& osc, FmMatrix::TablesData& tables)
 {
-    auto tablepos = osc.morph.min(1.f) * float(tables.numTables - 1);
+    auto tablepos = (osc.morph * tables.numTables).min(tables.numTables - 1);
     return tablepos - tablepos.trunc();
 }
 
@@ -278,7 +279,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
 
         if constexpr (AOn) 
         {
-            if (AisMorphing) 
+            if (AisMorphing)
             {
                 A.morph = (A.morph_targ - A.morph).fmadd(morphAlpha, A.morph);
                 a_morph = getMorph(A, a_tables);
@@ -352,7 +353,7 @@ FmMatrix::TablesData FmMatrix::getTables(SIMDVox& vox, int oscidx, bool isMorphi
     for (int i = 0; i < SIMD_SZ; ++i)
     {
         auto morph = vox.osc[oscidx].morph.get(i);
-        auto tableIndex = int(float(tables.numTables - 1) * morph);
+        auto tableIndex = std::min(tables.numTables - 1, int(float(tables.numTables) * morph));
         auto* t1 = tables.tables.getUnchecked(tableIndex);
         out.data[i] = t1->tableForNote(vox.voice.key[i]).data();
         currIndex[i] = (float)tableIndex;
