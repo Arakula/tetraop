@@ -57,7 +57,7 @@ public:
 
     // oscilloscope sampling
     std::array<float, SCOPE_BUFLEN> oscOut[4]{};
-    std::array<int, 4> lastScopeIdx{ -1 };
+    std::array<int, 4> lastScopeIdx{};
 
     bool AisOut = false;
     bool BisOut = false;
@@ -144,9 +144,36 @@ public:
     inline void sampleOscilloscope(OSC::SIMDOSC& osc, SIMDF& outL, SIMDF& outR, int oscIdx, int voice)
     {
         int idx = (int)(osc.phase.get(voice) * SCOPE_BUFLEN);
-        if (idx == lastScopeIdx[oscIdx]) return;
+        int lastIdx = lastScopeIdx[oscIdx];
+        if (idx == lastIdx) return;
+
         float val = ((outL + outR) * 0.5f).get(voice);
-        oscOut[oscIdx][idx] = val;
+        int start = lastIdx;
+        int end = idx;
+        if (end < start) end += SCOPE_BUFLEN; // handle wrap-around
+
+        int span = end - start;
+        if (span == 1)
+        {
+            oscOut[oscIdx][idx] = val;
+        }
+        else
+        {
+            float lastVal = oscOut[oscIdx][lastIdx];
+            float delta = (val - lastVal) / span;
+            float cur = lastVal;
+            int writeIdx = (start + 1) % SCOPE_BUFLEN;
+
+            for (int i = 0; i < span; ++i)
+            {
+                cur += delta;
+                oscOut[oscIdx][writeIdx] = cur;
+
+                writeIdx++;
+                if (writeIdx == SCOPE_BUFLEN)
+                    writeIdx = 0;
+            }
+        }
         lastScopeIdx[oscIdx] = idx;
     }
 

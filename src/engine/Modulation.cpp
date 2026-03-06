@@ -203,7 +203,7 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
     }
 
     auto lastVoice = (Voice*)audioProcessor.synth->getVoice(lastUsedVoice);
-    bool voiceActive = lastVoice->isActive() || lastVoice->pressed;
+    lastVoiceIsActive = lastVoice->isActive() || lastVoice->pressed;
 
     blockDelta = (float)(nsamples / srate);
     float dt = blockDelta;
@@ -228,7 +228,7 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
                 ? lastVoice->release_elapsed + dt
                 : lastVoice->attack_elapsed + dt;
         mod.release_y = env.lrelgain;
-        mod.active = voiceActive || (mod.value > 0.f &&
+        mod.active = lastVoiceIsActive || (mod.value > 0.f &&
             (lastVoice->release_elapsed || lastVoice->attack_elapsed));
     }
 
@@ -248,7 +248,7 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
         mod.value = value;
         mod.x = elapsed;
         mod.x_offset = lfo.voices[0].phase_offset;
-        mod.active = voiceActive;
+        mod.active = lastVoiceIsActive;
     }
 
     // tick randgens
@@ -265,61 +265,61 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
         mod.value = value;
         mod.x = elapsed;
         mod.x_offset = rnd.voices[0].phase_offset;
-        mod.active = voiceActive;
+        mod.active = lastVoiceIsActive;
     }
 
     // Tick other modulators
 
     // update velocity modulator
-    modulators["vel"].active = voiceActive;
+    modulators["vel"].active = lastVoiceIsActive;
     modulators["vel"].x = lastVoice->vel;
     modulators["vel"].value = lastVoice->vel;
 
     // update keytrack modulator
-    modulators["key"].active = voiceActive;
+    modulators["key"].active = lastVoiceIsActive;
     modulators["key"].x = lastVoice->key;
     modulators["key"].value = lastVoice->key;
 
     // update modwheel modulator
-    modulators["mod"].active = voiceActive;
+    modulators["mod"].active = lastVoiceIsActive;
     modulators["mod"].value = modwheelValue;
 
     // update pitchbend modulator
-    modulators["bend"].active = voiceActive;
+    modulators["bend"].active = lastVoiceIsActive;
     modulators["bend"].value = pitchbendValue;
 
     // expression pedal
-    modulators["exp"].active = voiceActive;
+    modulators["exp"].active = lastVoiceIsActive;
     modulators["exp"].value = expressPedalValue;
 
     // volume pedal
-    modulators["vol"].active = voiceActive;
+    modulators["vol"].active = lastVoiceIsActive;
     modulators["vol"].value = volumePedalValue;
 
     // sustain pedal
-    modulators["sus"].active = voiceActive;
+    modulators["sus"].active = lastVoiceIsActive;
     modulators["sus"].value = sustainPedalValue;
 
     // sustain pedal
-    modulators["soft"].active = voiceActive;
+    modulators["soft"].active = lastVoiceIsActive;
     modulators["soft"].value = softPedalValue;
 
     // update rand modulator
-    modulators["rand"].active = voiceActive;
+    modulators["rand"].active = lastVoiceIsActive;
     modulators["rand"].value = randFromVoiceTimestamp(lastVoice->pressed_ts);
 
     // update aftertouch mod
-    modulators["at"].active = voiceActive;
+    modulators["at"].active = lastVoiceIsActive;
     modulators["at"].value = aftertouch.voices[lastVoice->id];
 
     // update MPE mods
-    modulators["x"].active = (voiceActive) && lastVoice->mpe_channel > 1;
+    modulators["x"].active = (lastVoiceIsActive) && lastVoice->mpe_channel > 1;
     modulators["x"].value = lastVoice->mpe_channel > 1 ? mpe[lastVoice->mpe_channel].x : 0.f;
-    modulators["y"].active = (voiceActive) && lastVoice->mpe_channel > 1;
+    modulators["y"].active = (lastVoiceIsActive) && lastVoice->mpe_channel > 1;
     modulators["y"].value = lastVoice->mpe_channel > 1 ? mpe[lastVoice->mpe_channel].y : 0.f;
-    modulators["z"].active = (voiceActive) && lastVoice->mpe_channel > 1;
+    modulators["z"].active = (lastVoiceIsActive) && lastVoice->mpe_channel > 1;
     modulators["z"].value = lastVoice->mpe_channel > 1 ? mpe[lastVoice->mpe_channel].z : 0.f;
-    modulators["lift"].active = (voiceActive) && lastVoice->mpe_channel > 1;
+    modulators["lift"].active = (lastVoiceIsActive) && lastVoice->mpe_channel > 1;
     modulators["lift"].value = (lastVoice->mpe_channel > 1 && lastVoice->released)
         ? mpe[lastVoice->mpe_channel].lift : 0.f;
 

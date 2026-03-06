@@ -18,7 +18,7 @@ namespace globals {
 	constexpr float MORPH_SECONDS = 0.005f;
 	constexpr float DB2LOG = 0.11512925464970228420089957273422f;
 	constexpr float PARAM_SMOOTHER_RESISTANCE = 0.05f;
-	constexpr int SCOPE_BUFLEN = 1024;
+	constexpr int SCOPE_BUFLEN = 512;
 
 	// Theme vars
 	constexpr int PANEL_PAD = 2;

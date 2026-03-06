@@ -31,6 +31,7 @@ public:
     void resized() override;
     void setMode(Mode _mode);
 
+    bool isMorphing = false; // set from OSCPanel
 private:
     Mode mode = Mode::Oscilloscope;
     bool isOn = false;

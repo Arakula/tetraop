@@ -110,12 +110,12 @@ void OSCPanel::resized()
 
 void OSCPanel::onMouseDownMorph() const
 {
-	waveDisplay->setMode(WaveDisplay::Wavetable);
+	waveDisplay->isMorphing = true;
 }
 
 void OSCPanel::onMouseUpMorph() const
 {
-	waveDisplay->setMode(WaveDisplay::Oscilloscope);
+	waveDisplay->isMorphing = false;
 }
 
 void OSCPanel::toggleUIComponents()

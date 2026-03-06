@@ -54,16 +54,34 @@ void WaveDisplay::parameterChanged(const juce::String& parameterID, float newVal
 
 void WaveDisplay::timerCallback()
 {
-    if (isOn && mode == Oscilloscope)
+    if (isOn && editor.audioProcessor.modulation->lastVoiceIsActive)
     {
+        mode = Oscilloscope;
         repaint();
+    }
+    else if (isMorphing)
+    {
+        if (mode != Wavetable)
+        {
+            mode = Wavetable;
+            toggleUIComponents();
+        }
+    }
+    else
+    {
+        if (mode != Waveform)
+        {
+            mode = Waveform;
+            toggleUIComponents();
+        }
     }
 }
 
 void WaveDisplay::paint(Graphics& g)
 {
-    if (!isOn || mode == 1) return;
-    if (mode == 0) {
+    if (!isOn || mode == Wavetable) return;
+
+    if (mode == Waveform) {
         auto morph = editor.audioProcessor.params.getRawParameterValue(prefix + "morph")->load();
         auto& tables = editor.audioProcessor.wavetables[oscId];
         int tablesz = tables.tableSize;
@@ -103,52 +121,25 @@ void WaveDisplay::drawWaveform(Graphics& g, float* waveform, int size)
     float scaleY = 0.5f * b.getHeight();
 
     juce::Path p;
-    juce::Array<float> minVals, maxVals;
-    minVals.resize(width);
-    maxVals.resize(width);
 
-    // compute min/max per pixel column
-    for (int x = 0; x < width; ++x)
+    // start at first sample
+    if (size > 0)
+        p.startNewSubPath(b.getX(), centerY - waveform[0] * scaleY);
+
+    // map each sample to pixel x
+    for (int x = 1; x < width; ++x)
     {
-        int start = (x * size) / width;
-        int end = ((x + 1) * size) / width;
+        // pick corresponding sample in waveform
+        int index = (x * size) / width;
+        if (index >= size)
+            index = size - 1;
 
-        float minVal = 1.0f;
-        float maxVal = -1.0f;
-
-        for (int i = start; i < end; ++i)
-        {
-            float s = waveform[i];
-            minVal = juce::jmin(minVal, s);
-            maxVal = juce::jmax(maxVal, s);
-        }
-
-        minVals.set(x, minVal);
-        maxVals.set(x, maxVal);
-    }
-
-    // build top edge (max)
-    for (int x = 0; x < width; ++x)
-    {
         float px = b.getX() + (float)x;
-        float py = centerY - maxVals[x] * scaleY;
+        float py = centerY - waveform[index] * scaleY;
 
-        if (x == 0)
-            p.startNewSubPath(px, py);
-        else
-            p.lineTo(px, py);
-    }
-
-    // build bottom edge (min) in reverse
-    for (int x = width - 1; x >= 0; --x)
-    {
-        float px = b.getX() + (float)x;
-        float py = centerY - minVals[x] * scaleY;
         p.lineTo(px, py);
     }
 
-    p.closeSubPath();
-
     g.setColour(COLOR_ACTIVE());
-    g.strokePath(p, juce::PathStrokeType(1.0f));
+    g.strokePath(p, juce::PathStrokeType(1.5f));
 }

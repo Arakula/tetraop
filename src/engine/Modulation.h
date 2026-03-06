@@ -116,6 +116,7 @@ public:
 	Aftertouch aftertouch;
 	std::atomic<bool> UIDirty { false }; // Flag to notify UI when it should redraw
 	int lastUsedVoice = 0;
+	bool lastVoiceIsActive = false;
 	float blockDelta = 0.f; // last block elapsed time in seconds
 	float modwheelValue = 0.f;
 	float pitchbendValue = 0.5f;
