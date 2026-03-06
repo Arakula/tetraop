@@ -20,6 +20,9 @@ public:
     void resized() override;
     void toggleUIComponents();
 
+	void onMouseEnterMorph() const;
+	void onMouseExitMorph() const;
+
 	std::unique_ptr<Rotary> level;
 	std::unique_ptr<Rotary> pan;
 	std::unique_ptr<Rotary> phase;

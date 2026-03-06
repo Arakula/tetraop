@@ -86,6 +86,10 @@ void Voice::noteStopped (bool allowTailOff)
     released = true;
     pressed = false;
 
+    auto lastVoice = (Voice*)audioProcessor.synth->getNewestVoice();
+    if (lastVoice)
+        audioProcessor.modulation->lastUsedVoice = lastVoice->id;
+
     if (! allowTailOff)
     {
         clearCurrentNote();

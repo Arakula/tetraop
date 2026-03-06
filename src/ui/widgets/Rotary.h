@@ -78,6 +78,8 @@ public:
     Format format;
     std::function<void()> onMouseDown;
     std::function<void()> onMouseUp;
+    std::function<void()> onMouseEnter;
+    std::function<void()> onMouseExit;
 
 protected:
     TetraOPAudioProcessorEditor& editor;

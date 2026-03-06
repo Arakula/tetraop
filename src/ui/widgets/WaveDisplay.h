@@ -12,6 +12,12 @@ class WaveDisplay
     , private juce::AudioProcessorValueTreeState::Listener
 {
 public:
+    enum Mode
+    {
+        Waveform,
+        Wavetable,
+        Oscilloscope
+    };
 
     WaveDisplay(TetraOPAudioProcessorEditor& e, int oscId);
     ~WaveDisplay() override;
@@ -22,11 +28,17 @@ public:
     void toggleUIComponents();
     void resized() override;
 
+    void setMode(Mode _mode)
+    {
+        mode = _mode;
+        toggleUIComponents();
+    }
+
 private:
+    Mode mode = Mode::Waveform;
     bool isOn = false;
     String prefix;
     int oscId;
     TetraOPAudioProcessorEditor& editor;
-    int mode = 0; // waveform, wavetable, oscilloscope
     WavetableDisplay wtdisplay;
 };

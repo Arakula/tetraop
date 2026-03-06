@@ -22,6 +22,11 @@ public:
     void renderNextSubBlock(AudioBuffer<float>& outputAudio, int startSample, int numSamples) override;
     void handleMidiEvent (const juce::MidiMessage& m) override;
 
+    gin::AudioFifo oscAOutput;
+    gin::AudioFifo oscBOutput;
+    gin::AudioFifo oscCOutput;
+    gin::AudioFifo oscDOutput;
+
 private:
     Voice::VoiceVec voiceVec{};
     OSC::OSCVec oscVec[MAX_OSCILLATORS]{};

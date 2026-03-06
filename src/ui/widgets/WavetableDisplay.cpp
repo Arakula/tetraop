@@ -70,12 +70,12 @@ void WavetableDisplay::paint (juce::Graphics& g)
     {
         g.setColour (findColour (waveColourId, true).withMultipliedAlpha (isEnabled() ? 1.0f : 0.5f));
         for (auto& p : paths)
-            g.strokePath (p, juce::PathStrokeType (.75f));
+            g.strokePath (p, juce::PathStrokeType (1.f));
 
         if (isEnabled())
         {
             g.setColour (findColour (activeWaveColourId, true).withMultipliedAlpha (isEnabled() ? 1.0f : 0.5f));
-            g.strokePath (createWavetablePath (params.position), juce::PathStrokeType (.75f));
+            g.strokePath (createWavetablePath (params.position), juce::PathStrokeType (1.f));
         }
     }
 }

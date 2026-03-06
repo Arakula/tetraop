@@ -19,6 +19,9 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 	semis = std::make_unique<Rotary>(editor, prefix + "pitch_semis", "Semis", Rotary::PitchSemis, true);
 	cents = std::make_unique<Rotary>(editor, prefix + "pitch_cents", "Fine", Rotary::Integer, true);
 
+	morph->onMouseDown = [this] { onMouseDownMorph(); };
+	morph->onMouseUp = [this] { onMouseUpMorph(); };
+
 	detune->setSmall();
 	blend->setSmall();
 	wide->setSmall();
@@ -103,6 +106,16 @@ void OSCPanel::resized()
 		.toFloat().translated(0.5f, 0.5f).reduced(2.f, 0.f);
 
 	waveDisplay->setBounds(viewport.withTrimmedBottom(20.f).reduced(2.f).toNearestInt());
+}
+
+void OSCPanel::onMouseDownMorph() const
+{
+	waveDisplay->setMode(WaveDisplay::Wavetable);
+}
+
+void OSCPanel::onMouseUpMorph() const
+{
+	waveDisplay->setMode(WaveDisplay::Waveform);
 }
 
 void OSCPanel::toggleUIComponents()

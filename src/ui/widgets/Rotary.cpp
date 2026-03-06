@@ -207,14 +207,14 @@ void Rotary::mouseDrag(const juce::MouseEvent& e) {
 void Rotary::mouseEnter(const juce::MouseEvent& e)
 {
     (void)e;
-    //mouse_hover = true;
-    //repaint();
+    if (onMouseEnter)
+        onMouseEnter();
 }
 void Rotary::mouseExit(const juce::MouseEvent& e)
 {
     (void)e;
-    //mouse_hover = false;
-    //repaint();
+    if (onMouseExit)
+        onMouseExit();
 }
 
 void Rotary::drawRotary(juce::Graphics& g, float slider_pos) {

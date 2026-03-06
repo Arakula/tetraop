@@ -22,6 +22,10 @@ WaveDisplay::WaveDisplay(TetraOPAudioProcessorEditor& e, int _oscId)
     auto morph = editor.audioProcessor.params.getRawParameterValue(prefix + "morph")->load();
     p.position = morph;
     wtdisplay.setParams(p);
+    wtdisplay.setStyle(WavetableDisplay::b);
+    wtdisplay.setInterceptsMouseClicks(false, false);
+   
+    toggleUIComponents();
 }
 
 WaveDisplay::~WaveDisplay()
@@ -41,19 +45,15 @@ void WaveDisplay::parameterChanged(const juce::String& parameterID, float newVal
         auto morph = editor.audioProcessor.params.getRawParameterValue(prefix + "morph")->load();
         p.position = morph;
         wtdisplay.setParams(p);
-
-        //mode = 1;
-        //toggleUIComponents();
     }
 
-    juce::MessageManager::callAsync([this] { repaint(); });
+    juce::MessageManager::callAsync([this] { toggleUIComponents(); });
 }
 
 void WaveDisplay::paint(Graphics& g)
 {
-    if (!isOn) return;
-
-    //drawWaveform(g);
+    if (!isOn || mode != 0) return;
+    drawWaveform(g);
 }
 
 void WaveDisplay::resized()
@@ -63,7 +63,8 @@ void WaveDisplay::resized()
 
 void WaveDisplay::toggleUIComponents()
 {
-
+    wtdisplay.setVisible(mode == 1 && isOn);
+    repaint();
 }
 
 void WaveDisplay::drawWaveform(Graphics& g)
