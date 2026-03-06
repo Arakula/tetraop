@@ -67,6 +67,12 @@ void WaveDisplay::toggleUIComponents()
     repaint();
 }
 
+void WaveDisplay::setMode(Mode _mode)
+{
+    mode = _mode;
+    toggleUIComponents();
+}
+
 void WaveDisplay::drawWaveform(Graphics& g)
 {
     auto morph = editor.audioProcessor.params.getRawParameterValue(prefix + "morph")->load();

@@ -5,11 +5,12 @@ Synth::Synth(TetraOPAudioProcessor& p) : audioProcessor(p)
 {
     setVoiceStealingEnabled (true);
 
-	for (int i = 0; i < MAX_POLYPHONY; i++)
+	for (int i = 0; i < MAX_POLYPHONY; ++i)
     {
         auto voice = new Voice (audioProcessor, i);
         addVoice (voice);
     }
+
     fm = std::make_unique<FmMatrix>(audioProcessor);
 }
 
@@ -64,16 +65,9 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
         for (int o = 0; o < MAX_OSCILLATORS; ++o)
             std::memset(&oscVec[o], 0, sizeof(oscVec[o]));
 
-        int activeVoice = -1; // used to retrieve oscillator outputs for visualization
-
         // fetch data into arrays
         for (int lane = 0; lane < batchSize; ++lane)
         {
-            if (activeVoices[i + lane]->id == audioProcessor.modulation->lastUsedVoice)
-            {
-                activeVoice = lane;
-            }
-
             activeVoices[i + lane]->stateToVec(voiceVec, lane);
             for (int o = 0; o < MAX_OSCILLATORS; ++o)
             {

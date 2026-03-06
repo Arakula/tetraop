@@ -27,12 +27,7 @@ public:
     void drawWaveform(juce::Graphics& g);
     void toggleUIComponents();
     void resized() override;
-
-    void setMode(Mode _mode)
-    {
-        mode = _mode;
-        toggleUIComponents();
-    }
+    void setMode(Mode _mode);
 
 private:
     Mode mode = Mode::Waveform;

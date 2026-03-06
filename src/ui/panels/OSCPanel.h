@@ -19,9 +19,8 @@ public:
     void paint(Graphics& g) override;
     void resized() override;
     void toggleUIComponents();
-
-	void onMouseEnterMorph() const;
-	void onMouseExitMorph() const;
+	void onMouseDownMorph() const;
+	void onMouseUpMorph() const;
 
 	std::unique_ptr<Rotary> level;
 	std::unique_ptr<Rotary> pan;
