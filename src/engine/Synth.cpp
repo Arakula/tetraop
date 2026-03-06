@@ -65,9 +65,16 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
         for (int o = 0; o < MAX_OSCILLATORS; ++o)
             std::memset(&oscVec[o], 0, sizeof(oscVec[o]));
 
+        int activeVoice = -1; // used to retrieve oscillator outputs for visualization
+
         // fetch data into arrays
         for (int lane = 0; lane < batchSize; ++lane)
         {
+            if (activeVoices[i + lane]->id == audioProcessor.modulation->lastUsedVoice)
+            {
+                activeVoice = lane;
+            }
+
             activeVoices[i + lane]->stateToVec(voiceVec, lane);
             for (int o = 0; o < MAX_OSCILLATORS; ++o)
             {
@@ -82,7 +89,7 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
             vox.osc[v] = OSC::vecToSIMD(oscVec[v]);
         }
 
-        fm->processBlock(vox, numSamples);
+        fm->processBlock(vox, numSamples, activeVoice);
 
         for (int s = 0; s < numSamples; ++s)
         {

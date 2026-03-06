@@ -115,7 +115,7 @@ void OSCPanel::onMouseDownMorph() const
 
 void OSCPanel::onMouseUpMorph() const
 {
-	waveDisplay->setMode(WaveDisplay::Waveform);
+	waveDisplay->setMode(WaveDisplay::Oscilloscope);
 }
 
 void OSCPanel::toggleUIComponents()

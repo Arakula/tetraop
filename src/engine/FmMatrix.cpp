@@ -129,7 +129,7 @@ static inline std::pair<SIMDF, SIMDF> processUnison(
 }
 
 // SIMD'ed voices rendering
-void FmMatrix::processBlock(SIMDVox& data, int numSamples)
+void FmMatrix::processBlock(SIMDVox& data, int numSamples, int activeVoice)
 {
     bool aon = data.osc[0].level.sum() > 1e-5 || data.osc[0].level_step.sum() > 1e-5;
     bool bon = data.osc[1].level.sum() > 1e-5 || data.osc[1].level_step.sum() > 1e-5;
@@ -140,22 +140,22 @@ void FmMatrix::processBlock(SIMDVox& data, int numSamples)
 
     switch (mask)
     {
-    case 0b0000: _process<false, false, false, false>(data, numSamples); break;
-    case 0b0001: _process<false, false, false, true>(data, numSamples); break;
-    case 0b0010: _process<false, false, true, false>(data, numSamples); break;
-    case 0b0011: _process<false, false, true, true>(data, numSamples); break;
-    case 0b0100: _process<false, true, false, false>(data, numSamples); break;
-    case 0b0101: _process<false, true, false, true>(data, numSamples); break;
-    case 0b0110: _process<false, true, true, false>(data, numSamples); break;
-    case 0b0111: _process<false, true, true, true>(data, numSamples); break;
-    case 0b1000: _process<true, false, false, false>(data, numSamples); break;
-    case 0b1001: _process<true, false, false, true>(data, numSamples); break;
-    case 0b1010: _process<true, false, true, false>(data, numSamples); break;
-    case 0b1011: _process<true, false, true, true>(data, numSamples); break;
-    case 0b1100: _process<true, true, false, false>(data, numSamples); break;
-    case 0b1101: _process<true, true, false, true>(data, numSamples); break;
-    case 0b1110: _process<true, true, true, false>(data, numSamples); break;
-    case 0b1111: _process<true, true, true, true>(data, numSamples); break;
+    case 0b0000: _process<false, false, false, false>(data, numSamples, activeVoice); break;
+    case 0b0001: _process<false, false, false, true>(data, numSamples, activeVoice); break;
+    case 0b0010: _process<false, false, true, false>(data, numSamples, activeVoice); break;
+    case 0b0011: _process<false, false, true, true>(data, numSamples, activeVoice); break;
+    case 0b0100: _process<false, true, false, false>(data, numSamples, activeVoice); break;
+    case 0b0101: _process<false, true, false, true>(data, numSamples, activeVoice); break;
+    case 0b0110: _process<false, true, true, false>(data, numSamples, activeVoice); break;
+    case 0b0111: _process<false, true, true, true>(data, numSamples, activeVoice); break;
+    case 0b1000: _process<true, false, false, false>(data, numSamples, activeVoice); break;
+    case 0b1001: _process<true, false, false, true>(data, numSamples, activeVoice); break;
+    case 0b1010: _process<true, false, true, false>(data, numSamples, activeVoice); break;
+    case 0b1011: _process<true, false, true, true>(data, numSamples, activeVoice); break;
+    case 0b1100: _process<true, true, false, false>(data, numSamples, activeVoice); break;
+    case 0b1101: _process<true, true, false, true>(data, numSamples, activeVoice); break;
+    case 0b1110: _process<true, true, true, false>(data, numSamples, activeVoice); break;
+    case 0b1111: _process<true, true, true, true>(data, numSamples, activeVoice); break;
     }
 }
 
@@ -174,7 +174,7 @@ static inline SIMDF getMorph(OSC::SIMDOSC& osc, FmMatrix::TablesData& tables)
 }
 
 template<bool AOn, bool BOn, bool COn, bool DOn>
-void FmMatrix::_process(SIMDVox& vox, int numSamples)
+void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
 {
     auto& A = vox.osc[0];
     auto& B = vox.osc[1];
@@ -237,10 +237,10 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
         if constexpr (DOn)
             D.out = renderWave(d_tables.data, d_tables.size, D.phase + offsetD, d_morph) * D.level;
 
-        if constexpr (AOn) AoutL = AoutR = A.out * AisOut;
-        if constexpr (BOn) BoutL = BoutR = B.out * BisOut;
-        if constexpr (COn) CoutL = CoutR = C.out * CisOut;
-        if constexpr (DOn) DoutL = DoutR = D.out * DisOut;
+        if constexpr (AOn) AoutL = AoutR = A.out;
+        if constexpr (BOn) BoutL = BoutR = B.out;
+        if constexpr (COn) CoutL = CoutR = C.out;
+        if constexpr (DOn) DoutL = DoutR = D.out;
 
         // render unison
         if constexpr (AOn)
@@ -333,7 +333,22 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples)
             Utils::wrapPhase(D.phase); 
         }
 
-        // render output
+        // sample outputs for UI oscilloscopes
+        if (activeVoice > -1)
+        {
+            if constexpr (AOn) sampleOscilloscope(A, AoutL, AoutR, 0, activeVoice);
+            if constexpr (BOn) sampleOscilloscope(B, BoutL, BoutR, 1, activeVoice);
+            if constexpr (COn) sampleOscilloscope(C, CoutL, CoutR, 2, activeVoice);
+            if constexpr (DOn) sampleOscilloscope(D, DoutL, DoutR, 3, activeVoice);
+        }
+
+        // scale outputs by FM matrix output coeffs
+        if constexpr (AOn) { AoutL *= AisOut; AoutR *= AisOut; }
+        if constexpr (BOn) { BoutL *= BisOut; BoutR *= BisOut; }
+        if constexpr (COn) { CoutL *= CisOut; CoutR *= CisOut; }
+        if constexpr (DOn) { DoutL *= DisOut; DoutR *= DisOut; }
+
+        // render stereo output
         outL[i] = AoutL.fmadd(A.gain_l, BoutL.fmadd(B.gain_l, CoutL.fmadd(C.gain_l, DoutL * D.gain_l)));
         outR[i] = AoutR.fmadd(A.gain_r, BoutR.fmadd(B.gain_r, CoutR.fmadd(C.gain_r, DoutR * D.gain_r)));
     }

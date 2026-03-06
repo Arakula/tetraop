@@ -24,6 +24,8 @@ WaveDisplay::WaveDisplay(TetraOPAudioProcessorEditor& e, int _oscId)
     wtdisplay.setParams(p);
     wtdisplay.setStyle(WavetableDisplay::b);
     wtdisplay.setInterceptsMouseClicks(false, false);
+
+    startTimerHz(60);
    
     toggleUIComponents();
 }
@@ -50,10 +52,29 @@ void WaveDisplay::parameterChanged(const juce::String& parameterID, float newVal
     juce::MessageManager::callAsync([this] { toggleUIComponents(); });
 }
 
+void WaveDisplay::timerCallback()
+{
+    if (isOn && mode == Oscilloscope)
+    {
+        repaint();
+    }
+}
+
 void WaveDisplay::paint(Graphics& g)
 {
-    if (!isOn || mode != 0) return;
-    drawWaveform(g);
+    if (!isOn || mode == 1) return;
+    if (mode == 0) {
+        auto morph = editor.audioProcessor.params.getRawParameterValue(prefix + "morph")->load();
+        auto& tables = editor.audioProcessor.wavetables[oscId];
+        int tablesz = tables.tableSize;
+        auto& table = tables.tables.getTable((int)std::round(((tables.numTables - 1) * morph)))->tableForNote(0.5f);
+        drawWaveform(g, table.data(), tablesz);
+    }
+    else
+    {
+        auto& waveform = editor.audioProcessor.synth->fm->oscOut[oscId];
+        drawWaveform(g, waveform.data(), SCOPE_BUFLEN);
+    }
 }
 
 void WaveDisplay::resized()
@@ -73,13 +94,8 @@ void WaveDisplay::setMode(Mode _mode)
     toggleUIComponents();
 }
 
-void WaveDisplay::drawWaveform(Graphics& g)
+void WaveDisplay::drawWaveform(Graphics& g, float* waveform, int size)
 {
-    auto morph = editor.audioProcessor.params.getRawParameterValue(prefix + "morph")->load();
-    auto& tables = editor.audioProcessor.wavetables[oscId];
-    int tablesz = tables.tableSize;
-    auto& table = tables.tables.getTable((int)std::round(((tables.numTables - 1) * morph)))->tableForNote(0.5f);
-
     auto b = getLocalBounds().toFloat().reduced(4.f, 8.f);
 
     int width = (int)b.getWidth();
@@ -94,15 +110,15 @@ void WaveDisplay::drawWaveform(Graphics& g)
     // compute min/max per pixel column
     for (int x = 0; x < width; ++x)
     {
-        int start = (x * tablesz) / width;
-        int end = ((x + 1) * tablesz) / width;
+        int start = (x * size) / width;
+        int end = ((x + 1) * size) / width;
 
         float minVal = 1.0f;
         float maxVal = -1.0f;
 
         for (int i = start; i < end; ++i)
         {
-            float s = table[i];
+            float s = waveform[i];
             minVal = juce::jmin(minVal, s);
             maxVal = juce::jmax(maxVal, s);
         }

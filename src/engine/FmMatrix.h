@@ -55,6 +55,10 @@ public:
     std::array<SIMDF, MAX_BLOCKSIZE> outL;
     std::array<SIMDF, MAX_BLOCKSIZE> outR;
 
+    // oscilloscope sampling
+    std::array<float, SCOPE_BUFLEN> oscOut[4]{};
+    std::array<int, 4> lastScopeIdx{ -1 };
+
     bool AisOut = false;
     bool BisOut = false;
     bool CisOut = false;
@@ -66,7 +70,7 @@ public:
 
     void setLayout(Layout l);
     void prepare(float _srate);
-    void processBlock(SIMDVox& data, int numSamples);
+    void processBlock(SIMDVox& data, int numSamples, int activeVoiceLane);
 
     inline static SIMDF renderSine(SIMDF phase)
     {
@@ -137,11 +141,20 @@ public:
         return c1.fmadd(t3, c2.fmadd(t2, c3.fmadd(t, y1)));
     }
 
+    inline void sampleOscilloscope(OSC::SIMDOSC& osc, SIMDF& outL, SIMDF& outR, int oscIdx, int voice)
+    {
+        int idx = (int)(osc.phase.get(voice) * SCOPE_BUFLEN);
+        if (idx == lastScopeIdx[oscIdx]) return;
+        float val = ((outL + outR) * 0.5f).get(voice);
+        oscOut[oscIdx][idx] = val;
+        lastScopeIdx[oscIdx] = idx;
+    }
+
 private:
     TablesData getTables(SIMDVox& vox, int oscidx, bool isMorphing);
 
     template<bool AOn, bool BOn, bool COn, bool DOn>
-    void _process(SIMDVox& data, int numSamples);
+    void _process(SIMDVox& data, int numSamples, const int activeVoiceLane);
     float morphAlpha = 0.f; // exponential param smoother
 
 	TetraOPAudioProcessor& audioProcessor;

@@ -10,6 +10,7 @@ using namespace globals;
 class WaveDisplay 
     : public juce::Component 
     , private juce::AudioProcessorValueTreeState::Listener
+    , private juce::Timer
 {
 public:
     enum Mode
@@ -22,15 +23,16 @@ public:
     WaveDisplay(TetraOPAudioProcessorEditor& e, int oscId);
     ~WaveDisplay() override;
     void parameterChanged (const juce::String& parameterID, float newValue) override;
+    void timerCallback() override;
 
     void paint(juce::Graphics& g) override;
-    void drawWaveform(juce::Graphics& g);
+    void drawWaveform(juce::Graphics& g, float* waveform, int size);
     void toggleUIComponents();
     void resized() override;
     void setMode(Mode _mode);
 
 private:
-    Mode mode = Mode::Waveform;
+    Mode mode = Mode::Oscilloscope;
     bool isOn = false;
     String prefix;
     int oscId;
