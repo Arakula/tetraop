@@ -22,15 +22,12 @@ public:
         kSub
     };
 
-    static Arr16f generatePhases(float phaseStart, float phaseRand)
+    static Arr16f generatePhases(float phaseRand)
     {
         alignas(sizeof(SIMDF)) Arr16f out{};
 
         for (int i = 0; i < MAX_UNISON; ++i)
-        {
-            out[i] = (rand() / (float)RAND_MAX) * phaseRand + phaseStart;
-            if (out[i] > 1.f) out[i] -= 1.f;
-        }
+            out[i] = (rand() / (float)RAND_MAX) * phaseRand;
 
         return out;
     }
@@ -102,11 +99,12 @@ public:
         int centerIndex = nvoices / 2;
         int n_center = oddVoices ? 1 : 2;
         int n_side = nvoices - n_center;
+        int side_pairs = n_side / 2;
 
         float center_amp = 1.0f;
         float side_amp = blend;
 
-        float sum_sq = n_center * center_amp * center_amp + n_side * side_amp * side_amp;
+        float sum_sq = n_center * center_amp * center_amp + side_pairs * side_amp * side_amp;
         float adjustment = 1.0f / std::sqrt(sum_sq);
 
         if (!normalizeRMS)

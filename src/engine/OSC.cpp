@@ -12,13 +12,13 @@ OSC::OSC(int _id, int _voiceId, TetraOPAudioProcessor& p)
 void OSC::trigger(int note, float srate)
 {
 	auto& mod = audioProcessor.modulation;
-	phase = 0.f;
 	freq = 440.0f * std::pow(2.0f, (note - 69) / 12.0f);
 	phase_inc = freq / srate;
 	out = 0.f;
-	auto phase_start = mod->getValue(prefix + "phase_start");
-	auto phase_rand = mod->getValue(prefix + "phase_rand");
-	unison_phase = Unison::generatePhases(phase_start, phase_rand);
+	auto phase_rand = mod->getPolyValue(prefix + "phase_rand", voiceId, 0);
+	phase_offset = mod->getPolyValue(prefix + "phase_offset", voiceId, 0);
+	phase = (rand() / (float)RAND_MAX) * phase_rand;
+	unison_phase = Unison::generatePhases(phase_rand);
 	auto ntables = audioProcessor.wavetables[id].numTables;
 	auto idx = std::min(ntables - 1, int(float(ntables) * mod->getPolyValue(prefix + "morph", voiceId)));
 	morph = morph_targ = idx / (float)ntables + 1e-4; // 1e-4 so that morph lerps to floor(morph) == tableIndex
@@ -29,12 +29,14 @@ void OSC::trigger(int note, float srate)
 void OSC::prepareBlock(int startSample, int numSamples)
 {
 	(void)startSample;
+	int blkoffset = numSamples; // TODO - should take into account subblock offset?
 	auto& mod = audioProcessor.modulation;
 	isOn = mod->getValue(prefix + "on");
-	level_targ = mod->getPolyValue(prefix + "level", voiceId, numSamples) * isOn;
+	level_targ = mod->getPolyValue(prefix + "level", voiceId, blkoffset) * isOn;
 	if (level < 1e-4 && level_targ < 1e-4) return;
 
-	auto pan_targ = mod->getPolyValue(prefix + "pan", voiceId, numSamples);
+	phase_offset = mod->getPolyValue(prefix + "phase_offset", voiceId, blkoffset);
+	auto pan_targ = mod->getPolyValue(prefix + "pan", voiceId, blkoffset);
 	if (pan != pan_targ)
 	{
 		pan = pan_targ;
@@ -43,16 +45,16 @@ void OSC::prepareBlock(int startSample, int numSamples)
 	}
 
 	auto ntables = audioProcessor.wavetables[id].numTables;
-	auto idx = std::min(ntables - 1, int(float(ntables) * mod->getPolyValue(prefix + "morph", voiceId)));
+	auto idx = std::min(ntables - 1, int(float(ntables) * mod->getPolyValue(prefix + "morph", voiceId, blkoffset)));
 	morph_targ = idx / (float)ntables + 1e-4; // 1e-4 so that morph lerps to floor(morph) == tableIndex
 
 	auto unison_v = (int)mod->getValue(prefix + "unison_voices", true);
 	auto unison_mod = (int)mod->getValue(prefix + "unison_mode", true);
-	auto unison_det = mod->getPolyValue(prefix + "unison_detune", voiceId, numSamples);
-	auto unison_st = mod->getPolyValue(prefix + "unison_stereo", voiceId, numSamples);
-	auto unison_sprd = mod->getPolyValue(prefix + "unison_spread", voiceId, numSamples);
-	auto unison_bld = mod->getPolyValue(prefix + "unison_blend", voiceId, numSamples);
-	feedback = mod->getPolyValue(prefix + "feedback", voiceId, numSamples);
+	auto unison_det = mod->getPolyValue(prefix + "unison_detune", voiceId, blkoffset);
+	auto unison_st = mod->getPolyValue(prefix + "unison_stereo", voiceId, blkoffset);
+	auto unison_sprd = mod->getPolyValue(prefix + "unison_spread", voiceId, blkoffset);
+	auto unison_bld = mod->getPolyValue(prefix + "unison_blend", voiceId, blkoffset);
+	feedback = mod->getPolyValue(prefix + "feedback", voiceId, blkoffset);
 
 	if (unison_v == 1)
 	{

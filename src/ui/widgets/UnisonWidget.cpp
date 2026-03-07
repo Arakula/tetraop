@@ -51,6 +51,32 @@ void UnisonWidget::mouseDown(const MouseEvent& e)
     start_mouse_pos = Desktop::getInstance().getMousePosition();
     repaint();
     param->beginChangeGesture();
+
+    if (editingSpread)
+    {
+        if (!spreadValuePopup) {
+            spreadValuePopup = std::make_unique<juce::Label>();
+            spreadValuePopup->setJustificationType(juce::Justification::centred);
+            spreadValuePopup->setColour(juce::Label::backgroundColourId, juce::Colours::black.withAlpha(0.8f));
+            spreadValuePopup->setColour(juce::Label::textColourId, juce::Colours::white);
+            spreadValuePopup->setBorderSize(juce::BorderSize<int>(2));
+            spreadValuePopup->setSize(60, 40);
+        }
+
+        auto* top = getTopLevelComponent();
+        auto target = top->getLocalArea(this, spreadBounds.translated(0, 30));
+        spreadValuePopup->setTopLeftPosition((int)(target.getCentreX() - spreadValuePopup->getWidth() / 2),
+            (int)(target.getY() + target.getHeight() / 2 - spreadValuePopup->getHeight() / 2));
+        spreadValuePopup->setText(String("Warp\n") + String(std::round(param->getValue() * 200.f - 100.f)) + "%", dontSendNotification);
+        if (spreadValuePopup->getParentComponent() != top)
+            top->addAndMakeVisible(*spreadValuePopup);
+    }
+}
+
+void UnisonWidget::positionSpreadValuePopup()
+{
+    auto* top = getTopLevelComponent();
+    
 }
 
 void UnisonWidget::mouseUp(const MouseEvent& e)
@@ -58,6 +84,7 @@ void UnisonWidget::mouseUp(const MouseEvent& e)
     if (!mouse_down)
         return;
 
+    spreadValuePopup.reset();
     mouse_down = false;
     setMouseCursor(MouseCursor::NormalCursor);
     e.source.enableUnboundedMouseMovement(false);
@@ -80,6 +107,11 @@ void UnisonWidget::mouseDrag(const MouseEvent& e)
     cur_normed_value += slider_change;
     auto param = editor.audioProcessor.params.getParameter(editingVoices ? prefix + "unison_voices" : prefix + "unison_spread");
     param->setValueNotifyingHost(cur_normed_value);
+
+    if (editingSpread)
+    {
+        spreadValuePopup->setText(String("Warp\n") + String(std::round(param->getValue() * 200.f - 100.f)) + "%", dontSendNotification);
+    }
 }
 
 void UnisonWidget::mouseDoubleClick(const MouseEvent& e)

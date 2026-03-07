@@ -109,7 +109,7 @@ static inline std::pair<SIMDF, SIMDF> processUnison(
     {
         auto& U = osc.unison[lane];
         int batch = (U.voices + 3) >> 2;
-        auto offset = SIMDF(phaseOffset.get(lane));
+        auto offset = SIMDF(phaseOffset.get(lane) + osc.phase_offset.get(lane));
         int t2lane = lane + 4;
 
         for (int v = 0; v < batch; ++v) // for each unison voice
@@ -186,20 +186,20 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
     TablesData c_tables{};
     TablesData d_tables{};
 
-    bool AisMorphing = AOn && (A.morph - A.morph_targ).abs().hmax() > 1e-4f;
-    bool BisMorphing = BOn && (B.morph - B.morph_targ).abs().hmax() > 1e-4f;
-    bool CisMorphing = COn && (C.morph - C.morph_targ).abs().hmax() > 1e-4f;
-    bool DisMorphing = DOn && (D.morph - D.morph_targ).abs().hmax() > 1e-4f;
+    const bool AisMorphing = AOn && (A.morph - A.morph_targ).abs().hmax() > 1e-4f;
+    const bool BisMorphing = BOn && (B.morph - B.morph_targ).abs().hmax() > 1e-4f;
+    const bool CisMorphing = COn && (C.morph - C.morph_targ).abs().hmax() > 1e-4f;
+    const bool DisMorphing = DOn && (D.morph - D.morph_targ).abs().hmax() > 1e-4f;
 
     if constexpr (AOn) a_tables = getTables(vox, 0, AisMorphing);
     if constexpr (BOn) b_tables = getTables(vox, 1, BisMorphing);
     if constexpr (COn) c_tables = getTables(vox, 2, CisMorphing);
     if constexpr (DOn) d_tables = getTables(vox, 3, DisMorphing);
 
-    bool AhasUnison = AisOut && A.unison->voices > 1;
-    bool BhasUnison = BisOut && B.unison->voices > 1;
-    bool ChasUnison = CisOut && C.unison->voices > 1;
-    bool DhasUnison = DisOut && D.unison->voices > 1;
+    const bool AhasUnison = AisOut && A.unison->voices > 1;
+    const bool BhasUnison = BisOut && B.unison->voices > 1;
+    const bool ChasUnison = CisOut && C.unison->voices > 1;
+    const bool DhasUnison = DisOut && D.unison->voices > 1;
 
     SIMDF la, lb, lc, ld;
     SIMDF offsetA(0.f), offsetB(0.f), offsetC(0.f), offsetD(0.f);
@@ -229,13 +229,13 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
 
         // render mono outputs
         if constexpr (AOn)
-            A.out = renderWave(a_tables.data, a_tables.size, A.phase + offsetA, a_morph) * A.level;
+            A.out = renderWave(a_tables.data, a_tables.size, A.phase + A.phase_offset + offsetA, a_morph) * A.level;
         if constexpr (BOn)
-            B.out = renderWave(b_tables.data, b_tables.size, B.phase + offsetB, b_morph) * B.level;
+            B.out = renderWave(b_tables.data, b_tables.size, B.phase + B.phase_offset + offsetB, b_morph) * B.level;
         if constexpr (COn)
-            C.out = renderWave(c_tables.data, c_tables.size, C.phase + offsetC, c_morph) * C.level;
+            C.out = renderWave(c_tables.data, c_tables.size, C.phase + C.phase_offset + offsetC, c_morph) * C.level;
         if constexpr (DOn)
-            D.out = renderWave(d_tables.data, d_tables.size, D.phase + offsetD, d_morph) * D.level;
+            D.out = renderWave(d_tables.data, d_tables.size, D.phase + D.phase_offset + offsetD, d_morph) * D.level;
 
         if constexpr (AOn) AoutL = AoutR = A.out;
         if constexpr (BOn) BoutL = BoutR = B.out;
@@ -342,7 +342,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
             if constexpr (DOn) sampleOscilloscope(D, DoutL, DoutR, 3, activeVoice);
         }
 
-        // scale outputs by FM matrix output coeffs
+        // scale outputs by FM matrix outputs
         if constexpr (AOn) { AoutL *= AisOut; AoutR *= AisOut; }
         if constexpr (BOn) { BoutL *= BisOut; BoutR *= BisOut; }
         if constexpr (COn) { CoutL *= CisOut; CoutR *= CisOut; }

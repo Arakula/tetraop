@@ -36,6 +36,7 @@ public:
     {
         SIMDF phase;
         SIMDF phase_inc;
+        SIMDF phase_offset;
         SIMDF gain_l;
         SIMDF gain_r;
         SIMDF freq;
@@ -52,6 +53,7 @@ public:
     {
         alignas(sizeof(SIMDF)) float phase[4];
         alignas(sizeof(SIMDF)) float phase_inc[4];
+        alignas(sizeof(SIMDF)) float phase_offset[4];
         alignas(sizeof(SIMDF)) float freq[4];
         alignas(sizeof(SIMDF)) float level[4];
         alignas(sizeof(SIMDF)) float level_step[4];
@@ -75,8 +77,9 @@ public:
     int id = 0;
     String prefix = "";
     float phase = 0.f;
-    float freq = 1000.f;
     float phase_inc = 0.f;
+    float phase_offset = 0.f;
+    float freq = 1000.f;
     float level = 0.f;
     float level_targ = 0.f;
     float out = 0.f;
@@ -107,6 +110,7 @@ public:
     {
         vec.phase[lane] = phase;
         vec.phase_inc[lane] = phase_inc;
+        vec.phase_offset[lane] = phase_offset;
         vec.freq[lane] = freq;
         vec.level[lane] = level;
         vec.level_step[lane] = (level_targ - level) / numSamples;
@@ -138,6 +142,7 @@ public:
         SIMDOSC o;
         o.phase.load(vec.phase);
         o.phase_inc.load(vec.phase_inc);
+        o.phase_offset.load(vec.phase_offset);
         o.freq.load(vec.freq);
         o.level.load(vec.level);
         o.level_step.load(vec.level_step);

@@ -8,7 +8,7 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 {
 	level = std::make_unique<Rotary>(e, prefix + "level", "Level", Rotary::gain2dB);
 	pan = std::make_unique<Rotary>(e, prefix + "pan", "Pan", Rotary::Pan, true);
-	phase = std::make_unique<Rotary>(editor, prefix + "phase_start", "Phase", Rotary::float2);
+	phase = std::make_unique<Rotary>(editor, prefix + "phase_offset", "Phase", Rotary::float2);
 	rand = std::make_unique<Rotary>(editor, prefix + "phase_rand", "Rand", Rotary::Percent);
 	auto rotaryFormat = oscId == 0 ? Rotary::OSCMorphA : oscId == 1 ? Rotary::OSCMorphB : oscId == 2 ? Rotary::OSCMorphC : Rotary::OSCMorphD;
 	morph = std::make_unique<Rotary>(editor, prefix + "morph", "Frame", rotaryFormat);

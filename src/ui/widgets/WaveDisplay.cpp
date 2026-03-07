@@ -90,7 +90,15 @@ void WaveDisplay::paint(Graphics& g)
     }
     else
     {
-        auto& waveform = editor.audioProcessor.synth->fm->oscOut[oscId];
+        auto waveform = editor.audioProcessor.synth->fm->oscOut[oscId];
+        float maxAbs = 0.0f;
+        for (int i = 0; i < SCOPE_BUFLEN; ++i)
+            maxAbs = std::max(maxAbs, std::abs(waveform[i]));
+        float gain = (maxAbs > 1.0f) ? (1.0f / maxAbs) : 1.0f;
+        if (gain < 1.f)
+            for (int i = 0; i < SCOPE_BUFLEN; ++i)
+                waveform[i] *= gain;  // normalize waveform if it exceeds 1
+
         drawWaveform(g, waveform.data(), SCOPE_BUFLEN);
     }
 }
