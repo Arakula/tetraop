@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include "../widgets/Rotary.h"
 #include "../widgets/WaveDisplay.h"
+#include "../widgets/UnisonWidget.h"
 
 class TetraOPAudioProcessorEditor;
 
@@ -34,6 +35,7 @@ public:
 	std::unique_ptr<Rotary> semis;
 	std::unique_ptr<Rotary> cents;
 
+	std::unique_ptr<UnisonWidget> unison;
 	std::unique_ptr<WaveDisplay> waveDisplay;
 
 private:

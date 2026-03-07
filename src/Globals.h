@@ -56,6 +56,7 @@ namespace globals {
 	inline Colour COLOR_KNOB_HANDLE() { return colors["COLOR_KNOB_HANDLE"]; };
 	inline Colour COLOR_KNOB_LABEL() { return colors["COLOR_KNOB_LABEL"]; };
 	inline Colour COLOR_KNOB_ARC() { return colors["COLOR_KNOB_ARC"]; };
+	inline Colour COLOR_VIEWPORT_TEXT() { return colors["COLOR_VIEWPORT_TEXT"]; };
 
 	inline void loadDefaultTheme() {
 		themeLoaded = true;
@@ -69,5 +70,6 @@ namespace globals {
 		colors["COLOR_KNOB_HANDLE"] = Colour(0xffD9D9D9);
 		colors["COLOR_KNOB_LABEL"] = Colour(0xffFAFAFA);
 		colors["COLOR_KNOB_ARC"] = Colour(0xff5C5C5C);
+		colors["COLOR_VIEWPORT_TEXT"] = Colour(0xffFAFAFA);
 	}
 };

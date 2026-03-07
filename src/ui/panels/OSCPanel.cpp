@@ -50,6 +50,9 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 	addAndMakeVisible(semis.get());
 	addAndMakeVisible(cents.get());
 
+	unison = std::make_unique<UnisonWidget>(editor, oscId);
+	addAndMakeVisible(unison.get());
+
 	waveDisplay = std::make_unique<WaveDisplay>(editor, oscId);
 	addAndMakeVisible(waveDisplay.get());
 }
@@ -73,14 +76,14 @@ void OSCPanel::paint(Graphics& g)
 	g.setColour(COLOR_BACKGROUND());
 	g.fillRoundedRectangle(viewport.reduced(1).withTrimmedTop(1).withTrimmedLeft(1), 5.f);
 
-	g.setColour(COLOR_KNOB_LABEL());
-	g.setFont(FontOptions(16.f));
-	g.drawText("Unison", viewport.getX(), viewport.getBottom() - 18 - 2, 60, 18, Justification::centred);
-	g.setColour(Colours::white.withAlpha(0.20f));
-	g.drawVerticalLine((int)viewport.getX() + 60, viewport.getBottom() - 18, viewport.getBottom() - 3);
-	g.drawVerticalLine((int)viewport.getX() + 60 + 30, viewport.getBottom() - 18, viewport.getBottom() - 3);
-	g.setColour(COLOR_KNOB_LABEL());
-	g.drawText("16", viewport.getX() + 60, viewport.getBottom() - 18-2, 30, 18, Justification::centred);
+	//g.setColour(COLOR_KNOB_LABEL());
+	//g.setFont(FontOptions(16.f));
+	//g.drawText("Unison", viewport.getX(), viewport.getBottom() - 18 - 2, 60, 18, Justification::centred);
+	//g.setColour(Colours::white.withAlpha(0.20f));
+	//g.drawVerticalLine((int)viewport.getX() + 60, viewport.getBottom() - 18, viewport.getBottom() - 3);
+	//g.drawVerticalLine((int)viewport.getX() + 60 + 30, viewport.getBottom() - 18, viewport.getBottom() - 3);
+	//g.setColour(COLOR_KNOB_LABEL());
+	//g.drawText("16", viewport.getX() + 60, viewport.getBottom() - 18-2, 30, 18, Justification::centred);
 }
 
 void OSCPanel::resized()
@@ -105,6 +108,7 @@ void OSCPanel::resized()
 	viewport = Rectangle<int>(KNOB_WIDTH * 2, PANEL_HEADER_HEIGHT + 5, KNOB_WIDTH_SM * 3, KNOB_HEIGHT + 8)
 		.toFloat().translated(0.5f, 0.5f).reduced(2.f, 0.f);
 
+	unison->setBounds(viewport.toNearestInt().removeFromBottom(20));
 	waveDisplay->setBounds(viewport.withTrimmedBottom(20.f).reduced(2.f).toNearestInt());
 }
 

@@ -65,7 +65,7 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         layout.add(std::make_unique<AudioParameterChoice>(prefix + "unison_mode", prefixnm + "Unison Mode", StringArray{ "Unison", "Gaussian", "Alternate", "5ths", "Sub" }, 0));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "unison_detune", prefixnm + "Unison Detune", 0.f, 1.f, 0.35f));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "unison_stereo", prefixnm + "Unison Stereo", 0.f, 1.f, .5f));
-        layout.add(std::make_unique<AudioParameterFloat>(prefix + "unison_spread", prefixnm + "Unison Spread", -1.f, 1.f, -0.33f));
+        layout.add(std::make_unique<AudioParameterFloat>(prefix + "unison_spread", prefixnm + "Unison Spread", -1.f, 1.f, 0.f));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "unison_blend", prefixnm + "Unison Blend", 0.f, 1.f, 1.f));
     }
 

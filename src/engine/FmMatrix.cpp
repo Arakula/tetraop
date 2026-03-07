@@ -77,7 +77,7 @@ static inline SIMDF renderUnison(const float* table1, const float* table2, const
     auto posf = phase * float(size);
     auto posi = posf.trunc();
     auto t = posf - posi;
-    auto posint = mipp::cvt<float, int32_t>(posi);
+    auto posint = mipp::cvt<float, int32_t>(posi) + 1; // +1 because tables are padded
 
     SIMDF l1 = mipp::gather(&table1[0], posint);
     SIMDF l2 = mipp::gather(&table1[0], posint + 1);

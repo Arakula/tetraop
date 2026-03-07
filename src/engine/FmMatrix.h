@@ -58,6 +58,7 @@ public:
     // oscilloscope sampling
     std::array<float, SCOPE_BUFLEN> oscOut[4]{};
     std::array<int, 4> lastScopeIdx{};
+    uint32_t sampleCounter = 0;
 
     bool AisOut = false;
     bool BisOut = false;
@@ -141,13 +142,13 @@ public:
         return c1.fmadd(t3, c2.fmadd(t2, c3.fmadd(t, y1)));
     }
 
-    inline void sampleOscilloscope(OSC::SIMDOSC& osc, SIMDF& outL, SIMDF& outR, int oscIdx, int voice)
+    inline void sampleOscilloscope(OSC::SIMDOSC& osc, SIMDF& out_l, SIMDF& out_r, int oscIdx, int voice)
     {
         int idx = (int)(osc.phase.get(voice) * SCOPE_BUFLEN);
         int lastIdx = lastScopeIdx[oscIdx];
         if (idx == lastIdx) return;
 
-        float val = ((outL + outR) * 0.5f).get(voice);
+        float val = ((out_l + out_r) * 0.5f).get(voice);
         int start = lastIdx;
         int end = idx;
         if (end < start) end += SCOPE_BUFLEN; // handle wrap-around

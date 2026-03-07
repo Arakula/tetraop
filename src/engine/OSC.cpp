@@ -79,13 +79,15 @@ void OSC::recalcUnison()
 	for (int i = 0; i < unison_voices; ++i)
 		unison_mask[i] = 1.f;
 
-	unison_ratio = Unison::generateDetuneRatios(unison_voices, unison_detune);
+	unison_ratio = Unison::generateDetuneRatios(unison_voices, unison_detune, unison_spread);
 	auto panarr = Unison::generateVoicesPan(unison_voices, unison_stereo);
+	auto gainarr = Unison::generateVoicesGain(unison_voices, unison_blend);
 	for (int i = 0; i < unison_voices; i += SIMD_SZ)
 	{
 		SIMDF p = mipp::load(&panarr[i]);
 		auto lr = Utils::panToGainCheap(p);
-		lr[0].store(&unison_gain_l[i]);
-		lr[1].store(&unison_gain_r[i]);
+		SIMDF gain = mipp::load(&gainarr[i]);
+		(lr[0] * gain).store(&unison_gain_l[i]);
+		(lr[1] * gain).store(&unison_gain_r[i]);
 	}
 }
