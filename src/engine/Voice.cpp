@@ -88,7 +88,7 @@ void Voice::noteStopped (bool allowTailOff)
 
     juce::Array<Voice*> activeVoices;
     for (auto voice : audioProcessor.synth->getActiveVoices())
-        if (voice->isActive() && ((Voice*)voice)->id != id)
+        if (voice->isActive() && ((Voice*)voice)->pressed)
             activeVoices.add((Voice*)voice);
     std::sort(activeVoices.begin(), activeVoices.end(), [](Voice* a, Voice* b) { return a->noteOnTime < b->noteOnTime; });
 
