@@ -69,7 +69,7 @@ void FmMatrix::prepare(float _srate)
     morphAlpha = 1.f - std::exp(-1.f / (MORPH_SECONDS * srate));
 }
 
-static inline SIMDF renderUnison(const float* table1, const float* table2, const int size, SIMDF phase, const SIMDF morph)
+static inline SIMDF renderUnison(const float* table1, const float* table2, const int size, SIMDF phase, float morph)
 {
     static constexpr float almostOne = 1.f - std::numeric_limits<float>::epsilon();
 
@@ -82,13 +82,13 @@ static inline SIMDF renderUnison(const float* table1, const float* table2, const
     SIMDF l1 = mipp::gather(&table1[0], posint);
     SIMDF l2 = mipp::gather(&table1[0], posint + 1);
 
-    if (morph.sum() > 0.f)
+    if (morph > 0.f)
     {
         SIMDF l3 = mipp::gather(&table2[0], posint);
         SIMDF l4 = mipp::gather(&table2[0], posint + 1);
 
-        l1 = mipp::fmadd(morph, (l3 - l1), l1);
-        l2 = mipp::fmadd(morph, (l4 - l2), l2);
+        l1 = mipp::fmadd(SIMDF(morph), (l3 - l1), l1);
+        l2 = mipp::fmadd(SIMDF(morph), (l4 - l2), l2);
     }
 
     return mipp::fmadd(t, (l2 - l1), l1);
@@ -114,7 +114,7 @@ static inline std::pair<SIMDF, SIMDF> processUnison(
 
         for (int v = 0; v < batch; ++v) // for each unison voice
         {
-            SIMDF s = renderUnison(tables[lane], tables[t2lane], size, U.phase[v] + offset, morph);
+            SIMDF s = renderUnison(tables[lane], tables[t2lane], size, U.phase[v] + offset, morph.get(lane));
             s *= U.mask[v];
 
             accL[lane] += (s * U.gain_l[v]).sum();
