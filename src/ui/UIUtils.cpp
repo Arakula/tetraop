@@ -79,3 +79,17 @@ void UIUtils::drawVSeparator(Graphics& g, Rectangle<float> bounds)
     g.setColour(Colours::white.withAlpha(0.25f));
     g.drawVerticalLine((int)x + 1, bounds.getY(), bounds.getBottom());
 }
+
+void UIUtils::drawCheckmark(Graphics& g, Rectangle<float> bounds, Colour bg, Colour check, bool checked)
+{
+    auto b = Rectangle<float>(bounds.getCentreX() - 5, bounds.getCentreY() - 5, 10.f, 10.f);
+    g.setColour(bg);
+    g.fillRoundedRectangle(b, 1.f);
+    if (checked)
+    {
+        g.setColour(check.withAlpha(0.5f));
+        g.fillRect(b.reduced(1.f));
+        g.setColour(check);
+        g.fillRect(b.reduced(2.f));
+    }
+}

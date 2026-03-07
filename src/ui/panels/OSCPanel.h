@@ -23,6 +23,8 @@ public:
 	void onMouseDownMorph() const;
 	void onMouseUpMorph() const;
 
+	TextButton onBtn;
+
 	std::unique_ptr<Rotary> level;
 	std::unique_ptr<Rotary> pan;
 	std::unique_ptr<Rotary> phase;

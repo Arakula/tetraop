@@ -26,7 +26,7 @@ public:
     void timerCallback() override;
 
     void paint(juce::Graphics& g) override;
-    void drawWaveform(juce::Graphics& g, float* waveform, int size);
+    void drawWaveform(juce::Graphics& g, float* waveform, int size, float phase);
     void toggleUIComponents();
     void resized() override;
     void setMode(Mode _mode);

@@ -13,6 +13,7 @@ public:
 
     CustomLookAndFeel();
     Typeface::Ptr getTypefaceForFont(const juce::Font&) override;
+    juce::Font getBoldFont(float size);
     int getPopupMenuBorderSize() override { return 5; };
 
     void drawPopupMenuBackground(juce::Graphics& g, int width, int height) override
@@ -33,4 +34,5 @@ public:
 
 private:
     juce::Typeface::Ptr defaultFont;
+    juce::Typeface::Ptr defaultFontBold;
 };

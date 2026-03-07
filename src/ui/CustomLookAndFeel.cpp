@@ -8,6 +8,7 @@ CustomLookAndFeel::CustomLookAndFeel()
     setColour(ScrollBar::thumbColourId, Colours::white);
 
     defaultFont = Typeface::createSystemTypefaceFor(BinaryData::PlayRegular_ttf, BinaryData::PlayRegular_ttfSize);
+    defaultFontBold = Typeface::createSystemTypefaceFor(BinaryData::PlayBold_ttf, BinaryData::PlayBold_ttfSize);
     setDefaultSansSerifTypeface(defaultFont);
     this->setDefaultLookAndFeel(this);
 }
@@ -16,6 +17,11 @@ Typeface::Ptr CustomLookAndFeel::getTypefaceForFont(const Font& font)
 {
     (void)font;
     return defaultFont;
+}
+
+juce::Font CustomLookAndFeel::getBoldFont(float size)
+{
+    return juce::Font(FontOptions(defaultFontBold)).withHeight(size);
 }
 
 void CustomLookAndFeel::drawTooltip(juce::Graphics& g, const juce::String& text, int width, int height)

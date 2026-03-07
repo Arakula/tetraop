@@ -90,8 +90,8 @@ public:
             return out;
         }
         if (nvoices == 2) {
-            out[0] = normalizeRMS ? 1.f / std::sqrt(2) : 1.f;
-            out[1] = normalizeRMS ? 1.f / std::sqrt(2) : 1.f;
+            out[0] = normalizeRMS ? 1.f / std::sqrt(2.f) : 1.f;
+            out[1] = normalizeRMS ? 1.f / std::sqrt(2.f) : 1.f;
             return out;
         }
 

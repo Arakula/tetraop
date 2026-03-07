@@ -6,6 +6,7 @@ UnisonWidget::UnisonWidget(TetraOPAudioProcessorEditor& e, int _oscId)
     , oscId(_oscId)
     , prefix(_oscId == 0 ? "a_" : _oscId == 1 ? "b_" : _oscId == 2 ? "c_" : "d_")
 {
+    editor.audioProcessor.params.addParameterListener(prefix + "on", this);
     editor.audioProcessor.params.addParameterListener(prefix + "unison_mode", this);
     editor.audioProcessor.params.addParameterListener(prefix + "unison_voices", this);
     editor.audioProcessor.params.addParameterListener(prefix + "unison_detune", this);
@@ -15,6 +16,7 @@ UnisonWidget::UnisonWidget(TetraOPAudioProcessorEditor& e, int _oscId)
 
 UnisonWidget::~UnisonWidget()
 {
+    editor.audioProcessor.params.removeParameterListener(prefix + "on", this);
     editor.audioProcessor.params.removeParameterListener(prefix + "unison_mode", this);
     editor.audioProcessor.params.removeParameterListener(prefix + "unison_voices", this);
     editor.audioProcessor.params.removeParameterListener(prefix + "unison_detune", this);
@@ -32,7 +34,8 @@ void UnisonWidget::parameterChanged(const juce::String& parameterID, float newVa
 
 void UnisonWidget::mouseDown(const MouseEvent& e)
 {
-    if (mouse_down) return;
+    auto on = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "on")->load();
+    if (mouse_down || !on) return;
     mouse_down = true;
 
     editingVoices = voiceBounds.contains(e.getPosition().toFloat());
@@ -81,6 +84,7 @@ void UnisonWidget::positionSpreadValuePopup()
 
 void UnisonWidget::mouseUp(const MouseEvent& e)
 {
+    
     if (!mouse_down)
         return;
 
@@ -116,6 +120,8 @@ void UnisonWidget::mouseDrag(const MouseEvent& e)
 
 void UnisonWidget::mouseDoubleClick(const MouseEvent& e)
 {
+    auto on = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "on")->load();
+    if (!on) return;
     if (voiceBounds.contains(e.getPosition().toFloat()))
     {
         auto param = editor.audioProcessor.params.getParameter(prefix + "unison_voices");
@@ -130,7 +136,8 @@ void UnisonWidget::mouseDoubleClick(const MouseEvent& e)
 
 void UnisonWidget::mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel)
 {
-    if (mouse_down) return; // prevent crash, param is already mutating
+    auto on = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "on")->load();
+    if (mouse_down || !on) return; // prevent crash, param is already mutating
 
     bool _editingVoices = voiceBounds.contains(e.getPosition().toFloat());
     bool _editingSpread = spreadBounds.contains(e.getPosition().toFloat());
@@ -153,19 +160,20 @@ void UnisonWidget::mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWh
 
 void UnisonWidget::paint(Graphics& g)
 {
+    auto on = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "on")->load();
+    if (!on) return;
     int voices = (int)editor.audioProcessor.params.getRawParameterValue(prefix + "unison_voices")->load();
     auto mode = (Unison::Mode)editor.audioProcessor.params.getRawParameterValue(prefix + "unison_mode")->load();
-    auto modeStr = StringArray{"Unison", "Gauss", "Alt", "5ths", "Sub"}[mode];
-
-    g.setColour(COLOR_VIEWPORT_TEXT());
-    g.setFont(FontOptions(16.f));
-    g.drawText(modeStr, modeBounds, Justification::centred);
-    g.drawText(String(voices), voiceBounds, Justification::centred);
+    String modeStr = StringArray{"Unison", "Gauss", "Alt", "5ths", "Sub"}[mode];
 
     g.setColour(Colours::white.withAlpha(0.20f));
     g.drawVerticalLine((int)voiceBounds.getX(), voiceBounds.getY() + 2, voiceBounds.getBottom() - 2);
     g.drawVerticalLine((int)voiceBounds.getRight(), voiceBounds.getY() + 2, voiceBounds.getBottom() - 2);
-    g.drawHorizontalLine((int)modeBounds.getY(), modeBounds.getX() + 2, spreadBounds.getRight() - 2);
+    g.drawHorizontalLine((int)modeBounds.getY(), modeBounds.getX() + 3, spreadBounds.getRight() - 2);
+    g.setColour(COLOR_VIEWPORT_TEXT());
+    g.setFont(FontOptions(16.f));
+    g.drawText(modeStr, modeBounds, Justification::centred);
+    g.drawText(String(voices), voiceBounds, Justification::centred);
 
     drawUnisonVoices(g);
 }

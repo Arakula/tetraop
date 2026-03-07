@@ -8,6 +8,7 @@ WaveDisplay::WaveDisplay(TetraOPAudioProcessorEditor& e, int _oscId)
 {
     editor.audioProcessor.params.addParameterListener(prefix + "on", this);
     editor.audioProcessor.params.addParameterListener(prefix + "morph", this);
+    editor.audioProcessor.params.addParameterListener(prefix + "phase_offset", this);
     isOn = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "on")->load();
 
     addAndMakeVisible(wtdisplay);
@@ -34,6 +35,7 @@ WaveDisplay::~WaveDisplay()
 {
     editor.audioProcessor.params.removeParameterListener(prefix + "on", this);
     editor.audioProcessor.params.removeParameterListener(prefix + "morph", this);
+    editor.audioProcessor.params.removeParameterListener(prefix + "phase_offset", this);
 }
 
 void WaveDisplay::parameterChanged(const juce::String& parameterID, float newValue)
@@ -86,7 +88,9 @@ void WaveDisplay::paint(Graphics& g)
         auto& tables = editor.audioProcessor.wavetables[oscId];
         int tablesz = tables.tableSize;
         auto& table = tables.tables.getTable((int)std::round(((tables.numTables - 1) * morph)))->tableForNote(0.5f);
-        drawWaveform(g, table.data(), tablesz);
+        auto phase = editor.audioProcessor.params.getRawParameterValue(prefix + "phase_offset")->load();
+
+        drawWaveform(g, table.data(), tablesz, phase);
     }
     else
     {
@@ -99,7 +103,7 @@ void WaveDisplay::paint(Graphics& g)
             for (int i = 0; i < SCOPE_BUFLEN; ++i)
                 waveform[i] *= gain;  // normalize waveform if it exceeds 1
 
-        drawWaveform(g, waveform.data(), SCOPE_BUFLEN);
+        drawWaveform(g, waveform.data(), SCOPE_BUFLEN, 0);
     }
 }
 
@@ -120,27 +124,29 @@ void WaveDisplay::setMode(Mode _mode)
     toggleUIComponents();
 }
 
-void WaveDisplay::drawWaveform(Graphics& g, float* waveform, int size)
+void WaveDisplay::drawWaveform(Graphics& g, float* waveform, int size, float phase)
 {
     auto b = getLocalBounds().toFloat().reduced(4.f, 8.f);
 
     int width = (int)b.getWidth();
     float centerY = b.getCentreY();
     float scaleY = 0.5f * b.getHeight();
+    int phaseOffset = (int)(phase * size);
 
     juce::Path p;
 
     // start at first sample
-    if (size > 0)
-        p.startNewSubPath(b.getX(), centerY - waveform[0] * scaleY);
+    if (size > 0) {
+        int index = phaseOffset % size;
+        p.startNewSubPath(b.getX(), centerY - waveform[index] * scaleY);
+    }
 
     // map each sample to pixel x
     for (int x = 1; x < width; ++x)
     {
         // pick corresponding sample in waveform
         int index = (x * size) / width;
-        if (index >= size)
-            index = size - 1;
+        index = (index + phaseOffset) % size;
 
         float px = b.getX() + (float)x;
         float py = centerY - waveform[index] * scaleY;

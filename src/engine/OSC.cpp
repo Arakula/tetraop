@@ -21,9 +21,15 @@ void OSC::trigger(int note, float srate)
 	unison_phase = Unison::generatePhases(phase_rand);
 	auto ntables = audioProcessor.wavetables[id].numTables;
 	auto idx = std::min(ntables - 1, int(float(ntables) * mod->getPolyValue(prefix + "morph", voiceId)));
-	morph = morph_targ = idx / (float)ntables + 1e-4; // 1e-4 so that morph lerps to floor(morph) == tableIndex
+	morph = morph_targ = idx / (float)ntables + 1e-4f; // 1e-4 so that morph lerps to floor(morph) == tableIndex
 	isOn = mod->getValue(prefix + "on");
 	level = level_targ = mod->getPolyValue(prefix + "level", voiceId, 0) * isOn;
+
+	auto pitch_cents = mod->getPolyValue(prefix + "pitch_cents", voiceId, 0);
+	auto pitch_semis = mod->getPolyValue(prefix + "pitch_semis", voiceId, 0);
+	auto pitch_oct = mod->getPolyValue(prefix + "pitch_oct", voiceId, 0);
+	auto total_cents = pitch_cents + (pitch_semis * 100.0f) + (pitch_oct * 1200.0f);
+	pitch_ratio = pitch_ratio_targ = Utils::centsToRatio(total_cents);
 }
 
 void OSC::prepareBlock(int startSample, int numSamples)
@@ -33,7 +39,7 @@ void OSC::prepareBlock(int startSample, int numSamples)
 	auto& mod = audioProcessor.modulation;
 	isOn = mod->getValue(prefix + "on");
 	level_targ = mod->getPolyValue(prefix + "level", voiceId, blkoffset) * isOn;
-	if (level < 1e-4 && level_targ < 1e-4) return;
+	if (level < 1e-4f && level_targ < 1e-4f) return;
 
 	phase_offset = mod->getPolyValue(prefix + "phase_offset", voiceId, blkoffset);
 	auto pan_targ = mod->getPolyValue(prefix + "pan", voiceId, blkoffset);
@@ -46,7 +52,7 @@ void OSC::prepareBlock(int startSample, int numSamples)
 
 	auto ntables = audioProcessor.wavetables[id].numTables;
 	auto idx = std::min(ntables - 1, int(float(ntables) * mod->getPolyValue(prefix + "morph", voiceId, blkoffset)));
-	morph_targ = idx / (float)ntables + 1e-4; // 1e-4 so that morph lerps to floor(morph) == tableIndex
+	morph_targ = idx / (float)ntables + 1e-4f; // 1e-4 so that morph lerps to floor(morph) == tableIndex
 
 	auto unison_v = (int)mod->getValue(prefix + "unison_voices", true);
 	auto unison_mod = (int)mod->getValue(prefix + "unison_mode", true);
@@ -55,6 +61,12 @@ void OSC::prepareBlock(int startSample, int numSamples)
 	auto unison_sprd = mod->getPolyValue(prefix + "unison_spread", voiceId, blkoffset);
 	auto unison_bld = mod->getPolyValue(prefix + "unison_blend", voiceId, blkoffset);
 	feedback = mod->getPolyValue(prefix + "feedback", voiceId, blkoffset);
+
+	auto pitch_cents = mod->getPolyValue(prefix + "pitch_cents", voiceId, blkoffset);
+	auto pitch_semis = mod->getPolyValue(prefix + "pitch_semis", voiceId, blkoffset);
+	auto pitch_oct = mod->getPolyValue(prefix + "pitch_oct", voiceId, blkoffset);
+	auto total_cents = pitch_cents + (pitch_semis * 100.0f) + (pitch_oct * 1200.0f);
+	pitch_ratio_targ = Utils::centsToRatio(total_cents);
 
 	if (unison_v == 1)
 	{
@@ -73,6 +85,13 @@ void OSC::prepareBlock(int startSample, int numSamples)
 		unison_blend = unison_bld;
 		recalcUnison();
 	}
+}
+
+void OSC::finishBlock(int)
+{
+	level = level_targ;
+	pitch_ratio = pitch_ratio_targ;
+	morph = morph_targ;
 }
 
 void OSC::recalcUnison()

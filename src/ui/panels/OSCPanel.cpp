@@ -6,6 +6,16 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 	, oscId(_oscId)
 	, prefix(_oscId == 0 ? "a_" : _oscId == 1 ? "b_" : _oscId == 2 ? "c_" : "d_")
 {
+	editor.audioProcessor.params.addParameterListener(prefix + "on", this);
+
+	addAndMakeVisible(onBtn);
+	onBtn.setAlpha(0.f);
+	onBtn.onClick = [this]
+		{
+			auto param = editor.audioProcessor.params.getParameter(prefix + "on");
+			param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
+		};
+
 	level = std::make_unique<Rotary>(e, prefix + "level", "Level", Rotary::gain2dB);
 	pan = std::make_unique<Rotary>(e, prefix + "pan", "Pan", Rotary::Pan, true);
 	phase = std::make_unique<Rotary>(editor, prefix + "phase_offset", "Phase", Rotary::float2);
@@ -59,12 +69,14 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 
 OSCPanel::~OSCPanel()
 {
-
+	editor.audioProcessor.params.removeParameterListener(prefix + "on", this);
 }
 
-void OSCPanel::parameterChanged(const juce::String& parameterID, float newValue)
+void OSCPanel::parameterChanged(const juce::String& paramId, float val)
 {
-
+	(void)paramId;
+	(void)val;
+	MessageManager::callAsync([this] { repaint(); });
 }
 
 void OSCPanel::paint(Graphics& g)
@@ -76,19 +88,23 @@ void OSCPanel::paint(Graphics& g)
 	g.setColour(COLOR_BACKGROUND());
 	g.fillRoundedRectangle(viewport.reduced(1).withTrimmedTop(1).withTrimmedLeft(1), 5.f);
 
-	//g.setColour(COLOR_KNOB_LABEL());
-	//g.setFont(FontOptions(16.f));
-	//g.drawText("Unison", viewport.getX(), viewport.getBottom() - 18 - 2, 60, 18, Justification::centred);
-	//g.setColour(Colours::white.withAlpha(0.20f));
-	//g.drawVerticalLine((int)viewport.getX() + 60, viewport.getBottom() - 18, viewport.getBottom() - 3);
-	//g.drawVerticalLine((int)viewport.getX() + 60 + 30, viewport.getBottom() - 18, viewport.getBottom() - 3);
-	//g.setColour(COLOR_KNOB_LABEL());
-	//g.drawText("16", viewport.getX() + 60, viewport.getBottom() - 18-2, 30, 18, Justification::centred);
+	auto headerb = b.withHeight(PANEL_HEADER_HEIGHT);
+	bool on = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "on")->load();
+	auto c = oscId == 0 ? COLOR_A() : oscId == 1 ? COLOR_B() : oscId == 2 ? COLOR_C() : COLOR_D();
+	UIUtils::drawCheckmark(g, onBtn.getBounds().toFloat(), COLOR_CHECKMARK_BG_LIGHT(), c, on);
+	g.setColour(COLOR_PANEL_HEADER_TEXT());
+	g.saveState();
+	g.setFont(editor.customLookAndFeel->getBoldFont(16.f));
+	auto name = prefix.substring(0,1).toUpperCase();
+	g.drawText(name, headerb.withWidth(20).translated(20, 0), Justification::centred);
+	g.restoreState();
 }
 
 void OSCPanel::resized()
 {
 	auto bounds = getLocalBounds();
+	onBtn.setBounds({ bounds.getX(), bounds.getY(), PANEL_HEADER_HEIGHT, PANEL_HEADER_HEIGHT});
+
 	bounds.translate(0, PANEL_HEADER_HEIGHT);
 	level->setBounds(bounds.getX(), bounds.getY(), KNOB_WIDTH, KNOB_HEIGHT);
 	pan->setBounds(level->getBounds().translated(KNOB_WIDTH, 0));

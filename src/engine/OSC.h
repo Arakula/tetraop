@@ -37,6 +37,8 @@ public:
         SIMDF phase;
         SIMDF phase_inc;
         SIMDF phase_offset;
+        SIMDF pitch_ratio;
+        SIMDF pitch_ratio_step;
         SIMDF gain_l;
         SIMDF gain_r;
         SIMDF freq;
@@ -54,6 +56,8 @@ public:
         alignas(sizeof(SIMDF)) float phase[4];
         alignas(sizeof(SIMDF)) float phase_inc[4];
         alignas(sizeof(SIMDF)) float phase_offset[4];
+        alignas(sizeof(SIMDF)) float pitch_ratio[4];
+        alignas(sizeof(SIMDF)) float pitch_ratio_step[4];
         alignas(sizeof(SIMDF)) float freq[4];
         alignas(sizeof(SIMDF)) float level[4];
         alignas(sizeof(SIMDF)) float level_step[4];
@@ -95,6 +99,8 @@ public:
     float unison_stereo = -1.f;
     float unison_spread = -1.f;
     float unison_blend = -1.f;
+    float pitch_ratio = 1.f;
+    float pitch_ratio_targ = 1.f;
 
     OSC(int _id, int _voiceId, TetraOPAudioProcessor& p);
     ~OSC() {}
@@ -104,6 +110,7 @@ public:
 
     void trigger(int note, float srate);
     void prepareBlock(int startSample, int numSamples);
+    void finishBlock(int numSamples);
     void recalcUnison();
 
     void stateToVec(OSCVec& vec, int lane, bool isFMOutput, int numSamples) const
@@ -111,6 +118,8 @@ public:
         vec.phase[lane] = phase;
         vec.phase_inc[lane] = phase_inc;
         vec.phase_offset[lane] = phase_offset;
+        vec.pitch_ratio[lane] = pitch_ratio;
+        vec.pitch_ratio_step[lane] = (pitch_ratio_targ - pitch_ratio) / numSamples;
         vec.freq[lane] = freq;
         vec.level[lane] = level;
         vec.level_step[lane] = (level_targ - level) / numSamples;
@@ -143,6 +152,8 @@ public:
         o.phase.load(vec.phase);
         o.phase_inc.load(vec.phase_inc);
         o.phase_offset.load(vec.phase_offset);
+        o.pitch_ratio.load(vec.pitch_ratio);
+        o.pitch_ratio_step.load(vec.pitch_ratio_step);
         o.freq.load(vec.freq);
         o.level.load(vec.level);
         o.level_step.load(vec.level_step);
@@ -179,9 +190,7 @@ public:
     {
         OSCVec vec{};
         simd.phase.store(vec.phase);
-        simd.level.store(vec.level);
         simd.out.store(vec.out);
-        simd.morph.store(vec.morph);
 
         for (int lane = 0; lane < 4; ++lane)
         {
@@ -202,9 +211,7 @@ public:
     void vecToState(OSCVec& vec, int lane)
     {
         phase = vec.phase[lane];
-        level = vec.level[lane];
         out = vec.out[lane];
-        morph = vec.morph[lane];
 
         if (vec.unison[lane].voices > 1)
         {

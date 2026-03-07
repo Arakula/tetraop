@@ -108,9 +108,10 @@ static inline std::pair<SIMDF, SIMDF> processUnison(
     for (int lane = 0; lane < 4; ++lane) // for each voice
     {
         auto& U = osc.unison[lane];
-        int batch = (U.voices + 3) >> 2;
-        auto offset = SIMDF(phaseOffset.get(lane) + osc.phase_offset.get(lane));
-        int t2lane = lane + 4;
+        const int batch = (U.voices + 3) >> 2;
+        const auto offset = SIMDF(phaseOffset.get(lane) + osc.phase_offset.get(lane));
+        const int t2lane = lane + 4;
+        const float pitch_ratio = osc.pitch_ratio.get(lane);
 
         for (int v = 0; v < batch; ++v) // for each unison voice
         {
@@ -120,7 +121,8 @@ static inline std::pair<SIMDF, SIMDF> processUnison(
             accL[lane] += (s * U.gain_l[v]).sum();
             accR[lane] += (s * U.gain_r[v]).sum();
 
-            U.phase[v] += U.inc[v];
+            auto& phase = U.phase[v];
+            phase = U.inc[v].fmadd(pitch_ratio, phase);
             Utils::wrapPhase(U.phase[v]);
         }
     }
@@ -162,14 +164,15 @@ void FmMatrix::processBlock(SIMDVox& data, int numSamples, int activeVoice)
 // checks if global morph position is at a different index from tables.currIndex
 static inline bool hasCurrTableChanged(OSC::SIMDOSC& osc, FmMatrix::TablesData& tables)
 {
-    auto idx = (osc.morph * tables.numTables).trunc().min(tables.numTables - 1);
+    auto idx = (osc.morph * tables.numTables).trunc().min(tables.numTables - 1.f);
     auto msk = ~(idx == tables.currIndex);
     return !msk.testz();
 }
 
 static inline SIMDF getMorph(OSC::SIMDOSC& osc, FmMatrix::TablesData& tables)
 {
-    auto tablepos = (osc.morph * tables.numTables).min(tables.numTables - 1);
+    float tablesf = static_cast<float>(tables.numTables);
+    auto tablepos = (osc.morph * tablesf).min(tablesf - 1.f);
     return tablepos - tablepos.trunc();
 }
 
@@ -287,7 +290,8 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
                     a_tables = getTables(vox, 0, AisMorphing);
             }
             A.level += A.level_step;
-            A.phase += A.phase_inc;
+            A.phase = A.phase_inc.fmadd(A.pitch_ratio, A.phase);
+            A.pitch_ratio += A.pitch_ratio_step;
             Utils::wrapPhase(A.phase); 
         }
 
@@ -301,7 +305,8 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
                     b_tables = getTables(vox, 1, BisMorphing);
             }
             B.level += B.level_step;
-            B.phase += B.phase_inc; 
+            B.phase = B.phase_inc.fmadd(B.pitch_ratio, B.phase);
+            B.pitch_ratio += B.pitch_ratio_step;
             Utils::wrapPhase(B.phase); 
         }
 
@@ -315,7 +320,8 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
                     c_tables = getTables(vox, 2, CisMorphing);
             }
             C.level += C.level_step;
-            C.phase += C.phase_inc; 
+            C.phase = C.phase_inc.fmadd(C.pitch_ratio, C.phase);
+            C.pitch_ratio += C.pitch_ratio_step;
             Utils::wrapPhase(C.phase); 
         }
 
@@ -329,7 +335,8 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
                     d_tables = getTables(vox, 3, DisMorphing);
             }
             D.level += D.level_step;
-            D.phase += D.phase_inc; 
+            D.phase = D.phase_inc.fmadd(D.pitch_ratio, D.phase);
+            D.pitch_ratio += D.pitch_ratio_step;
             Utils::wrapPhase(D.phase); 
         }
 

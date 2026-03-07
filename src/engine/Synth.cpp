@@ -110,6 +110,9 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
         }
     }
 
-    for (auto& voice : activeVoices)
+    for (auto& voice : activeVoices) {
         voice->endBlock(startSample, numSamples);
+        for (int o = 0; o < MAX_OSCILLATORS; ++o)
+            voice->osc[o].finishBlock(numSamples);
+    }
 }
