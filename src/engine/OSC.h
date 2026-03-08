@@ -76,6 +76,8 @@ public:
     alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> unison_gain_l{};
     alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> unison_gain_r{};
 
+    WhiteNoiseGen noiseGen{ 0 };
+    PinkNoiseGen pinkNoiseGen{ 0 };
     bool isOn = false;
     int voiceId = 0;
     int id = 0;

@@ -352,11 +352,20 @@ public:
 
 class NoiseGen {
 public:
-    NoiseGen(uint32_t seed)
-        : original_seed(seed), state(seed) {
+    virtual ~NoiseGen() = default;
+    virtual float next() = 0;
+    virtual void reseed(uint32_t seed) = 0;
+};
+
+class WhiteNoiseGen : public NoiseGen {
+public:
+    WhiteNoiseGen(uint32_t seed)
+        : original_seed(seed), state(seed) 
+    {
     }
 
-    float next() {
+    float next() override
+    {
         uint32_t x = state;
         x ^= x << 13;
         x ^= x >> 17;
@@ -371,7 +380,8 @@ public:
         state = original_seed;
     }
 
-    void reseed(uint32_t seed) {
+    void reseed(uint32_t seed) override
+    {
         state = seed;
     }
 
@@ -381,73 +391,52 @@ private:
     uint32_t state;
 };
 
-
-/*
- ==============================================================================
-
- This code is part of the GIN library.
- Copyright (c) 2018 - 2026 by Roland Rabien.
-
- ==============================================================================
- */
-class PinkNoiseGen
+class PinkNoiseGen : public NoiseGen
 {
 public:
-    PinkNoiseGen(uint64_t seed)
+    PinkNoiseGen(uint32_t seed)
     {
-        rand.s = seed;
-        rand.x = 0;
-        rand.w = 0;
-        counter = 0;
-
-        memset(octave_hold_vals, 0, 9 * 4);
-        out = 0;
+        reseed(seed);
     }
 
-    float next()
+    float next() override
     {
-        uint8_t octave = trailing_zeros[counter];
+        float white = next_white();
 
-        out -= octave_hold_vals[octave];
-        octave_hold_vals[octave] = (float)next_int() / (float)INT32_MAX;
-        octave_hold_vals[octave] /= (float)(10 - octave);
-        out += octave_hold_vals[octave];
+        b0 = 0.99886f * b0 + white * 0.0555179f;
+        b1 = 0.99332f * b1 + white * 0.0750759f;
+        b2 = 0.96900f * b2 + white * 0.1538520f;
+        b3 = 0.86650f * b3 + white * 0.3104856f;
+        b4 = 0.55000f * b4 + white * 0.5329522f;
+        b5 = -0.7616f * b5 - white * 0.0168980f;
 
-        counter++;
+        float pink = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362f;
+        b6 = white * 0.115926f;
 
-        return out;
+        return pink * 0.11f; // normalization
     }
 
-    void reseed(uint64_t seed)
+    void reseed(uint32_t seed) override
     {
-        rand.s = seed;
-        rand.x = 0;
-        rand.w = 0;
-        counter = 0;
-        out = 0.f;
-        memset(octave_hold_vals, 0, sizeof(octave_hold_vals));
+        state = seed ? seed : 1;
+
+        b0 = b1 = b2 = b3 = b4 = b5 = b6 = 0.f;
     }
 
 private:
-    struct middle_square_weyl
-    {
-        uint64_t s;
-        uint64_t x;
-        uint64_t w;
-    };
+    uint64_t state;
 
-    int32_t next_int()
+    float b0, b1, b2, b3, b4, b5, b6;
+
+    float next_white()
     {
-        rand.x *= rand.x;
-        rand.x += (rand.w += rand.s);
-        rand.x = (rand.x >> 32u) | (rand.x << 32u);
-        return int32_t(rand.x);
+        // xorshift64*
+        state ^= state >> 12;
+        state ^= state << 25;
+        state ^= state >> 27;
+
+        uint32_t r = (state * 2685821657736338717ULL) >> 32;
+
+        return (float)int32_t(r) * (1.0f / 2147483648.0f);
     }
-
-    uint8_t trailing_zeros[256] = { 8,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,5,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,6,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,5,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,7,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,5,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,6,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,5,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0,4,0,1,0,2,0,1,0,3,0,1,0,2,0,1,0, };
-
-    middle_square_weyl rand;
-    float out;
-    float octave_hold_vals[9];
-    uint8_t counter;
 };

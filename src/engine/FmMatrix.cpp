@@ -69,6 +69,28 @@ void FmMatrix::prepare(float _srate)
     morphAlpha = 1.f - std::exp(-1.f / (MORPH_SECONDS * srate));
 }
 
+bool FmMatrix::isNoise(int oscId)
+{
+    auto& wt = audioProcessor.wavetables[oscId];
+    return wt.mode == TetraOPAudioProcessor::WhiteNoise || wt.mode == TetraOPAudioProcessor::PinkNoise;
+}
+
+void FmMatrix::fetchNoiseGenerators(int oscId, SIMDI voiceId)
+{
+    auto& wt = audioProcessor.wavetables[oscId];
+    bool isWhiteNoise = wt.mode == TetraOPAudioProcessor::WhiteNoise;
+
+    for (int i = 0; i < SIMD_SZ; ++i) 
+    {
+        auto* voice = (Voice*)audioProcessor.synth->getVoice(voiceId.get(i));
+        if (!voice) continue;
+        auto& osc = voice->osc[oscId];
+        auto& ng = noiseGens[oscId];
+        ng[i] = isWhiteNoise ? (NoiseGen*)&osc.noiseGen : (NoiseGen*)&osc.pinkNoiseGen;
+    }
+}
+
+
 static inline SIMDF renderUnison(const float* table1, const float* table2, const int size, SIMDF phase, float morph)
 {
     static constexpr float almostOne = 1.f - std::numeric_limits<float>::epsilon();
@@ -164,7 +186,8 @@ void FmMatrix::processBlock(SIMDVox& data, int numSamples, int activeVoice)
 // checks if global morph position is at a different index from tables.currIndex
 static inline bool hasCurrTableChanged(OSC::SIMDOSC& osc, FmMatrix::TablesData& tables)
 {
-    auto idx = (osc.morph * tables.numTables).trunc().min(tables.numTables - 1.f);
+    float tablesf = static_cast<float>(tables.numTables);
+    auto idx = (osc.morph * tablesf).trunc().min(tablesf - 1.f);
     auto msk = ~(idx == tables.currIndex);
     return !msk.testz();
 }
@@ -199,10 +222,29 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
     if constexpr (COn) c_tables = getTables(vox, 2, CisMorphing);
     if constexpr (DOn) d_tables = getTables(vox, 3, DisMorphing);
 
-    const bool AhasUnison = AisOut && A.unison->voices > 1;
-    const bool BhasUnison = BisOut && B.unison->voices > 1;
-    const bool ChasUnison = CisOut && C.unison->voices > 1;
-    const bool DhasUnison = DisOut && D.unison->voices > 1;
+    const bool AisNoise = AOn && isNoise(0);
+    const bool BisNoise = BOn && isNoise(1);
+    const bool CisNoise = COn && isNoise(2);
+    const bool DisNoise = DOn && isNoise(3);
+
+    const bool AhasUnison = AisOut && A.unison->voices > 1 && !AisNoise;
+    const bool BhasUnison = BisOut && B.unison->voices > 1 && !BisNoise;
+    const bool ChasUnison = CisOut && C.unison->voices > 1 && !CisNoise;
+    const bool DhasUnison = DisOut && D.unison->voices > 1 && !DisNoise;
+
+    const RenderFn renderA = isNoise(0) ? renderNoise : AisOut ? renderWaveCubic : renderWaveLinear;
+    const RenderFn renderB = isNoise(1) ? renderNoise : BisOut ? renderWaveCubic : renderWaveLinear;
+    const RenderFn renderC = isNoise(2) ? renderNoise : CisOut ? renderWaveCubic : renderWaveLinear;
+    const RenderFn renderD = isNoise(3) ? renderNoise : DisOut ? renderWaveCubic : renderWaveLinear;
+
+    std::array<NoiseGen*, 4>* ANoiseGen = nullptr;
+    std::array<NoiseGen*, 4>* BNoiseGen = nullptr;
+    std::array<NoiseGen*, 4>* CNoiseGen = nullptr;
+    std::array<NoiseGen*, 4>* DNoiseGen = nullptr;
+    if (AisNoise) { fetchNoiseGenerators(0, vox.voice.id); ANoiseGen = &noiseGens[0]; };
+    if (BisNoise) { fetchNoiseGenerators(1, vox.voice.id); BNoiseGen = &noiseGens[1]; };
+    if (CisNoise) { fetchNoiseGenerators(2, vox.voice.id); CNoiseGen = &noiseGens[2]; };
+    if (DisNoise) { fetchNoiseGenerators(3, vox.voice.id); DNoiseGen = &noiseGens[3]; };
 
     SIMDF la, lb, lc, ld;
     SIMDF offsetA(0.f), offsetB(0.f), offsetC(0.f), offsetD(0.f);
@@ -232,13 +274,13 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
 
         // render mono outputs
         if constexpr (AOn)
-            A.out = renderWave(a_tables.data, a_tables.size, A.phase + A.phase_offset + offsetA, a_morph) * A.level;
+            A.out = renderA(a_tables.data, a_tables.size, A.phase + A.phase_offset + offsetA, a_morph, ANoiseGen) * A.level;
         if constexpr (BOn)
-            B.out = renderWave(b_tables.data, b_tables.size, B.phase + B.phase_offset + offsetB, b_morph) * B.level;
+            B.out = renderB(b_tables.data, b_tables.size, B.phase + B.phase_offset + offsetB, b_morph, BNoiseGen) * B.level;
         if constexpr (COn)
-            C.out = renderWave(c_tables.data, c_tables.size, C.phase + C.phase_offset + offsetC, c_morph) * C.level;
+            C.out = renderC(c_tables.data, c_tables.size, C.phase + C.phase_offset + offsetC, c_morph, CNoiseGen) * C.level;
         if constexpr (DOn)
-            D.out = renderWave(d_tables.data, d_tables.size, D.phase + D.phase_offset + offsetD, d_morph) * D.level;
+            D.out = renderD(d_tables.data, d_tables.size, D.phase + D.phase_offset + offsetD, d_morph, DNoiseGen) * D.level;
 
         if constexpr (AOn) AoutL = AoutR = A.out;
         if constexpr (BOn) BoutL = BoutR = B.out;
@@ -362,19 +404,19 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
 }
 
 // fetches 1 table per voice + 1 morphing table per voice
-FmMatrix::TablesData FmMatrix::getTables(SIMDVox& vox, int oscidx, bool isMorphing)
+FmMatrix::TablesData FmMatrix::getTables(SIMDVox& vox, int oscId, bool isMorphing)
 {
     alignas(sizeof(SIMDF)) std::array<float, 4> currIndex{};
     alignas(sizeof(SIMDF)) std::array<float, 4> targIndex{};
 
     TablesData out{};
-    auto& tables = audioProcessor.wavetables[oscidx];
+    auto& tables = audioProcessor.wavetables[oscId];
     out.numTables = tables.numTables;
     out.size = tables.tableSize;
 
-    for (int i = 0; i < SIMD_SZ; ++i)
+    for (int i = 0; i < SIMD_SZ; ++i) // for each voice get OSC wavetables
     {
-        auto morph = vox.osc[oscidx].morph.get(i);
+        auto morph = vox.osc[oscId].morph.get(i);
         auto tableIndex = std::min(tables.numTables - 1, int(float(tables.numTables) * morph));
         auto* t1 = tables.tables.getUnchecked(tableIndex);
         out.data[i] = t1->tableForNote(vox.voice.key[i]).data();

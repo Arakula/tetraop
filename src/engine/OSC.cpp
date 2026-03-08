@@ -30,6 +30,10 @@ void OSC::trigger(int note, float srate)
 	auto pitch_oct = mod->getPolyValue(prefix + "pitch_oct", voiceId, 0);
 	auto total_cents = pitch_cents + (pitch_semis * 100.0f) + (pitch_oct * 1200.0f);
 	pitch_ratio = pitch_ratio_targ = Utils::centsToRatio(total_cents);
+
+	auto seed = phase_rand > 0 ? rand() + 1000 : id * 1000 + 1000;
+	noiseGen.reseed(seed);
+	pinkNoiseGen.reseed(seed);
 }
 
 void OSC::prepareBlock(int startSample, int numSamples)

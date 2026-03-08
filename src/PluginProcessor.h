@@ -35,6 +35,14 @@ class TetraOPAudioProcessor
     , public juce::ValueTree::Listener
 {
 public:
+    enum WTMode
+    {
+        Table,
+        WhiteNoise,
+        PinkNoise,
+        UserTable
+    };
+
     struct WTable 
     {
         String name;
@@ -42,6 +50,7 @@ public:
         gin::Wavetable tables;
         int numTables;
         int tableSize;
+        WTMode mode = PinkNoise;
     };
 
     // synth

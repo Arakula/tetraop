@@ -7,6 +7,8 @@
 #include "Utils.h"
 
 using namespace globals;
+using RenderFn = SIMDF(*)(const std::array<float*, 8>&, int, SIMDF, SIMDF, void*);
+
 class TetraOPAudioProcessor;
 
 struct SIMDVox
@@ -24,7 +26,7 @@ public:
         SIMDF targIndex;
         int numTables;
         int size;
-        std::array<float*, 8> data;
+        std::array<float*, 8> data; // 4 tables (1 per voice) + 4 morph target tables
     };
 
     using Matrix4x4 = std::array<std::array<float, 4>, 4>;
@@ -55,6 +57,8 @@ public:
     std::array<SIMDF, MAX_BLOCKSIZE> outL;
     std::array<SIMDF, MAX_BLOCKSIZE> outR;
 
+    std::array<NoiseGen*, 4> noiseGens[4];
+
     // oscilloscope sampling
     std::array<float, SCOPE_BUFLEN> oscOut[4]{};
     std::array<int, 4> lastScopeIdx{};
@@ -72,6 +76,11 @@ public:
     void setLayout(Layout l);
     void prepare(float _srate);
     void processBlock(SIMDVox& data, int numSamples, int activeVoiceLane);
+    bool isNoise(int oscId);
+
+    // Noise generators belong to each oscillator so they can retrigger with same seed if phase_rand is zero
+    // Fetch noise generators of each voice for this oscillator for processing 
+    void fetchNoiseGenerators(int oscId, SIMDI voiceId);
 
     inline static SIMDF renderSine(SIMDF phase)
     {
@@ -79,7 +88,20 @@ public:
         return mipp::sin(phase * MathConstants<float>::twoPi);
     }
 
-    static inline SIMDF renderWaveLinear(const std::array<float*, 8>& tables, const int size, SIMDF phase, const SIMDF morph)
+    static inline SIMDF renderNoise(const std::array<float*, 8>&, const int, SIMDF, const SIMDF, void* noiseGens)
+    {
+        auto gens = static_cast<std::array<NoiseGen*, 4>*>(noiseGens);
+        return
+        {
+            (*gens)[0]->next(),
+            (*gens)[1]->next(),
+            (*gens)[2]->next(),
+            (*gens)[3]->next(),
+        };
+    }
+
+    // last arg void* is to keep the same signature as noise generators
+    static inline SIMDF renderWaveLinear(const std::array<float*, 8>& tables, const int size, SIMDF phase, const SIMDF morph, void*)
     {
         Utils::wrapPhase(phase);
         auto posf = phase * float(size);
@@ -105,7 +127,7 @@ public:
         return mipp::fmadd(frac, (l2 - l1), l1);
     }
 
-    static inline SIMDF renderWave(const std::array<float*, 8>& tables, const int size, SIMDF phase, const SIMDF morph)
+    static inline SIMDF renderWaveCubic(const std::array<float*, 8>& tables, const int size, SIMDF phase, const SIMDF morph, void*)
     {
         Utils::wrapPhase(phase);
         auto posf = phase * float(size);

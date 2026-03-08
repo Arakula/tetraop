@@ -14,7 +14,8 @@ class Voice : public gin::SynthesiserVoice
 public:
     struct SIMDVoice
     {
-        std::array<float, 4> key;
+        std::array<float, 4> key; // float 0...1 note pressed used to get wavetable
+        SIMDI id;
         SIMDF env;
         SIMDF vel_mult;
         SIMDF env_step;
@@ -23,6 +24,7 @@ public:
     struct VoiceVec
     {
         std::array<float, 4> key;
+        alignas(sizeof(SIMDI)) int id[4];
         alignas(sizeof(SIMDF)) float vel_mult[4];
         alignas(sizeof(SIMDF)) float env[4];
         alignas(sizeof(SIMDF)) float env_step[4];
@@ -34,17 +36,13 @@ public:
         vec.env[lane] = env;
         vec.vel_mult[lane] = vel_mult;
         vec.env_step[lane] = env_step;
-    }
-
-    void vecToState(VoiceVec& vec, int lane)
-    {
-        env = vec.env[lane];
-        vel_mult = vec.vel_mult[lane];
+        vec.id[lane] = id;
     }
 
     static SIMDVoice vecToSIMD(VoiceVec& vec)
     {
         SIMDVoice v;
+        v.id.load(vec.id);
         v.key = vec.key;
         v.env.load(vec.env);
         v.vel_mult.load(vec.vel_mult);
@@ -58,6 +56,12 @@ public:
         simd.vel_mult.store(vec.vel_mult);
         simd.env.store(vec.env);
         return vec;
+    }
+
+    void vecToState(VoiceVec& vec, int lane)
+    {
+        env = vec.env[lane];
+        vel_mult = vec.vel_mult[lane];
     }
 
 	int id;
