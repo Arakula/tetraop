@@ -50,7 +50,7 @@ public:
         gin::Wavetable tables;
         int numTables;
         int tableSize;
-        WTMode mode = PinkNoise;
+        WTMode mode;
     };
 
     // synth

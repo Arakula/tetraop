@@ -92,18 +92,25 @@ void WaveDisplay::paint(Graphics& g)
 
         drawWaveform(g, table.data(), tablesz, phase);
     }
-    else
+    else // oscilloscope
     {
-        auto waveform = editor.audioProcessor.synth->fm->oscOut[oscId];
-        float maxAbs = 0.0f;
-        for (int i = 0; i < SCOPE_BUFLEN; ++i)
-            maxAbs = std::max(maxAbs, std::abs(waveform[i]));
-        float gain = (maxAbs > 1.0f) ? (1.0f / maxAbs) : 1.0f;
-        if (gain < 1.f)
+        auto level = editor.audioProcessor.params.getRawParameterValue(prefix + "level")->load();
+        if (level > 0.f) {
+            auto waveform = editor.audioProcessor.synth->fm->oscOut[oscId];
+            float maxAbs = 0.0f;
             for (int i = 0; i < SCOPE_BUFLEN; ++i)
-                waveform[i] *= gain;  // normalize waveform if it exceeds 1
-
-        drawWaveform(g, waveform.data(), SCOPE_BUFLEN, 0);
+                maxAbs = std::max(maxAbs, std::abs(waveform[i]));
+            float gain = (maxAbs > 1.0f) ? (1.0f / maxAbs) : 1.0f;
+            if (gain < 1.f)
+                for (int i = 0; i < SCOPE_BUFLEN; ++i)
+                    waveform[i] *= gain;  // normalize waveform if it exceeds 1
+            drawWaveform(g, waveform.data(), SCOPE_BUFLEN, 0);
+        }
+        else
+        {
+            std::array<float, 2> empty{};
+            drawWaveform(g, empty.data(), 2, 0);
+        }
     }
 }
 

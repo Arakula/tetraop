@@ -22,6 +22,15 @@ void Synth::prepare()
 {
     auto srate = (float)getSampleRate();
     fm->prepare(srate);
+    dcBlockerL.setSampleRate(srate);
+    dcBlockerR.setSampleRate(srate);
+}
+
+void Synth::clear()
+{
+    clearVoices();
+    dcBlockerL.reset();
+    dcBlockerR.reset();
 }
 
 void Synth::handleMidiEvent (const juce::MidiMessage& m)
@@ -108,6 +117,13 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
             for (int o = 0; o < MAX_OSCILLATORS; ++o)
                 activeVoices[i + lane]->osc[o].vecToState(oscVecOutTemp[o], lane);
         }
+    }
+
+    // final dc blocking
+    for (int i = 0; i < numSamples; ++i)
+    {
+        left[startSample + i] = dcBlockerL.process(left[startSample + i]);
+        right[startSample + i] = dcBlockerR.process(right[startSample + i]);
     }
 
     for (auto& voice : activeVoices) {

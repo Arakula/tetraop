@@ -21,7 +21,6 @@ public:
     void mouseDrag(const MouseEvent& e) override;
     void mouseDoubleClick(const MouseEvent& e) override;
     void mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel) override;
-    void positionSpreadValuePopup();
 
     void paint(Graphics& g) override;
     void drawUnisonVoices(Graphics& g);

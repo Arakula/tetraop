@@ -232,11 +232,6 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
     const bool ChasUnison = CisOut && C.unison->voices > 1 && !CisNoise;
     const bool DhasUnison = DisOut && D.unison->voices > 1 && !DisNoise;
 
-    const RenderFn renderA = isNoise(0) ? renderNoise : AisOut ? renderWaveCubic : renderWaveLinear;
-    const RenderFn renderB = isNoise(1) ? renderNoise : BisOut ? renderWaveCubic : renderWaveLinear;
-    const RenderFn renderC = isNoise(2) ? renderNoise : CisOut ? renderWaveCubic : renderWaveLinear;
-    const RenderFn renderD = isNoise(3) ? renderNoise : DisOut ? renderWaveCubic : renderWaveLinear;
-
     std::array<NoiseGen*, 4>* ANoiseGen = nullptr;
     std::array<NoiseGen*, 4>* BNoiseGen = nullptr;
     std::array<NoiseGen*, 4>* CNoiseGen = nullptr;
@@ -245,6 +240,11 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
     if (BisNoise) { fetchNoiseGenerators(1, vox.voice.id); BNoiseGen = &noiseGens[1]; };
     if (CisNoise) { fetchNoiseGenerators(2, vox.voice.id); CNoiseGen = &noiseGens[2]; };
     if (DisNoise) { fetchNoiseGenerators(3, vox.voice.id); DNoiseGen = &noiseGens[3]; };
+
+    const RenderFn renderA = isNoise(0) ? renderNoise : AisOut ? renderWaveCubic : renderWaveLinear;
+    const RenderFn renderB = isNoise(1) ? renderNoise : BisOut ? renderWaveCubic : renderWaveLinear;
+    const RenderFn renderC = isNoise(2) ? renderNoise : CisOut ? renderWaveCubic : renderWaveLinear;
+    const RenderFn renderD = isNoise(3) ? renderNoise : DisOut ? renderWaveCubic : renderWaveLinear;
 
     SIMDF la, lb, lc, ld;
     SIMDF offsetA(0.f), offsetB(0.f), offsetC(0.f), offsetD(0.f);

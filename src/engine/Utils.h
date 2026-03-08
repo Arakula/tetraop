@@ -440,3 +440,47 @@ private:
         return (float)int32_t(r) * (1.0f / 2147483648.0f);
     }
 };
+
+class DCBlocker
+{
+public:
+    DCBlocker() {}
+    ~DCBlocker() {}
+
+    void setSampleRate(float sampleRate_)
+    {
+        sampleRate = sampleRate_;
+        recalc();
+    }
+
+    void setCutoff(float cutoff_ /* Hz */)
+    {
+        cutoff = cutoff_;
+        recalc();
+    }
+
+    float process(float x)
+    {
+        float y = x - z;
+        z = x - y * b;
+        return y;
+    }
+
+    void reset()
+    {
+        b = 0;
+        z = 0;
+    }
+
+private:
+    float sampleRate = 1;
+    float cutoff = 10.0f;
+
+    float b = 0;
+    float z = 0;
+
+    void recalc()
+    {
+        b = std::exp(-2.0f * juce::MathConstants<float>::pi * cutoff / sampleRate);
+    }
+};

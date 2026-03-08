@@ -19,10 +19,13 @@ public:
     ~Synth() override;
 
     void prepare();
+    void clear();
     void renderNextSubBlock(AudioBuffer<float>& outputAudio, int startSample, int numSamples) override;
     void handleMidiEvent(const juce::MidiMessage& m) override;
 
 private:
+    DCBlocker dcBlockerL{};
+    DCBlocker dcBlockerR{};
     Voice::VoiceVec voiceVec{};
     OSC::OSCVec oscVec[MAX_OSCILLATORS]{};
     Voice::VoiceVec voiceVecOutTemp{};

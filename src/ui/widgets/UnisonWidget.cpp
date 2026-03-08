@@ -76,12 +76,6 @@ void UnisonWidget::mouseDown(const MouseEvent& e)
     }
 }
 
-void UnisonWidget::positionSpreadValuePopup()
-{
-    auto* top = getTopLevelComponent();
-    
-}
-
 void UnisonWidget::mouseUp(const MouseEvent& e)
 {
     
