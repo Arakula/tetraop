@@ -59,7 +59,8 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "morph", prefixnm + "Morph", NormalisableRange<float>(0.f, 1.f), 0.f));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "phase_offset", prefixnm + "Phase", 0.f, 1.f, 0.0f));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "phase_rand", prefixnm + "Phase Rand", 0.f, 1.f, 1.f));
-        layout.add(std::make_unique<AudioParameterFloat>(prefix + "phase_dist", prefixnm + "Phase Dist", 0.f, 1.f, 0.f));
+        layout.add(std::make_unique<AudioParameterChoice>(prefix + "phase_dist_mode", prefixnm + "Phase Dist Mode", StringArray{"Off", "Bend", "Skew", "Bias", "Pulse", "Sync", "Formant", "Quantize", "Fold" }, 0));
+        layout.add(std::make_unique<AudioParameterFloat>(prefix + "phase_dist_amt", prefixnm + "Phase Dist Amt", -1.f, 1.f, 0.f));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "feedback", prefixnm + "Feedback", 0.f, 1.f, 0.f));
         layout.add(std::make_unique<AudioParameterInt>(prefix + "unison_voices", prefixnm + "Unison Voices", 1, MAX_UNISON, 1));
         layout.add(std::make_unique<AudioParameterChoice>(prefix + "unison_mode", prefixnm + "Unison Mode", StringArray{ "Unison", "Gaussian", "Alternate", "5ths", "Sub" }, 0));

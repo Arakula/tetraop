@@ -3,50 +3,94 @@
 
 FmMatrix::FmMatrix(TetraOPAudioProcessor& p) : audioProcessor(p)
 {
-    matrices[int(DCBA)][3][2] = 1.f; // DC
-    matrices[int(DCBA)][2][1] = 1.f; // CB
-    matrices[int(DCBA)][1][0] = 1.f; // BA
+    audioProcessor.params.addParameterListener("a_phase_dist_mode", this);
+    audioProcessor.params.addParameterListener("b_phase_dist_mode", this);
+    audioProcessor.params.addParameterListener("c_phase_dist_mode", this);
+    audioProcessor.params.addParameterListener("d_phase_dist_mode", this);
 
-    matrices[int(DC_BA)][3][2] = 1.f; // DC
-    matrices[int(DC_BA)][1][0] = 1.f; // BA
+    layouts[int(DCBA)][3][2] = 1.f; // DC
+    layouts[int(DCBA)][2][1] = 1.f; // CB
+    layouts[int(DCBA)][1][0] = 1.f; // BA
 
-    matrices[int(DC_B_A)][3][2] = 1.f; // DC
+    layouts[int(DC_BA)][3][2] = 1.f; // DC
+    layouts[int(DC_BA)][1][0] = 1.f; // BA
 
-    matrices[int(DA_DB_DC)][3][0] = 1.f; // DA
-    matrices[int(DA_DB_DC)][3][1] = 1.f; // DB
-    matrices[int(DA_DB_DC)][3][2] = 1.f; // DC
+    layouts[int(DC_B_A)][3][2] = 1.f; // DC
 
-    matrices[int(BA_CA_DA)][1][0] = 1.f; // BA
-    matrices[int(BA_CA_DA)][2][0] = 1.f; // CA
-    matrices[int(BA_CA_DA)][3][0] = 1.f; // DA
+    layouts[int(DA_DB_DC)][3][0] = 1.f; // DA
+    layouts[int(DA_DB_DC)][3][1] = 1.f; // DB
+    layouts[int(DA_DB_DC)][3][2] = 1.f; // DC
 
-    matrices[int(A_CB_DC)][2][1] = 1.f; // CB
-    matrices[int(A_CB_DC)][3][2] = 1.f; // DC
+    layouts[int(BA_CA_DA)][1][0] = 1.f; // BA
+    layouts[int(BA_CA_DA)][2][0] = 1.f; // CA
+    layouts[int(BA_CA_DA)][3][0] = 1.f; // DA
 
-    matrices[int(DC_CA_CB)][3][2] = 1.f; // DC
-    matrices[int(DC_CA_CB)][2][0] = 1.f; // CA
-    matrices[int(DC_CA_CB)][2][1] = 1.f; // CB
+    layouts[int(A_CB_DC)][2][1] = 1.f; // CB
+    layouts[int(A_CB_DC)][3][2] = 1.f; // DC
 
-    matrices[int(DC_DB_BA_CA)][3][2] = 1.f; // DC
-    matrices[int(DC_DB_BA_CA)][3][1] = 1.f; // DB
-    matrices[int(DC_DB_BA_CA)][1][0] = 1.f; // BA
-    matrices[int(DC_DB_BA_CA)][2][0] = 1.f; // CA
+    layouts[int(DC_CA_CB)][3][2] = 1.f; // DC
+    layouts[int(DC_CA_CB)][2][0] = 1.f; // CA
+    layouts[int(DC_CA_CB)][2][1] = 1.f; // CB
 
-    matrices[int(DB_CB_BA)][3][1] = 1.f; // DB
-    matrices[int(DB_CB_BA)][2][1] = 1.f; // CB
-    matrices[int(DB_CB_BA)][1][0] = 1.f; // BA
+    layouts[int(DC_DB_BA_CA)][3][2] = 1.f; // DC
+    layouts[int(DC_DB_BA_CA)][3][1] = 1.f; // DB
+    layouts[int(DC_DB_BA_CA)][1][0] = 1.f; // BA
+    layouts[int(DC_DB_BA_CA)][2][0] = 1.f; // CA
+
+    layouts[int(DB_CB_BA)][3][1] = 1.f; // DB
+    layouts[int(DB_CB_BA)][2][1] = 1.f; // CB
+    layouts[int(DB_CB_BA)][1][0] = 1.f; // BA
 
     setLayout(Layout::DCBA);
 }
 
 FmMatrix::~FmMatrix()
 {
+    audioProcessor.params.removeParameterListener("a_phase_dist_mode", this);
+    audioProcessor.params.removeParameterListener("b_phase_dist_mode", this);
+    audioProcessor.params.removeParameterListener("c_phase_dist_mode", this);
+    audioProcessor.params.removeParameterListener("d_phase_dist_mode", this);
+}
+
+void FmMatrix::parameterChanged(const juce::String&, float)
+{
+    paramsChanged = true;
+}
+
+void FmMatrix::onParamsChange()
+{
+    std::array<DistFn, 9> dists = {
+        PhaseDist::bypass,
+        PhaseDist::bend,
+        PhaseDist::skew,
+        PhaseDist::bias,
+        PhaseDist::pulse,
+        PhaseDist::sync,
+        PhaseDist::sync,
+        PhaseDist::quantize,
+        PhaseDist::fold
+    };
+
+    auto adist = (PhaseDist::Mode)audioProcessor.params.getRawParameterValue("a_phase_dist_mode")->load();
+    auto bdist = (PhaseDist::Mode)audioProcessor.params.getRawParameterValue("b_phase_dist_mode")->load();
+    auto cdist = (PhaseDist::Mode)audioProcessor.params.getRawParameterValue("c_phase_dist_mode")->load();
+    auto ddist = (PhaseDist::Mode)audioProcessor.params.getRawParameterValue("d_phase_dist_mode")->load();
+
+    Adist = dists[adist];
+    Bdist = dists[bdist];
+    Cdist = dists[cdist];
+    Ddist = dists[ddist];
+
+    Awindow = adist == 6 ? PhaseDist::windowHalfSine : PhaseDist::windowBypass;
+    Bwindow = bdist == 6 ? PhaseDist::windowHalfSine : PhaseDist::windowBypass;
+    Cwindow = cdist == 6 ? PhaseDist::windowHalfSine : PhaseDist::windowBypass;
+    Dwindow = ddist == 6 ? PhaseDist::windowHalfSine : PhaseDist::windowBypass;
 }
 
 void FmMatrix::setLayout(Layout l)
 {
     layout = l;
-    matrix = matrices[layout];
+    matrix = layouts[layout];
 
     ab = matrix[0][1]; ac = matrix[0][2]; ad = matrix[0][3];
     ba = matrix[1][0]; bc = matrix[1][2]; bd = matrix[1][3];
@@ -155,6 +199,12 @@ static inline std::pair<SIMDF, SIMDF> processUnison(
 // SIMD'ed voices rendering
 void FmMatrix::processBlock(SIMDVox& data, int numSamples, int activeVoice)
 {
+    if (paramsChanged)
+    {
+        onParamsChange();
+        paramsChanged = false;
+    }
+
     bool aon = data.osc[0].level.sum() > 1e-5 || data.osc[0].level_step.sum() > 1e-5;
     bool bon = data.osc[1].level.sum() > 1e-5 || data.osc[1].level_step.sum() > 1e-5;
     bool con = data.osc[2].level.sum() > 1e-5 || data.osc[2].level_step.sum() > 1e-5;
@@ -246,7 +296,8 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
     const RenderFn renderC = isNoise(2) ? renderNoise : CisOut ? renderWaveCubic : renderWaveLinear;
     const RenderFn renderD = isNoise(3) ? renderNoise : DisOut ? renderWaveCubic : renderWaveLinear;
 
-    SIMDF la, lb, lc, ld;
+    // temp vars
+    SIMDF la, lb, lc, ld, fm_phase; 
     SIMDF offsetA(0.f), offsetB(0.f), offsetC(0.f), offsetD(0.f);
     SIMDF AoutL(0.f), AoutR(0.f);
     SIMDF BoutL(0.f), BoutR(0.f);
@@ -273,14 +324,34 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
             offsetD = la.fmadd(ad, lb.fmadd(bd, lc.fmadd(cd, ld * D.feedback)));
 
         // render mono outputs
-        if constexpr (AOn)
-            A.out = renderA(a_tables.data, a_tables.size, A.phase + A.phase_offset + offsetA, a_morph, ANoiseGen) * A.level;
+        if constexpr (AOn) 
+        {
+            fm_phase = A.phase + A.phase_offset + offsetA;
+            Utils::wrapPhase(fm_phase);
+            A.out = renderA(a_tables.data, a_tables.size, Adist(fm_phase, A.dist_amt), a_morph, ANoiseGen) * A.level;
+            Awindow(A.out, fm_phase);
+        }
         if constexpr (BOn)
-            B.out = renderB(b_tables.data, b_tables.size, B.phase + B.phase_offset + offsetB, b_morph, BNoiseGen) * B.level;
+        {
+            fm_phase = B.phase + B.phase_offset + offsetB;
+            Utils::wrapPhase(fm_phase);
+            B.out = renderB(b_tables.data, b_tables.size, Bdist(fm_phase, B.dist_amt), b_morph, BNoiseGen) * B.level;
+            Bwindow(B.out, fm_phase);
+        }
         if constexpr (COn)
-            C.out = renderC(c_tables.data, c_tables.size, C.phase + C.phase_offset + offsetC, c_morph, CNoiseGen) * C.level;
+        {
+            fm_phase = C.phase + C.phase_offset + offsetC;
+            Utils::wrapPhase(fm_phase);
+            C.out = renderC(c_tables.data, c_tables.size, Cdist(fm_phase, C.dist_amt), c_morph, CNoiseGen) * C.level;
+            Cwindow(C.out, fm_phase);
+        }
         if constexpr (DOn)
-            D.out = renderD(d_tables.data, d_tables.size, D.phase + D.phase_offset + offsetD, d_morph, DNoiseGen) * D.level;
+        {
+            fm_phase = D.phase + D.phase_offset + offsetD;
+            Utils::wrapPhase(fm_phase);
+            D.out = renderD(d_tables.data, d_tables.size, Ddist(fm_phase, D.dist_amt), d_morph, DNoiseGen) * D.level;
+            Dwindow(D.out, D.phase)
+        }
 
         if constexpr (AOn) AoutL = AoutR = A.out;
         if constexpr (BOn) BoutL = BoutR = B.out;

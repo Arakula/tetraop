@@ -72,6 +72,8 @@ void OSC::prepareBlock(int startSample, int numSamples)
 	auto total_cents = pitch_cents + (pitch_semis * 100.0f) + (pitch_oct * 1200.0f);
 	pitch_ratio_targ = Utils::centsToRatio(total_cents);
 
+	dist_amt = mod->getPolyValue(prefix + "phase_dist_amt", voiceId, blkoffset);
+
 	if (unison_v == 1)
 	{
 		unison_voices = unison_v;
@@ -95,7 +97,6 @@ void OSC::finishBlock(int)
 {
 	level = level_targ;
 	pitch_ratio = pitch_ratio_targ;
-	morph = morph_targ;
 }
 
 void OSC::recalcUnison()

@@ -48,6 +48,7 @@ public:
         SIMDF feedback;
         SIMDF morph;
         SIMDF morph_targ;
+        SIMDF dist_amt;
         SIMDUnison unison[4]; // four lanes of voices
     };
 
@@ -67,6 +68,7 @@ public:
         alignas(sizeof(SIMDF)) float gain_r[4];
         alignas(sizeof(SIMDF)) float morph[4];
         alignas(sizeof(SIMDF)) float morph_targ[4];
+        alignas(sizeof(SIMDF)) float dist_amt[4];
         UnisonVec unison[4];
     };
 
@@ -103,6 +105,7 @@ public:
     float unison_blend = -1.f;
     float pitch_ratio = 1.f;
     float pitch_ratio_targ = 1.f;
+    float dist_amt = 0.f;
 
     OSC(int _id, int _voiceId, TetraOPAudioProcessor& p);
     ~OSC() {}
@@ -131,6 +134,7 @@ public:
         vec.feedback[lane] = feedback;
         vec.morph[lane] = morph;
         vec.morph_targ[lane] = morph_targ;
+        vec.dist_amt[lane] = dist_amt;
 
         vec.unison[lane].voices = unison_voices;
         if (! isFMOutput || (level <= 1e-5f && level_targ < 1e-5f))
@@ -165,6 +169,7 @@ public:
         o.feedback.load(vec.feedback);
         o.morph.load(vec.morph);
         o.morph_targ.load(vec.morph_targ);
+        o.dist_amt.load(vec.dist_amt);
 
         for (int lane = 0; lane < 4; ++lane) // for each voice
         {
@@ -193,6 +198,7 @@ public:
         OSCVec vec{};
         simd.phase.store(vec.phase);
         simd.out.store(vec.out);
+        simd.morph.store(vec.morph);
 
         for (int lane = 0; lane < 4; ++lane)
         {
@@ -214,6 +220,7 @@ public:
     {
         phase = vec.phase[lane];
         out = vec.out[lane];
+        morph = vec.morph[lane];
 
         if (vec.unison[lane].voices > 1)
         {

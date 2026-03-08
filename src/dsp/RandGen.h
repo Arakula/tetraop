@@ -6,6 +6,9 @@
 
 using namespace globals;
 
+/*
+* Modulator that generates noise of different types
+*/
 class RandGen
 {
 public:

@@ -22,7 +22,7 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 	rand = std::make_unique<Rotary>(editor, prefix + "phase_rand", "Rand", Rotary::Percent);
 	auto rotaryFormat = oscId == 0 ? Rotary::OSCMorphA : oscId == 1 ? Rotary::OSCMorphB : oscId == 2 ? Rotary::OSCMorphC : Rotary::OSCMorphD;
 	morph = std::make_unique<Rotary>(editor, prefix + "morph", "Frame", rotaryFormat);
-	dist = std::make_unique<Rotary>(editor, prefix + "phase_dist", "Dist", Rotary::Percent);
+	dist = std::make_unique<Rotary>(editor, prefix + "phase_dist_amt", "", Rotary::Percent, true);
 	detune = std::make_unique<Rotary>(editor, prefix + "unison_detune", "Det", Rotary::Percent);
 	blend = std::make_unique<Rotary>(editor, prefix + "unison_blend", "Blend", Rotary::Percent);
 	wide = std::make_unique<Rotary>(editor, prefix + "unison_stereo", "Wide", Rotary::Percent);

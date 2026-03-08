@@ -5,6 +5,7 @@
 #include "FmMatrix.h"
 #include "Voice.h"
 #include "Utils.h"
+#include "../dsp/PhaseDist.h"
 
 using namespace globals;
 using RenderFn = SIMDF(*)(const std::array<float*, 8>&, int, SIMDF, SIMDF, void*);
@@ -17,7 +18,7 @@ struct SIMDVox
     OSC::SIMDOSC osc[4];
 };
 
-class FmMatrix
+class FmMatrix : public juce::AudioProcessorValueTreeState::Listener
 {
 public:
     struct TablesData 
@@ -46,8 +47,9 @@ public:
     };
 
     Layout layout = Layout::A_B_C_D;
-    std::array<Matrix4x4, kLayouts> matrices{};
+    std::array<Matrix4x4, kLayouts> layouts{};
     Matrix4x4 matrix{};
+    bool paramsChanged = true; // flag to detect when osc distortion mode changes
 
     SIMDF ab = 0.f; SIMDF ac = 0.f; SIMDF ad = 0.f;
     SIMDF ba = 0.f; SIMDF bc = 0.f; SIMDF bd = 0.f;
@@ -70,9 +72,22 @@ public:
     bool DisOut = false;
     bool isOut[4] = {};
 
+    // phase distortion function pointers
+    DistFn Adist = PhaseDist::bypass;
+    DistFn Bdist = PhaseDist::bypass;
+    DistFn Cdist = PhaseDist::bypass;
+    DistFn Ddist = PhaseDist::bypass;
+    WindowFn Awindow = PhaseDist::windowBypass;
+    WindowFn Bwindow = PhaseDist::windowBypass;
+    WindowFn Cwindow = PhaseDist::windowBypass;
+    WindowFn Dwindow = PhaseDist::windowBypass;
+
     FmMatrix(TetraOPAudioProcessor& p);
     ~FmMatrix();
 
+    void parameterChanged(const juce::String& paramId, float value) override;
+
+    void onParamsChange();
     void setLayout(Layout l);
     void prepare(float _srate);
     void processBlock(SIMDVox& data, int numSamples, int activeVoiceLane);

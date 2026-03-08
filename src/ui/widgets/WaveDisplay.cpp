@@ -9,6 +9,8 @@ WaveDisplay::WaveDisplay(TetraOPAudioProcessorEditor& e, int _oscId)
     editor.audioProcessor.params.addParameterListener(prefix + "on", this);
     editor.audioProcessor.params.addParameterListener(prefix + "morph", this);
     editor.audioProcessor.params.addParameterListener(prefix + "phase_offset", this);
+    editor.audioProcessor.params.addParameterListener(prefix + "phase_dist_amt", this);
+    editor.audioProcessor.params.addParameterListener(prefix + "phase_dist_mode", this);
     isOn = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "on")->load();
 
     addAndMakeVisible(wtdisplay);
@@ -36,6 +38,8 @@ WaveDisplay::~WaveDisplay()
     editor.audioProcessor.params.removeParameterListener(prefix + "on", this);
     editor.audioProcessor.params.removeParameterListener(prefix + "morph", this);
     editor.audioProcessor.params.removeParameterListener(prefix + "phase_offset", this);
+    editor.audioProcessor.params.removeParameterListener(prefix + "phase_dist_amt", this);
+    editor.audioProcessor.params.removeParameterListener(prefix + "phase_dist_mode", this);
 }
 
 void WaveDisplay::parameterChanged(const juce::String& parameterID, float newValue)
@@ -89,8 +93,9 @@ void WaveDisplay::paint(Graphics& g)
         int tablesz = tables.tableSize;
         auto& table = tables.tables.getTable((int)std::round(((tables.numTables - 1) * morph)))->tableForNote(0.5f);
         auto phase = editor.audioProcessor.params.getRawParameterValue(prefix + "phase_offset")->load();
+        auto distAmt = editor.audioProcessor.params.getRawParameterValue(prefix + "phase_dist_amt")->load();
 
-        drawWaveform(g, table.data(), tablesz, phase);
+        drawWaveform(g, table.data(), tablesz, phase, PhaseDist::sync, PhaseDist::windowHalfSine, distAmt);
     }
     else // oscilloscope
     {
@@ -104,12 +109,12 @@ void WaveDisplay::paint(Graphics& g)
             if (gain < 1.f)
                 for (int i = 0; i < SCOPE_BUFLEN; ++i)
                     waveform[i] *= gain;  // normalize waveform if it exceeds 1
-            drawWaveform(g, waveform.data(), SCOPE_BUFLEN, 0);
+            drawWaveform(g, waveform.data(), SCOPE_BUFLEN, 0, nullptr, nullptr, 0.f);
         }
         else
         {
             std::array<float, 2> empty{};
-            drawWaveform(g, empty.data(), 2, 0);
+            drawWaveform(g, empty.data(), 2, 0, nullptr, nullptr, 0.f);
         }
     }
 }
@@ -131,7 +136,7 @@ void WaveDisplay::setMode(Mode _mode)
     toggleUIComponents();
 }
 
-void WaveDisplay::drawWaveform(Graphics& g, float* waveform, int size, float phase)
+void WaveDisplay::drawWaveform(Graphics& g, float* waveform, int size, float phase, DistFn dist, WindowFn distWindow, float distAmt)
 {
     auto b = getLocalBounds().toFloat().reduced(4.f, 8.f);
 
@@ -151,12 +156,26 @@ void WaveDisplay::drawWaveform(Graphics& g, float* waveform, int size, float pha
     // map each sample to pixel x
     for (int x = 1; x < width; ++x)
     {
-        // pick corresponding sample in waveform
-        int index = (x * size) / width;
-        index = (index + phaseOffset) % size;
+        float phs = (float)x / width + phase;
+        float phsorig = phs;
+        if (phs > 1.f) phs -= 1.f;
+
+        if (dist)
+            phs = dist(SIMDF(phs), distAmt).getfirst();
+
+        int index = (int)(phs * (size - 1));
 
         float px = b.getX() + (float)x;
-        float py = centerY - waveform[index] * scaleY;
+        auto val = waveform[index];
+
+        if (distWindow) {
+            auto simdval = SIMDF(val);
+            auto simdphs = SIMDF(phsorig);
+            distWindow(simdval, simdphs);
+            val = simdval.getfirst();
+        }
+
+        float py = centerY - val * scaleY;
 
         p.lineTo(px, py);
     }

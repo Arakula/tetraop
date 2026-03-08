@@ -61,7 +61,7 @@ public:
         return values[index] + frac * (values[index + 1] - values[index]);
     }
 
-    inline float cubic(float input) const
+    inline float fold(float input) const
     {
         input = std::clamp(input, min, max);
         float index = input * scaler + offset;
@@ -222,7 +222,7 @@ public:
     /*
     * Cubic interpolation with wrap around
     */
-    static inline float cubic(const float* buf, int size, float pos)
+    static inline float fold(const float* buf, int size, float pos)
     {
         while (pos < 0.0) pos += size;
         while (pos >= size) pos -= size;

@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include "../../Globals.h"
 #include "WavetableDisplay.h"
+#include "../../dsp/PhaseDist.h"
 
 class TetraOPAudioProcessorEditor;
 using namespace globals;
@@ -26,7 +27,7 @@ public:
     void timerCallback() override;
 
     void paint(juce::Graphics& g) override;
-    void drawWaveform(juce::Graphics& g, float* waveform, int size, float phase);
+    void drawWaveform(juce::Graphics& g, float* waveform, int size, float phase, DistFn dist, WindowFn distWindow, float distAmt);
     void toggleUIComponents();
     void resized() override;
     void setMode(Mode _mode);
