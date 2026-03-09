@@ -4,6 +4,7 @@
 #include "../widgets/Rotary.h"
 #include "../widgets/WaveDisplay.h"
 #include "../widgets/UnisonWidget.h"
+#include "../../dsp/PhaseDist.h"
 
 class TetraOPAudioProcessorEditor;
 
@@ -22,8 +23,10 @@ public:
     void toggleUIComponents();
 	void onMouseDownMorph() const;
 	void onMouseUpMorph() const;
+	void showDistortionMenu();
 
 	TextButton onBtn;
+	TextButton distBtn;
 
 	std::unique_ptr<Rotary> level;
 	std::unique_ptr<Rotary> pan;
@@ -45,4 +48,5 @@ private:
 	int oscId = 0;
     String prefix;
     TetraOPAudioProcessorEditor& editor;
+	bool isMouseDownDist = false;
 };

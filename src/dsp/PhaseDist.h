@@ -34,7 +34,8 @@ public:
 	static inline SIMDF pulse(SIMDF phase, SIMDF amt)
 	{
 		phase = phase.blend(SIMDF(1.f) - phase, amt < 0.f);
-		return (phase * (amt.abs() * 1.60943791243f).exp()).min(almostOne);
+		phase = (phase * (amt.abs() * 1.60943791243f).exp()).min(almostOne);
+		return phase.blend(SIMDF(1.f) - phase, amt < 0.f).min(almostOne); // invert wave
 	}
 
 	static inline SIMDF quantize(SIMDF phase, SIMDF amt)

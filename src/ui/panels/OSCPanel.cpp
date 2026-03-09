@@ -7,6 +7,7 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 	, prefix(_oscId == 0 ? "a_" : _oscId == 1 ? "b_" : _oscId == 2 ? "c_" : "d_")
 {
 	editor.audioProcessor.params.addParameterListener(prefix + "on", this);
+	editor.audioProcessor.params.addParameterListener(prefix + "phase_dist_mode", this);
 
 	addAndMakeVisible(onBtn);
 	onBtn.setAlpha(0.f);
@@ -31,6 +32,9 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 
 	morph->onMouseDown = [this] { onMouseDownMorph(); };
 	morph->onMouseUp = [this] { onMouseUpMorph(); };
+
+	dist->onMouseDown = [this] { isMouseDownDist = true; repaint(); };
+	dist->onMouseUp = [this] { isMouseDownDist = false; repaint(); };
 
 	detune->setSmall();
 	blend->setSmall();
@@ -60,6 +64,10 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 	addAndMakeVisible(semis.get());
 	addAndMakeVisible(cents.get());
 
+	addAndMakeVisible(distBtn);
+	distBtn.setAlpha(0.f);
+	distBtn.onClick = [this] { showDistortionMenu(); };
+
 	unison = std::make_unique<UnisonWidget>(editor, oscId);
 	addAndMakeVisible(unison.get());
 
@@ -70,6 +78,7 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 OSCPanel::~OSCPanel()
 {
 	editor.audioProcessor.params.removeParameterListener(prefix + "on", this);
+	editor.audioProcessor.params.removeParameterListener(prefix + "phase_dist_mode", this);
 }
 
 void OSCPanel::parameterChanged(const juce::String& paramId, float val)
@@ -98,6 +107,30 @@ void OSCPanel::paint(Graphics& g)
 	auto name = prefix.substring(0,1).toUpperCase();
 	g.drawText(name, headerb.withWidth(20).translated(20, 0), Justification::centred);
 	g.restoreState();
+
+	g.setFont(FontOptions(16.f));
+	g.setColour(Colours::black.withAlpha(0.15f));
+	g.fillRoundedRectangle(distBtn.getBounds().toFloat(), 3.f);
+
+	auto distMode = (PhaseDist::Mode)editor.audioProcessor.params.getRawParameterValue(prefix + "phase_dist_mode")->load();
+	auto text = "Off";
+	switch (distMode)
+	{
+	case PhaseDist::Bend: text = "Bend"; break;
+	case PhaseDist::Bias: text = "Bias"; break;
+	case PhaseDist::Fold: text = "Fold"; break;
+	case PhaseDist::Formant: text = "Formt"; break;
+	case PhaseDist::Pulse: text = "Pulse"; break;
+	case PhaseDist::Quantize: text = "Qnt"; break;
+	case PhaseDist::Skew: text = "Skew"; break;
+	case PhaseDist::Sync: text = "Sync"; break;
+	}
+
+	if (!isMouseDownDist)
+	{
+		g.setColour(COLOR_KNOB_LABEL());
+		g.drawText(text, distBtn.getBounds().toFloat(), Justification::centred);
+	}
 }
 
 void OSCPanel::resized()
@@ -121,6 +154,8 @@ void OSCPanel::resized()
 	blend->setBounds(detune->getBounds().translated(KNOB_WIDTH_SM, 0));
 	wide->setBounds(blend->getBounds().translated(KNOB_WIDTH_SM, 0));
 
+	distBtn.setBounds(dist->getBounds().removeFromBottom(20).reduced(4, 0));
+
 	viewport = Rectangle<int>(KNOB_WIDTH * 2, PANEL_HEADER_HEIGHT + 5, KNOB_WIDTH_SM * 3, KNOB_HEIGHT + 8)
 		.toFloat().translated(0.5f, 0.5f).reduced(2.f, 0.f);
 
@@ -141,4 +176,31 @@ void OSCPanel::onMouseUpMorph() const
 void OSCPanel::toggleUIComponents()
 {
 
+}
+
+void OSCPanel::showDistortionMenu()
+{
+	auto mode = (PhaseDist::Mode)editor.audioProcessor.params.getRawParameterValue(prefix + "phase_dist_mode")->load();
+
+	PopupMenu menu;
+	menu.addItem(1, "Off", true, mode == PhaseDist::Off);
+	menu.addItem(2, "Bend", true, mode == PhaseDist::Bend);
+	menu.addItem(3, "Skew", true, mode == PhaseDist::Skew);
+	menu.addItem(4, "Bias", true, mode == PhaseDist::Bias);
+	menu.addItem(5, "Pulse", true, mode == PhaseDist::Pulse);
+	menu.addItem(6, "Sync", true, mode == PhaseDist::Sync);
+	menu.addItem(7, "Formant", true, mode == PhaseDist::Formant);
+	menu.addItem(8, "Quantize", true, mode == PhaseDist::Quantize);
+	menu.addItem(9, "Fold", true, mode == PhaseDist::Fold);
+
+	auto menuPos = localPointToGlobal(distBtn.getBounds().getBottomLeft());
+	menu.showMenuAsync(PopupMenu::Options()
+		.withTargetComponent(*this)
+		.withTargetScreenArea({ menuPos.getX(), menuPos.getY(), 1, 1 }),
+		[this](int result) {
+			if (result == 0) return;
+
+			auto param = editor.audioProcessor.params.getParameter(prefix + "phase_dist_mode");
+			param->setValueNotifyingHost(param->convertTo0to1((float)(result - 1)));
+		});
 }
