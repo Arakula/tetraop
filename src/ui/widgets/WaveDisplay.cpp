@@ -94,8 +94,25 @@ void WaveDisplay::paint(Graphics& g)
         auto& table = tables.tables.getTable((int)std::round(((tables.numTables - 1) * morph)))->tableForNote(0.5f);
         auto phase = editor.audioProcessor.params.getRawParameterValue(prefix + "phase_offset")->load();
         auto distAmt = editor.audioProcessor.params.getRawParameterValue(prefix + "phase_dist_amt")->load();
+        auto distMode = (PhaseDist::Mode)editor.audioProcessor.params.getRawParameterValue(prefix + "phase_dist_mode")->load();
 
-        drawWaveform(g, table.data(), tablesz, phase, PhaseDist::sync, PhaseDist::windowHalfSine, distAmt);
+        std::array<DistFn, 9> dists = {
+            PhaseDist::bypass,
+            PhaseDist::bend,
+            PhaseDist::skew,
+            PhaseDist::bias,
+            PhaseDist::pulse,
+            PhaseDist::sync,
+            PhaseDist::sync,
+            PhaseDist::quantize,
+            PhaseDist::fold
+        };
+
+        drawWaveform(g, table.data(), tablesz, phase, 
+            distMode > 0 ? dists[distMode] : nullptr, 
+            distMode == PhaseDist::Formant ? PhaseDist::windowHalfSine : nullptr, 
+            distAmt
+        );
     }
     else // oscilloscope
     {

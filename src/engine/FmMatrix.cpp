@@ -3,11 +3,6 @@
 
 FmMatrix::FmMatrix(TetraOPAudioProcessor& p) : audioProcessor(p)
 {
-    audioProcessor.params.addParameterListener("a_phase_dist_mode", this);
-    audioProcessor.params.addParameterListener("b_phase_dist_mode", this);
-    audioProcessor.params.addParameterListener("c_phase_dist_mode", this);
-    audioProcessor.params.addParameterListener("d_phase_dist_mode", this);
-
     layouts[int(DCBA)][3][2] = 1.f; // DC
     layouts[int(DCBA)][2][1] = 1.f; // CB
     layouts[int(DCBA)][1][0] = 1.f; // BA
@@ -46,18 +41,13 @@ FmMatrix::FmMatrix(TetraOPAudioProcessor& p) : audioProcessor(p)
 
 FmMatrix::~FmMatrix()
 {
-    audioProcessor.params.removeParameterListener("a_phase_dist_mode", this);
-    audioProcessor.params.removeParameterListener("b_phase_dist_mode", this);
-    audioProcessor.params.removeParameterListener("c_phase_dist_mode", this);
-    audioProcessor.params.removeParameterListener("d_phase_dist_mode", this);
 }
 
 void FmMatrix::parameterChanged(const juce::String&, float)
 {
-    paramsChanged = true;
 }
 
-void FmMatrix::onParamsChange()
+void FmMatrix::prepareDistortions(SIMDVox& vox)
 {
     std::array<DistFn, 9> dists = {
         PhaseDist::bypass,
@@ -76,10 +66,15 @@ void FmMatrix::onParamsChange()
     auto cdist = (PhaseDist::Mode)audioProcessor.params.getRawParameterValue("c_phase_dist_mode")->load();
     auto ddist = (PhaseDist::Mode)audioProcessor.params.getRawParameterValue("d_phase_dist_mode")->load();
 
-    Adist = dists[adist];
-    Bdist = dists[bdist];
-    Cdist = dists[cdist];
-    Ddist = dists[ddist];
+    auto allLanesZero = [](const SIMDF& reg)
+        {
+            return (reg != 0.f).testz();
+        };
+
+    Adist = allLanesZero(vox.osc[0].dist_amt) ? dists[0] : dists[adist];
+    Bdist = allLanesZero(vox.osc[1].dist_amt) ? dists[0] : dists[adist];
+    Cdist = allLanesZero(vox.osc[2].dist_amt) ? dists[0] : dists[adist];
+    Ddist = allLanesZero(vox.osc[3].dist_amt) ? dists[0] : dists[adist];
 
     Awindow = adist == 6 ? PhaseDist::windowHalfSine : PhaseDist::windowBypass;
     Bwindow = bdist == 6 ? PhaseDist::windowHalfSine : PhaseDist::windowBypass;
@@ -197,39 +192,35 @@ static inline std::pair<SIMDF, SIMDF> processUnison(
 }
 
 // SIMD'ed voices rendering
-void FmMatrix::processBlock(SIMDVox& data, int numSamples, int activeVoice)
+void FmMatrix::processBlock(SIMDVox& vox, int numSamples, int activeVoice)
 {
-    if (paramsChanged)
-    {
-        onParamsChange();
-        paramsChanged = false;
-    }
+    prepareDistortions(vox);
 
-    bool aon = data.osc[0].level.sum() > 1e-5 || data.osc[0].level_step.sum() > 1e-5;
-    bool bon = data.osc[1].level.sum() > 1e-5 || data.osc[1].level_step.sum() > 1e-5;
-    bool con = data.osc[2].level.sum() > 1e-5 || data.osc[2].level_step.sum() > 1e-5;
-    bool don = data.osc[3].level.sum() > 1e-5 || data.osc[3].level_step.sum() > 1e-5;
+    bool aon = vox.osc[0].level.sum() > 1e-5 || vox.osc[0].level_step.sum() > 1e-5;
+    bool bon = vox.osc[1].level.sum() > 1e-5 || vox.osc[1].level_step.sum() > 1e-5;
+    bool con = vox.osc[2].level.sum() > 1e-5 || vox.osc[2].level_step.sum() > 1e-5;
+    bool don = vox.osc[3].level.sum() > 1e-5 || vox.osc[3].level_step.sum() > 1e-5;
 
     int mask = (aon << 3) | (bon << 2) | (con << 1) | (don << 0);
 
     switch (mask)
     {
-    case 0b0000: _process<false, false, false, false>(data, numSamples, activeVoice); break;
-    case 0b0001: _process<false, false, false, true>(data, numSamples, activeVoice); break;
-    case 0b0010: _process<false, false, true, false>(data, numSamples, activeVoice); break;
-    case 0b0011: _process<false, false, true, true>(data, numSamples, activeVoice); break;
-    case 0b0100: _process<false, true, false, false>(data, numSamples, activeVoice); break;
-    case 0b0101: _process<false, true, false, true>(data, numSamples, activeVoice); break;
-    case 0b0110: _process<false, true, true, false>(data, numSamples, activeVoice); break;
-    case 0b0111: _process<false, true, true, true>(data, numSamples, activeVoice); break;
-    case 0b1000: _process<true, false, false, false>(data, numSamples, activeVoice); break;
-    case 0b1001: _process<true, false, false, true>(data, numSamples, activeVoice); break;
-    case 0b1010: _process<true, false, true, false>(data, numSamples, activeVoice); break;
-    case 0b1011: _process<true, false, true, true>(data, numSamples, activeVoice); break;
-    case 0b1100: _process<true, true, false, false>(data, numSamples, activeVoice); break;
-    case 0b1101: _process<true, true, false, true>(data, numSamples, activeVoice); break;
-    case 0b1110: _process<true, true, true, false>(data, numSamples, activeVoice); break;
-    case 0b1111: _process<true, true, true, true>(data, numSamples, activeVoice); break;
+    case 0b0000: _process<false, false, false, false>(vox, numSamples, activeVoice); break;
+    case 0b0001: _process<false, false, false, true>(vox, numSamples, activeVoice); break;
+    case 0b0010: _process<false, false, true, false>(vox, numSamples, activeVoice); break;
+    case 0b0011: _process<false, false, true, true>(vox, numSamples, activeVoice); break;
+    case 0b0100: _process<false, true, false, false>(vox, numSamples, activeVoice); break;
+    case 0b0101: _process<false, true, false, true>(vox, numSamples, activeVoice); break;
+    case 0b0110: _process<false, true, true, false>(vox, numSamples, activeVoice); break;
+    case 0b0111: _process<false, true, true, true>(vox, numSamples, activeVoice); break;
+    case 0b1000: _process<true, false, false, false>(vox, numSamples, activeVoice); break;
+    case 0b1001: _process<true, false, false, true>(vox, numSamples, activeVoice); break;
+    case 0b1010: _process<true, false, true, false>(vox, numSamples, activeVoice); break;
+    case 0b1011: _process<true, false, true, true>(vox, numSamples, activeVoice); break;
+    case 0b1100: _process<true, true, false, false>(vox, numSamples, activeVoice); break;
+    case 0b1101: _process<true, true, false, true>(vox, numSamples, activeVoice); break;
+    case 0b1110: _process<true, true, true, false>(vox, numSamples, activeVoice); break;
+    case 0b1111: _process<true, true, true, true>(vox, numSamples, activeVoice); break;
     }
 }
 
@@ -329,7 +320,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
             fm_phase = A.phase + A.phase_offset + offsetA;
             Utils::wrapPhase(fm_phase);
             A.out = renderA(a_tables.data, a_tables.size, Adist(fm_phase, A.dist_amt), a_morph, ANoiseGen) * A.level;
-            Awindow(A.out, fm_phase);
+            Awindow(A.out, fm_phase); // apply window function (formant distortion only)
         }
         if constexpr (BOn)
         {
@@ -350,7 +341,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
             fm_phase = D.phase + D.phase_offset + offsetD;
             Utils::wrapPhase(fm_phase);
             D.out = renderD(d_tables.data, d_tables.size, Ddist(fm_phase, D.dist_amt), d_morph, DNoiseGen) * D.level;
-            Dwindow(D.out, D.phase)
+            Dwindow(D.out, D.phase);
         }
 
         if constexpr (AOn) AoutL = AoutR = A.out;

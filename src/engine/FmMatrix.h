@@ -49,7 +49,6 @@ public:
     Layout layout = Layout::A_B_C_D;
     std::array<Matrix4x4, kLayouts> layouts{};
     Matrix4x4 matrix{};
-    bool paramsChanged = true; // flag to detect when osc distortion mode changes
 
     SIMDF ab = 0.f; SIMDF ac = 0.f; SIMDF ad = 0.f;
     SIMDF ba = 0.f; SIMDF bc = 0.f; SIMDF bd = 0.f;
@@ -87,7 +86,7 @@ public:
 
     void parameterChanged(const juce::String& paramId, float value) override;
 
-    void onParamsChange();
+    void prepareDistortions(SIMDVox& vox);
     void setLayout(Layout l);
     void prepare(float _srate);
     void processBlock(SIMDVox& data, int numSamples, int activeVoiceLane);

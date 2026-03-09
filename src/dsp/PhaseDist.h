@@ -1,3 +1,4 @@
+#pragma once
 #include <JuceHeader.h>
 #include "../Globals.h"
 #include "../engine/Utils.h"
@@ -62,7 +63,7 @@ public:
 
 		auto v_pos = mipp::exp(mipp::log(x * 2.f) * k) * 0.5f;
 		auto v_neg = (one - mipp::exp(mipp::log(one - x * 2.f) * k)) * 0.5f;
-		auto v = mipp::blend(v_neg, v_pos, amt >= 0.f);
+		auto v = mipp::blend(v_neg, v_pos, amt < 0.f);
 
 		return mipp::blend(v, one - v, phase < 0.5f).min(almostOne);
 	}

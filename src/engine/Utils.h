@@ -135,6 +135,14 @@ public:
         return SIMDFx2(l, r);
     }
 
+    template <typename T, typename U>
+    static inline T bit_cast(const U& src) {
+        static_assert(sizeof(T) == sizeof(U), "Types must be same size");
+        T dst{};
+        std::memcpy(&dst, &src, sizeof(T));
+        return dst;
+    }
+
     inline static float centsToRatio(float cents)
     {
         constexpr float LN2_OVER_1200 = 0.00057762265f; // ln(2)/1200
