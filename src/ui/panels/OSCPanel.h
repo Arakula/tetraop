@@ -4,7 +4,7 @@
 #include "../widgets/Rotary.h"
 #include "../widgets/WaveDisplay.h"
 #include "../widgets/UnisonWidget.h"
-#include "../../dsp/PhaseDist.h"
+#include "../../engine/PhaseDist.h"
 
 class TetraOPAudioProcessorEditor;
 

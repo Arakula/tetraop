@@ -1,9 +1,9 @@
 #pragma once
 
 namespace globals {
-	constexpr int SIMD_SZ = 4;
+	constexpr int SIMDSZ = 4;
 	constexpr int MAX_BLOCKSIZE = 128;
-	constexpr int MAX_POLYPHONY = 50;
+	constexpr int MAX_POLYPHONY = 44;
 	constexpr int MAX_MODULATIONS = 64;
 	constexpr float MAX_DETUNE_CENTS = 200.f;
 	constexpr float POWER_CURVE_POWER = 40.f;
@@ -17,8 +17,11 @@ namespace globals {
 	constexpr int MAX_UNISON = 16;
 	constexpr float MORPH_SECONDS = 0.005f;
 	constexpr float DB2LOG = 0.11512925464970228420089957273422f;
+	constexpr float LOG10 = 2.30258509299f;
 	constexpr float PARAM_SMOOTHER_RESISTANCE = 0.05f;
 	constexpr int SCOPE_BUFLEN = 512;
+	constexpr float MAX_FILTER_DRIVE = 24.f;
+	constexpr int MAX_FILTERS = 2;
 
 	// Theme vars
 	constexpr int PANEL_PAD = 2;

@@ -5,7 +5,7 @@
 #include "FmMatrix.h"
 #include "Voice.h"
 #include "Utils.h"
-#include "../dsp/PhaseDist.h"
+#include "PhaseDist.h"
 
 using namespace globals;
 using RenderFn = SIMDF(*)(const std::array<float*, 8>&, int, SIMDF, SIMDF, void*);
@@ -21,7 +21,7 @@ struct SIMDVox
 class FmMatrix : public juce::AudioProcessorValueTreeState::Listener
 {
 public:
-    struct TablesData 
+    struct TablesData
     {
         SIMDF currIndex;
         SIMDF targIndex;
@@ -93,7 +93,7 @@ public:
     bool isNoise(int oscId);
 
     // Noise generators belong to each oscillator so they can retrigger with same seed if phase_rand is zero
-    // Fetch noise generators of each voice for this oscillator for processing 
+    // Fetch noise generators of each voice for this oscillator for processing
     void fetchNoiseGenerators(int oscId, SIMDI voiceId);
 
     inline static SIMDF renderSine(SIMDF phase)

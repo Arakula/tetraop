@@ -5,7 +5,7 @@
 
 using namespace globals;
 using DistFn = SIMDF(*)(SIMDF, SIMDF);
-using WindowFn = void(*)(SIMDF&, SIMDF&);
+using WindowFn = void(*)(SIMDF&, const SIMDF&);
 
 class PhaseDist
 {
@@ -50,8 +50,8 @@ public:
 	{
 		auto split = (SIMDF(0.5f) + amt * 0.49f).sat(0.001f, 0.999f);
 		return mipp::blend(
-			phase / split * 0.5f, 
-			(phase - split) / (SIMDF(1.f) - split) * 0.5 + 0.5f, 
+			phase / split * 0.5f,
+			(phase - split) / (SIMDF(1.f) - split) * 0.5 + 0.5f,
 			phase < split
 		).min(almostOne);
 	}
@@ -66,6 +66,25 @@ public:
 		auto v_neg = (one - mipp::exp(mipp::log(one - x * 2.f) * k)) * 0.5f;
 		auto v = mipp::blend(v_neg, v_pos, amt < 0.f);
 
+		return mipp::blend(v, one - v, phase < 0.5f).min(almostOne);
+	}
+
+	// Bend distortion is heavy, separate pos and neg paths
+	static inline SIMDF bendPos(SIMDF phase, SIMDF amt)
+	{
+		SIMDF one = 1.f;
+		SIMDF k = one + (amt * amt).abs() * 32.f;
+		auto x = mipp::blend(phase, one - phase, phase < 0.5f).max(almostZero);
+		auto v = mipp::exp(mipp::log(x * 2.f) * k) * 0.5f;
+		return mipp::blend(v, one - v, phase < 0.5f).min(almostOne);
+	}
+
+	static inline SIMDF bendNeg(SIMDF phase, SIMDF amt)
+	{
+		SIMDF one = 1.f;
+		SIMDF k = one + (amt * amt).abs() * 32.f;
+		auto x = mipp::blend(phase, one - phase, phase < 0.5f).max(almostZero);
+		auto v = (one - mipp::exp(mipp::log(one - x * 2.f) * k)) * 0.5f;
 		return mipp::blend(v, one - v, phase < 0.5f).min(almostOne);
 	}
 
@@ -101,12 +120,12 @@ public:
 		return phase - phase.trunc();
 	}
 
-	static inline void windowHalfSine(SIMDF& value, SIMDF& phase)
+	static inline void windowHalfSine(SIMDF& value, const SIMDF& phase)
 	{
 		value *= (phase * MathConstants<float>::pi).sin();
 	}
 
-	static inline void windowBypass(SIMDF&, SIMDF&)
+	static inline void windowBypass(SIMDF&, const SIMDF&)
 	{
 	}
 };

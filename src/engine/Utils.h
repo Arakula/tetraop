@@ -61,7 +61,7 @@ public:
         return values[index] + frac * (values[index + 1] - values[index]);
     }
 
-    inline float fold(float input) const
+    inline float cubic(float input) const
     {
         input = std::clamp(input, min, max);
         float index = input * scaler + offset;
@@ -135,13 +135,37 @@ public:
         return SIMDFx2(l, r);
     }
 
-    template <typename T, typename U>
-    static inline T bit_cast(const U& src) {
-        static_assert(sizeof(T) == sizeof(U), "Types must be same size");
-        T dst{};
-        std::memcpy(&dst, &src, sizeof(T));
-        return dst;
+    inline static SIMDM laneToMask(int lane)
+    {
+        bool mask[4] = { 0, 0, 0, 0};
+        mask[lane] = 1;
+        return SIMDM(mask);
     }
+
+    inline static void setMasked(SIMDF& r1, const SIMDF& r2, SIMDM mask)
+    {
+        r1 = r2.blend(r1, mask);
+    }
+
+    inline static bool equal(const SIMDF& r1, const SIMDF& r2)
+    {
+        return ((r1 - r2).abs() > 0.000001f).testz();
+    }
+
+    inline static bool allLanesZero (const SIMDF& reg)
+    {
+        return (reg != 0.f).testz();
+    };
+
+    inline static bool allLanesPositiveOrZero (const SIMDF& reg)
+    {
+        return (reg < 0.f).testz();
+    };
+
+    inline static bool allLanesNegativeOrZero (const SIMDF& reg)
+    {
+        return (reg > 0.f).testz();
+    };
 
     inline static float centsToRatio(float cents)
     {
@@ -186,7 +210,7 @@ public:
         return std::fmax(0.0f, std::fmin(1.0f, norm));
     }
 
-    static inline float lerp(float min, float max, float t) 
+    static inline float lerp(float min, float max, float t)
     {
         return min + (max - min) * t;
     }
@@ -368,7 +392,7 @@ public:
 class WhiteNoiseGen : public NoiseGen {
 public:
     WhiteNoiseGen(uint32_t seed)
-        : original_seed(seed), state(seed) 
+        : original_seed(seed), state(seed)
     {
     }
 

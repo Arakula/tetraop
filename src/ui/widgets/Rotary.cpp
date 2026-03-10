@@ -266,13 +266,15 @@ void Rotary::drawRotary(juce::Graphics& g, float slider_pos) {
     }
 
     // draw active line
-    g.setColour(COLOR_ACTIVE());
+    g.setColour(colorValue);
     const float angle = -DEG130 + slider_pos * (DEG130 - -DEG130);
     const bool valueIsZero = (slider_pos == 0.f && !invertValue) || (slider_pos == 1.0f && invertValue);
-    if (drawValue && ((isSymmetric && slider_pos != 0.5f) || (!isSymmetric && !valueIsZero))) {
-        juce::Path arc2;
-        arc2.addCentredArc(center.x, center.y, radius + value_offset, radius + value_offset, 0, isSymmetric ? 0 : invertValue ? DEG130 : -DEG130, angle, true);
-        g.strokePath(arc2, PathStrokeType(value_thickness));
+    if (!disabled) {
+        if (drawValue && ((isSymmetric && slider_pos != 0.5f) || (!isSymmetric && !valueIsZero))) {
+            juce::Path arc2;
+            arc2.addCentredArc(center.x, center.y, radius + value_offset, radius + value_offset, 0, isSymmetric ? 0 : invertValue ? DEG130 : -DEG130, angle, true);
+            g.strokePath(arc2, PathStrokeType(value_thickness));
+        }
     }
 
     // draw handle
@@ -289,6 +291,7 @@ void Rotary::drawRotary(juce::Graphics& g, float slider_pos) {
 }
 
 void Rotary::drawModValue(juce::Graphics& g, float slider_pos) const {
+    if (disabled) return;
     auto bounds = getBounds();
     const float rad = radius + mod_value_offset;
     const float value = voiceActive ? modValue : slider_pos;
@@ -305,11 +308,12 @@ void Rotary::drawModValue(juce::Graphics& g, float slider_pos) const {
     // Draw small circle radius 1.0f
     g.setColour(COLOR_PANEL());
     g.fillEllipse(dotX - r * 2, dotY - r * 2, r * 4, r * 4);
-    g.setColour(COLOR_ACTIVE());
+    g.setColour(colorModValue);
     g.fillEllipse(dotX - r, dotY - r, r*2, r*2);
 }
 
 void Rotary::drawModRange(juce::Graphics& g, float slider_pos) const {
+    if (disabled) return;
     auto bounds = getBounds();
     const float rad = radius + mod_offset;
     const float slider_angle = -DEG130 + slider_pos * (DEG130 - -DEG130);

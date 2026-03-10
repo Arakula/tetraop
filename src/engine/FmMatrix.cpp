@@ -66,15 +66,27 @@ void FmMatrix::prepareDistortions(SIMDVox& vox)
     auto cdist = (PhaseDist::Mode)audioProcessor.params.getRawParameterValue("c_phase_dist_mode")->load();
     auto ddist = (PhaseDist::Mode)audioProcessor.params.getRawParameterValue("d_phase_dist_mode")->load();
 
-    auto allLanesZero = [](const SIMDF& reg)
-        {
-            return (reg != 0.f).testz();
-        };
+    Adist = Utils::allLanesZero(vox.osc[0].dist_amt) ? dists[0] : dists[adist];
+    Bdist = Utils::allLanesZero(vox.osc[1].dist_amt) ? dists[0] : dists[adist];
+    Cdist = Utils::allLanesZero(vox.osc[2].dist_amt) ? dists[0] : dists[adist];
+    Ddist = Utils::allLanesZero(vox.osc[3].dist_amt) ? dists[0] : dists[adist];
 
-    Adist = allLanesZero(vox.osc[0].dist_amt) ? dists[0] : dists[adist];
-    Bdist = allLanesZero(vox.osc[1].dist_amt) ? dists[0] : dists[adist];
-    Cdist = allLanesZero(vox.osc[2].dist_amt) ? dists[0] : dists[adist];
-    Ddist = allLanesZero(vox.osc[3].dist_amt) ? dists[0] : dists[adist];
+    // optimize bend distortion (heavy) by selecting only positive or negative paths
+    if (Adist == dists[1])
+        if (Utils::allLanesPositiveOrZero(vox.osc[0].dist_amt)) Adist = PhaseDist::bendPos;
+        else if (Utils::allLanesNegativeOrZero(vox.osc[0].dist_amt)) Adist = PhaseDist::bendNeg;
+
+    if (Bdist == dists[1])
+        if (Utils::allLanesPositiveOrZero(vox.osc[1].dist_amt)) Bdist = PhaseDist::bendPos;
+        else if (Utils::allLanesNegativeOrZero(vox.osc[1].dist_amt)) Bdist = PhaseDist::bendNeg;
+
+    if (Cdist == dists[1])
+        if (Utils::allLanesPositiveOrZero(vox.osc[2].dist_amt)) Cdist = PhaseDist::bendPos;
+        else if (Utils::allLanesNegativeOrZero(vox.osc[2].dist_amt)) Cdist = PhaseDist::bendNeg;
+
+    if (Ddist == dists[1])
+        if (Utils::allLanesPositiveOrZero(vox.osc[3].dist_amt)) Ddist = PhaseDist::bendPos;
+        else if (Utils::allLanesNegativeOrZero(vox.osc[3].dist_amt)) Ddist = PhaseDist::bendNeg;
 
     Awindow = adist == 6 ? PhaseDist::windowHalfSine : PhaseDist::windowBypass;
     Bwindow = bdist == 6 ? PhaseDist::windowHalfSine : PhaseDist::windowBypass;
@@ -119,7 +131,7 @@ void FmMatrix::fetchNoiseGenerators(int oscId, SIMDI voiceId)
     auto& wt = audioProcessor.wavetables[oscId];
     bool isWhiteNoise = wt.mode == TetraOPAudioProcessor::WhiteNoise;
 
-    for (int i = 0; i < SIMD_SZ; ++i) 
+    for (int i = 0; i < SIMDSZ; ++i) 
     {
         auto* voice = (Voice*)audioProcessor.synth->getVoice(voiceId.get(i));
         if (!voice) continue;
@@ -138,21 +150,33 @@ static inline SIMDF renderUnison(const float* table1, const float* table2, const
     auto posf = phase * float(size);
     auto posi = posf.trunc();
     auto t = posf - posi;
+    auto t2 = t * t;
+    auto t3 = t2 * t;
     auto posint = mipp::cvt<float, int32_t>(posi) + 1; // +1 because tables are padded
 
-    SIMDF l1 = mipp::gather(&table1[0], posint);
-    SIMDF l2 = mipp::gather(&table1[0], posint + 1);
+    SIMDF y0 = mipp::gather(&table1[0], posint - 1);
+    SIMDF y1 = mipp::gather(&table1[0], posint + 0);
+    SIMDF y2 = mipp::gather(&table1[0], posint + 1);
+    SIMDF y3 = mipp::gather(&table1[0], posint + 2);
 
     if (morph > 0.f)
     {
-        SIMDF l3 = mipp::gather(&table2[0], posint);
-        SIMDF l4 = mipp::gather(&table2[0], posint + 1);
+        SIMDF y02 = mipp::gather(&table2[0], posint - 1);
+        SIMDF y12 = mipp::gather(&table2[0], posint);
+        SIMDF y22 = mipp::gather(&table2[0], posint + 1);
+        SIMDF y32 = mipp::gather(&table2[0], posint + 2);
 
-        l1 = mipp::fmadd(SIMDF(morph), (l3 - l1), l1);
-        l2 = mipp::fmadd(SIMDF(morph), (l4 - l2), l2);
+        auto smorph = SIMDF(morph);
+        y0 = mipp::fmadd(smorph, (y02 - y0), y0);
+        y1 = mipp::fmadd(smorph, (y12 - y1), y1);
+        y2 = mipp::fmadd(smorph, (y22 - y2), y2);
+        y3 = mipp::fmadd(smorph, (y32 - y3), y3);
     }
 
-    return mipp::fmadd(t, (l2 - l1), l1);
+    auto c1 = y0.fmadd(-0.5f, y1.fmadd(1.5f, (-y2).fmadd(1.5f, y3 * 0.5f)));
+    auto c2 = y0 + (-y1).fmadd(2.5f, y2.fmadd(2.f, -y3 * 0.5f));
+    auto c3 = y0.fmadd(-0.5f, y2 * 0.5f);
+    return c1.fmadd(t3, c2.fmadd(t2, c3.fmadd(t, y1)));
 }
 
 static inline std::pair<SIMDF, SIMDF> processUnison(
@@ -160,7 +184,9 @@ static inline std::pair<SIMDF, SIMDF> processUnison(
     SIMDF phaseOffset,
     std::array<float*, 8>& tables,
     int size,
-    SIMDF morph
+    SIMDF morph,
+    DistFn dist,
+    WindowFn window
 )
 {
     alignas(sizeof(SIMDF)) float accL[4] = { 0.f, 0.f, 0.f, 0.f };
@@ -174,9 +200,12 @@ static inline std::pair<SIMDF, SIMDF> processUnison(
         const int t2lane = lane + 4;
         const float pitch_ratio = osc.pitch_ratio.get(lane);
 
+        SIMDF phs;
         for (int v = 0; v < batch; ++v) // for each unison voice
         {
-            SIMDF s = renderUnison(tables[lane], tables[t2lane], size, U.phase[v] + offset, morph.get(lane));
+            phs = U.phase[v] + offset;
+            SIMDF s = renderUnison(tables[lane], tables[t2lane], size, dist(phs, osc.dist_amt), morph.get(lane));
+            window(s, phs);
             s *= U.mask[v];
 
             accL[lane] += (s * U.gain_l[v]).sum();
@@ -353,7 +382,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
         if constexpr (AOn)
         if (AhasUnison)
         {
-            auto [uniL, uniR] = processUnison(A, offsetA, a_tables.data, a_tables.size, a_morph);
+            auto [uniL, uniR] = processUnison(A, offsetA, a_tables.data, a_tables.size, a_morph, Adist, Awindow);
             AoutL = uniL * A.level;
             AoutR = uniR * A.level;
         }
@@ -361,7 +390,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
         if constexpr (BOn)
         if (BhasUnison)
         {
-            auto [uniL, uniR] = processUnison(B, offsetB, b_tables.data, b_tables.size, b_morph);
+            auto [uniL, uniR] = processUnison(B, offsetB, b_tables.data, b_tables.size, b_morph, Bdist, Bwindow);
             BoutL = uniL * B.level;
             BoutR = uniR * B.level;
         }
@@ -369,7 +398,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
         if constexpr (COn)
         if (ChasUnison)
         {
-            auto [uniL, uniR] = processUnison(C, offsetC, c_tables.data, c_tables.size, c_morph);
+            auto [uniL, uniR] = processUnison(C, offsetC, c_tables.data, c_tables.size, c_morph, Cdist, Cwindow);
             CoutL = uniL * C.level;
             CoutR = uniR * C.level;
         }
@@ -377,7 +406,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
         if constexpr (DOn)
         if (DhasUnison)
         {
-            auto [uniL, uniR] = processUnison(D, offsetD, d_tables.data, d_tables.size, d_morph);
+            auto [uniL, uniR] = processUnison(D, offsetD, d_tables.data, d_tables.size, d_morph, Ddist, Dwindow);
             DoutL = uniL * D.level;
             DoutR = uniR * D.level;
         }
@@ -476,7 +505,7 @@ FmMatrix::TablesData FmMatrix::getTables(SIMDVox& vox, int oscId, bool isMorphin
     out.numTables = tables.numTables;
     out.size = tables.tableSize;
 
-    for (int i = 0; i < SIMD_SZ; ++i) // for each voice get OSC wavetables
+    for (int i = 0; i < SIMDSZ; ++i) // for each voice get OSC wavetables
     {
         auto morph = vox.osc[oscId].morph.get(i);
         auto tableIndex = std::min(tables.numTables - 1, int(float(tables.numTables) * morph));
@@ -484,7 +513,7 @@ FmMatrix::TablesData FmMatrix::getTables(SIMDVox& vox, int oscId, bool isMorphin
         out.data[i] = t1->tableForNote(vox.voice.key[i]).data();
         currIndex[i] = (float)tableIndex;
 
-        int t2idx = i + SIMD_SZ;
+        int t2idx = i + SIMDSZ;
         if (isMorphing && tableIndex < tables.numTables - 1)
         {
             auto tableIdxTarg = std::min(tableIndex + 1, tables.numTables - 1);

@@ -3,13 +3,13 @@
 #include <JuceHeader.h>
 #include "../../Globals.h"
 #include "WavetableDisplay.h"
-#include "../../dsp/PhaseDist.h"
+#include "../../engine/PhaseDist.h"
 
 class TetraOPAudioProcessorEditor;
 using namespace globals;
 
-class WaveDisplay 
-    : public juce::Component 
+class WaveDisplay
+    : public juce::Component
     , private juce::AudioProcessorValueTreeState::Listener
     , private juce::Timer
 {

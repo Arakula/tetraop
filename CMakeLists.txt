@@ -103,13 +103,13 @@ file(GLOB DSP_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/dsp/*.cpp
 )
 source_group(Source\\dsp FILES ${DSP_SOURCES})
-#
-# file(GLOB FX_SOURCES
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/dsp/fx/*.h
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/dsp/fx/*.cpp
-# )
-# source_group(Source\\dsp\\fx FILES ${FX_SOURCES})
-#
+
+file(GLOB FILTER_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/dsp/filter/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/dsp/filter/*.cpp
+)
+source_group(Source\\dsp\\filter FILES ${FILTER_SOURCES})
+
 file(GLOB ENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/engine/*.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/engine/*.cpp

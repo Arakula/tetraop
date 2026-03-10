@@ -55,6 +55,9 @@ public:
     bool drawTextLabel = true;
     bool invertValue = false;
     bool forceLabelShowValue = false;
+    Colour colorValue = COLOR_ACTIVE();
+    Colour colorModValue = COLOR_ACTIVE();
+    bool disabled = false;
     juce::String name;
 
     Rotary(TetraOPAudioProcessorEditor& e, juce::String paramId, juce::String name, Format format, bool isSymmetric = false);

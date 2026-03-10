@@ -79,6 +79,17 @@ public:
     float env_step = 0.f;
     float vel_mult = 1.f;
 
+    // filters
+    float f1_cut = 0.f;
+    float f1_res = 0.f;
+    float f1_drive = 0.f;
+    float f1_mix = 0.f;
+
+    float f2_cut = 0.f;
+    float f2_res = 0.f;
+    float f2_drive = 0.f;
+    float f2_mix = 0.f;
+
     std::vector<OSC> osc;
 
     Voice (TetraOPAudioProcessor& p, int id);

@@ -43,7 +43,7 @@ public:
         UserTable
     };
 
-    struct WTable 
+    struct WTable
     {
         String name;
         float srate;
@@ -85,6 +85,7 @@ public:
     double secondsPerBeat = 0.01;
     double timeInSeconds = 0.0;
     bool playing = false;
+    int currBlockSize = 128;
 
     // UI
     float scale = 1.f;

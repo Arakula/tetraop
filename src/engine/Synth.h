@@ -4,6 +4,8 @@
 #include "../Globals.h"
 #include "Voice.h"
 #include "FmMatrix.h"
+#include "../dsp/filter/Filter.h"
+#include "../dsp/filter/Digital.h"
 
 using namespace globals;
 
@@ -20,10 +22,15 @@ public:
 
     void prepare();
     void clear();
+    void initFilters(int f);
+    void prepareFilters(int voiceId, float cutoff, float resonance);
     void renderNextSubBlock(AudioBuffer<float>& outputAudio, int startSample, int numSamples) override;
     void handleMidiEvent(const juce::MidiMessage& m) override;
 
 private:
+    std::array<std::unique_ptr<Filter>, MAX_POLYPHONY / SIMDSZ> filterL;
+    std::array<std::unique_ptr<Filter>, MAX_POLYPHONY / SIMDSZ> filterR;
+
     DCBlocker dcBlockerL{};
     DCBlocker dcBlockerR{};
     Voice::VoiceVec voiceVec{};

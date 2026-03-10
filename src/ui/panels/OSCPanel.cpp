@@ -73,6 +73,8 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 
 	waveDisplay = std::make_unique<WaveDisplay>(editor, oscId);
 	addAndMakeVisible(waveDisplay.get());
+
+	toggleUIComponents();
 }
 
 OSCPanel::~OSCPanel()
@@ -85,7 +87,7 @@ void OSCPanel::parameterChanged(const juce::String& paramId, float val)
 {
 	(void)paramId;
 	(void)val;
-	MessageManager::callAsync([this] { repaint(); });
+	toggleUIComponents();
 }
 
 void OSCPanel::paint(Graphics& g)
@@ -175,7 +177,21 @@ void OSCPanel::onMouseUpMorph() const
 
 void OSCPanel::toggleUIComponents()
 {
+	bool on = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "on")->load();
+	level->disabled = !on;
+	level->disabled = !on;
+	pan->disabled = !on;
+	phase->disabled = !on;
+	rand->disabled = !on;
+	morph->disabled = !on;
+	dist->disabled = !on;
+	detune->disabled = !on;
+	blend->disabled = !on;
+	wide->disabled = !on;
+	semis->disabled = !on;
+	cents->disabled = !on;
 
+	MessageManager::callAsync([this] { repaint(); });
 }
 
 void OSCPanel::showDistortionMenu()
