@@ -34,17 +34,6 @@ public:
     float key = 0.f; // norm note used for keytracking
     int mpe_channel = 1;
 
-    // filters
-    float f1_cut = 0.f;
-    float f1_res = 0.f;
-    float f1_drive = 0.f;
-    float f1_mix = 0.f;
-
-    float f2_cut = 0.f;
-    float f2_res = 0.f;
-    float f2_drive = 0.f;
-    float f2_mix = 0.f;
-
     std::vector<OSC> osc;
 
     Voice (TetraOPAudioProcessor& p, int id);

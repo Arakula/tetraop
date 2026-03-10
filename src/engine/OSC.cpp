@@ -50,8 +50,8 @@ void OSC::trigger(int note, float srate)
 	Utils::setMasked(osc.pitch_ratio_targ, pitch_ratio, mask);
 
 	auto seed = phase_rand > 0 ? rand() + 1000 : id * 1000 + 1000;
-	noiseGen.reseed(seed);
-	pinkNoiseGen.reseed(seed);
+	osc.whiteNoiseGen[lane].reseed(seed);
+	osc.pinkNoiseGen[lane].reseed(seed);
 }
 
 void OSC::startBlock(int startSample, int numSamples)
@@ -126,18 +126,6 @@ void OSC::startBlock(int startSample, int numSamples)
 	if (unison.voices > 1)
 		for (int i = 0; i < 4; ++i)
 			unison.inc[i] = osc.phase_inc * unison.ratio[i];
-}
-
-void OSC::endBlock(int)
-{
-	auto& vox = audioProcessor.synth->vox[batch];
-	auto& osc = vox.osc[id];
-	bool msk[4] = { false, false, false, false };
-	msk[lane] = true;
-	SIMDM mask = SIMDM(msk);
-
-	Utils::setMasked(osc.level, osc.level_targ.get(lane), mask);
-	Utils::setMasked(osc.pitch_ratio, osc.pitch_ratio_targ.get(lane), mask);
 }
 
 void OSC::recalcUnison(SIMDUnison& unison) const

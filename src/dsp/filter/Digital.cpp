@@ -28,42 +28,42 @@ void Digital::init(SIMDF cutoff, SIMDF resonance, bool reset, SIMDM mask)
 
 
 
-void Digital::processBlock(float* buf, int start, int nsamps, int blocksize, SIMDM mask)
+void Digital::processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blocksize, SIMDF mask)
 {
     switch (filterSlope)
     {
         case k12p:
             switch(filterMode)
             {
-                case LP: _processBlock<Filter::LP, Filter::k12p>(buf, start, nsamps, blocksize, mask); break;
-                case HP: _processBlock<Filter::HP, Filter::k12p>(buf, start, nsamps, blocksize, mask); break;
-                case BP: _processBlock<Filter::BP, Filter::k12p>(buf, start, nsamps, blocksize, mask); break;
-                case BS: _processBlock<Filter::BS, Filter::k12p>(buf, start, nsamps, blocksize, mask); break;
-                case PK: _processBlock<Filter::PK, Filter::k12p>(buf, start, nsamps, blocksize, mask); break;
+                case LP: _processBlock<Filter::LP, Filter::k12p>(input, start, nsamps, blocksize, mask); break;
+                case HP: _processBlock<Filter::HP, Filter::k12p>(input, start, nsamps, blocksize, mask); break;
+                case BP: _processBlock<Filter::BP, Filter::k12p>(input, start, nsamps, blocksize, mask); break;
+                case BS: _processBlock<Filter::BS, Filter::k12p>(input, start, nsamps, blocksize, mask); break;
+                case PK: _processBlock<Filter::PK, Filter::k12p>(input, start, nsamps, blocksize, mask); break;
             }
             break;
         case k24p:
             switch(filterMode)
             {
-                case LP: _processBlock<Filter::LP, Filter::k24p>(buf, start, nsamps, blocksize, mask); break;
-                case HP: _processBlock<Filter::HP, Filter::k24p>(buf, start, nsamps, blocksize, mask); break;
-                case BP: _processBlock<Filter::BP, Filter::k24p>(buf, start, nsamps, blocksize, mask); break;
-                case BS: _processBlock<Filter::BS, Filter::k24p>(buf, start, nsamps, blocksize, mask); break;
-                case PK: _processBlock<Filter::PK, Filter::k24p>(buf, start, nsamps, blocksize, mask); break;
+                case LP: _processBlock<Filter::LP, Filter::k24p>(input, start, nsamps, blocksize, mask); break;
+                case HP: _processBlock<Filter::HP, Filter::k24p>(input, start, nsamps, blocksize, mask); break;
+                case BP: _processBlock<Filter::BP, Filter::k24p>(input, start, nsamps, blocksize, mask); break;
+                case BS: _processBlock<Filter::BS, Filter::k24p>(input, start, nsamps, blocksize, mask); break;
+                case PK: _processBlock<Filter::PK, Filter::k24p>(input, start, nsamps, blocksize, mask); break;
             }
             break;
     }
 }
 
 template<Filter::Mode mode, Filter::Slope slope>
-void Digital::_processBlock(float* buf, int start, int nsamps, int blocksize, SIMDM mask)
+void Digital::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blocksize, SIMDF mask)
 {
     // prepare block
     if (start == 0)
     {
         if (!Utils::equal(cut, cut_targ) || !Utils::equal(res, res_targ))
         {
-            init(cut_targ, res_targ, false, mask);
+            init(cut_targ, res_targ, false, Utils::floatToMask(mask));
             auto isize = 1.f / (blocksize - start);
             g_step = (g_targ - g) * isize;
             k_step = (k_targ - k) * isize;
@@ -73,16 +73,16 @@ void Digital::_processBlock(float* buf, int start, int nsamps, int blocksize, SI
     // process
     for (int i = 0; i < nsamps; ++i)
     {
-        auto x = SIMDF(buf[start + i]);
+        SIMDF x = input[i];
         x *= drive;
 
         // 12p first stage
         auto v3 = x - ic2;
-        auto v1 = a1 * ic1 + a2 * v3; // band
-        auto v2 = ic2 + a2 * ic1 + a3 * v3; // low
+        auto v1 = a1.fmadd(ic1, a2 * v3); // band
+        auto v2 = ic2 + a2.fmadd(ic1, a3 * v3); // low
 
-        ic1 = v1 * 2.f - ic1;
-        ic2 = v2 * 2.f - ic2;
+        ic1 = v1.fmadd(2.f, -ic1);
+        ic2 = v2.fmadd(2.f, -ic2);
 
         SIMDF output;
         if constexpr (mode == LP) output = v2;
@@ -91,7 +91,7 @@ void Digital::_processBlock(float* buf, int start, int nsamps, int blocksize, SI
         else if constexpr (mode == BS) output = x - k * v1;
         else output = x + (SIMDF(2.0f) - k) * v1;
 
-        out[i] = output.blend(0.f, mask).sum();
+        out[i] = output * mask;
 
         // interpolate
         g += g_step;
@@ -102,7 +102,7 @@ void Digital::_processBlock(float* buf, int start, int nsamps, int blocksize, SI
     }
 
     // finish block
-    if (start >= blocksize)
+    if (start + nsamps >= blocksize)
     {
         cut = cut_targ;
         res = res_targ;

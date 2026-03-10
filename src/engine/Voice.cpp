@@ -49,9 +49,9 @@ void Voice::noteStarted()
         osc[i].trigger(note.initialNote, srate);
     }
 
-    //f1_cut = audioProcessor.modulation->getPolyValue("f1_cut", id, 0);
-    //f1_res = audioProcessor.modulation->getPolyValue("f1_res", id, 0);
-    //audioProcessor.synth->prepareFilters(id, f1_cut, f1_res);
+    auto f1_cut = audioProcessor.modulation->getPolyValue("f1_cut", id, 0);
+    auto f1_res = audioProcessor.modulation->getPolyValue("f1_res", id, 0);
+    audioProcessor.synth->initFilters(id, f1_cut, f1_res);
 }
 
 void Voice::noteRetriggered()
@@ -144,10 +144,11 @@ void Voice::startBlock(int startSample, int numSamples)
     Utils::setMasked(voice.env_step, (env_targ - voice.env.get(lane)) / numSamples, mask);
     Utils::setMasked(voice.vel_mult, vel * audioProcessor.velsense + 1.0f - audioProcessor.velsense, mask);
 
-    //f1_cut = audioProcessor.modulation->getPolyValue("f1_cut", id, blkoffset);
-    //f1_res = audioProcessor.modulation->getPolyValue("f1_res", id, blkoffset);
-    //f1_drive = audioProcessor.modulation->getPolyValue("f1_drive", id, blkoffset);
-    //f1_mix = audioProcessor.modulation->getPolyValue("f1_mix", id, blkoffset);
+    auto f1_cut = audioProcessor.modulation->getPolyValue("f1_cut", id, blkoffset);
+    auto f1_res = audioProcessor.modulation->getPolyValue("f1_res", id, blkoffset);
+    //auto f1_drive = audioProcessor.modulation->getPolyValue("f1_drive", id, blkoffset);
+    //auto f1_mix = audioProcessor.modulation->getPolyValue("f1_mix", id, blkoffset);
+    audioProcessor.synth->updateFilters(id, f1_cut, f1_res);
 }
 
 void Voice::endBlock(int startSample, int numSamples)

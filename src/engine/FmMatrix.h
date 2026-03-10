@@ -8,7 +8,7 @@
 #include "PhaseDist.h"
 
 using namespace globals;
-using RenderFn = SIMDF(*)(const std::array<float*, 8>&, int, SIMDF, SIMDF, void*);
+using RenderFn = SIMDF(*)(const std::array<float*, 8>&, int, SIMDF, SIMDF, OSC::SIMDOSC&);
 
 class TetraOPAudioProcessor;
 
@@ -27,6 +27,9 @@ public:
         SIMDF targIndex;
         int numTables;
         int size;
+        bool isPinkNoise;
+        bool isWhiteNoise;
+        bool isMorphing;
         std::array<float*, 8> data; // 4 tables (1 per voice) + 4 morph target tables
     };
 
@@ -55,21 +58,20 @@ public:
     SIMDF ca = 0.f; SIMDF cb = 0.f; SIMDF cd = 0.f;
     SIMDF da = 0.f; SIMDF db = 0.f; SIMDF dc = 0.f;
 
-    std::array<SIMDF, MAX_BLOCKSIZE> outL;
-    std::array<SIMDF, MAX_BLOCKSIZE> outR;
-
-    std::array<NoiseGen*, 4> noiseGens[4];
+    // Output buffers for each oscillator
+    std::array<SIMDF, MAX_BLOCKSIZE> outL[4];
+    std::array<SIMDF, MAX_BLOCKSIZE> outR[4];
 
     // oscilloscope sampling
     std::array<float, SCOPE_BUFLEN> oscOut[4]{};
     std::array<int, 4> lastScopeIdx{};
     uint32_t sampleCounter = 0;
 
-    bool AisOut = false;
-    bool BisOut = false;
-    bool CisOut = false;
-    bool DisOut = false;
-    bool isOut[4] = {};
+    SIMDF AisOut = 0.f;
+    SIMDF BisOut = 0.f;
+    SIMDF CisOut = 0.f;
+    SIMDF DisOut = 0.f;
+    SIMDF isOut[4] = {};
 
     // phase distortion function pointers
     DistFn Adist = PhaseDist::bypass;
@@ -89,12 +91,7 @@ public:
     void prepareDistortions(SIMDVox& vox);
     void setLayout(Layout l);
     void prepare(float _srate);
-    void processBlock(SIMDVox& data, int numSamples, int activeVoiceLane, SIMDM vmask);
-    bool isNoise(int oscId);
-
-    // Noise generators belong to each oscillator so they can retrigger with same seed if phase_rand is zero
-    // Fetch noise generators of each voice for this oscillator for processing
-    void fetchNoiseGenerators(int oscId, SIMDI voiceId);
+    void processBlock(SIMDVox& data, int numSamples, int activeVoiceLane, SIMDF vmask);
 
     inline static SIMDF renderSine(SIMDF phase)
     {
@@ -102,20 +99,30 @@ public:
         return mipp::sin(phase * MathConstants<float>::twoPi);
     }
 
-    static inline SIMDF renderNoise(const std::array<float*, 8>&, const int, SIMDF, const SIMDF, void* noiseGens)
+    static inline SIMDF renderWhiteNoise(const std::array<float*, 8>&, const int, SIMDF, const SIMDF, OSC::SIMDOSC& osc)
     {
-        auto gens = static_cast<std::array<NoiseGen*, 4>*>(noiseGens);
         return
         {
-            (*gens)[0]->next(),
-            (*gens)[1]->next(),
-            (*gens)[2]->next(),
-            (*gens)[3]->next(),
+            osc.whiteNoiseGen[0].next(),
+            osc.whiteNoiseGen[1].next(),
+            osc.whiteNoiseGen[2].next(),
+            osc.whiteNoiseGen[3].next(),
+        };
+    }
+
+    static inline SIMDF renderPinkNoise(const std::array<float*, 8>&, const int, SIMDF, const SIMDF, OSC::SIMDOSC& osc)
+    {
+        return
+        {
+            osc.pinkNoiseGen[0].next(),
+            osc.pinkNoiseGen[1].next(),
+            osc.pinkNoiseGen[2].next(),
+            osc.pinkNoiseGen[3].next(),
         };
     }
 
     // last arg void* is to keep the same signature as noise generators
-    static inline SIMDF renderWaveLinear(const std::array<float*, 8>& tables, const int size, SIMDF phase, const SIMDF morph, void*)
+    static inline SIMDF renderWaveLinear(const std::array<float*, 8>& tables, const int size, SIMDF phase, const SIMDF morph, OSC::SIMDOSC&)
     {
         Utils::wrapPhase(phase);
         auto posf = phase * float(size);
@@ -129,7 +136,7 @@ public:
         SIMDF l1 = SIMDF{ tables[0][p[0]],     tables[1][p[1]],     tables[2][p[2]],     tables[3][p[3]] };
         SIMDF l2 = SIMDF{ tables[0][p[0] + 1], tables[1][p[1] + 1], tables[2][p[2] + 1], tables[3][p[3] + 1] };
 
-        if (morph.sum() > 0.f)
+        if (morph.hmax() > 0.f)
         {
             SIMDF l3 = SIMDF{ tables[4][p[0]],     tables[5][p[1]],     tables[6][p[2]],     tables[7][p[3]] };
             SIMDF l4 = SIMDF{ tables[4][p[0] + 1], tables[5][p[1] + 1], tables[6][p[2] + 1], tables[7][p[3] + 1] };
@@ -141,7 +148,7 @@ public:
         return mipp::fmadd(frac, (l2 - l1), l1);
     }
 
-    static inline SIMDF renderWaveCubic(const std::array<float*, 8>& tables, const int size, SIMDF phase, const SIMDF morph, void*)
+    static inline SIMDF renderWaveCubic(const std::array<float*, 8>& tables, const int size, SIMDF phase, const SIMDF morph, OSC::SIMDOSC&)
     {
         Utils::wrapPhase(phase);
         auto posf = phase * float(size);
@@ -159,7 +166,7 @@ public:
         SIMDF y2 = SIMDF{ tables[0][p[0] + 1], tables[1][p[1] + 1], tables[2][p[2] + 1], tables[3][p[3] + 1] };
         SIMDF y3 = SIMDF{ tables[0][p[0] + 2], tables[1][p[1] + 2], tables[2][p[2] + 2], tables[3][p[3] + 2] };
 
-        if (morph.sum() > 0.f)
+        if (morph.hmax() > 0.f)
         {
             SIMDF y02 = SIMDF{ tables[4][p[0] - 1], tables[5][p[1] - 1], tables[6][p[2] - 1], tables[7][p[3] - 1] };
             SIMDF y12 = SIMDF{ tables[4][p[0]],     tables[5][p[1]],     tables[6][p[2]],     tables[7][p[3]] };
@@ -218,7 +225,7 @@ private:
     TablesData getTables(SIMDVox& vox, int oscidx, bool isMorphing);
 
     template<bool AOn, bool BOn, bool COn, bool DOn>
-    void _process(SIMDVox& data, int numSamples, const int activeVoiceLane, SIMDM vmask);
+    void _process(SIMDVox& data, int numSamples, const int activeVoiceLane, SIMDF vmask);
     float morphAlpha = 0.f; // exponential param smoother
 
 	TetraOPAudioProcessor& audioProcessor;

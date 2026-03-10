@@ -142,6 +142,16 @@ public:
         return SIMDM(mask);
     }
 
+    inline static SIMDF maskToFloat(SIMDM mask)
+    {
+        return SIMDF(1.f).blend(0.f, mask);
+    }
+
+    inline static SIMDM floatToMask(SIMDF mask)
+    {
+        return mask != 0.f;
+    }
+
     inline static void setMasked(SIMDF& r1, const SIMDF& r2, SIMDM mask)
     {
         r1 = r2.blend(r1, mask);
@@ -382,21 +392,16 @@ public:
     }
 };
 
-class NoiseGen {
+class WhiteNoiseGen {
 public:
-    virtual ~NoiseGen() = default;
-    virtual float next() = 0;
-    virtual void reseed(uint32_t seed) = 0;
-};
+    WhiteNoiseGen() : state(0) {}
 
-class WhiteNoiseGen : public NoiseGen {
-public:
     WhiteNoiseGen(uint32_t seed)
-        : original_seed(seed), state(seed)
+        : state(seed)
     {
     }
 
-    float next() override
+    float next()
     {
         uint32_t x = state;
         x ^= x << 13;
@@ -408,30 +413,27 @@ public:
         return (int32_t)x * mult; // float(x)/2^31
     }
 
-    void reset() {
-        state = original_seed;
-    }
-
-    void reseed(uint32_t seed) override
+    void reseed(uint32_t seed)
     {
         state = seed;
     }
 
 private:
     const float mult = 1.0f / 2147483648.0f;
-    uint32_t original_seed;
     uint32_t state;
 };
 
-class PinkNoiseGen : public NoiseGen
+class PinkNoiseGen
 {
 public:
+    PinkNoiseGen() : state(0) {}
+
     PinkNoiseGen(uint32_t seed)
     {
         reseed(seed);
     }
 
-    float next() override
+    float next()
     {
         float white = next_white();
 
@@ -448,7 +450,7 @@ public:
         return pink * 0.11f; // normalization
     }
 
-    void reseed(uint32_t seed) override
+    void reseed(uint32_t seed)
     {
         state = seed ? seed : 1;
 
@@ -458,7 +460,7 @@ public:
 private:
     uint64_t state;
 
-    float b0, b1, b2, b3, b4, b5, b6;
+    float b0{}, b1{}, b2{}, b3{}, b4{}, b5{}, b6{};
 
     float next_white()
     {

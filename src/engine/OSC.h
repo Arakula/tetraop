@@ -53,6 +53,8 @@ public:
         SIMDF morph_targ;
         SIMDF dist_amt;
         SIMDUnison unison[4]; // four lanes of voices
+        WhiteNoiseGen whiteNoiseGen[4];
+        PinkNoiseGen pinkNoiseGen[4];
     };
 
     String prefix = "";
@@ -71,8 +73,7 @@ public:
     float unison_spread = -1.f;
     float unison_blend = -1.f;
 
-    WhiteNoiseGen noiseGen{ 0 };
-    PinkNoiseGen pinkNoiseGen{ 0 };
+    
 
     OSC(int _id, int _voiceId, TetraOPAudioProcessor& p);
     ~OSC() {}
@@ -82,7 +83,6 @@ public:
 
     void trigger(int note, float srate);
     void startBlock(int startSample, int numSamples);
-    void endBlock(int numSamples);
     void recalcUnison(SIMDUnison& unison) const;
 
 private:

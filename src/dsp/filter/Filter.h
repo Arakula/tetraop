@@ -51,7 +51,7 @@ public:
 	SIMDF res = 0.f;
 	SIMDF res_targ = 0.f;
 
-	std::array<float, MAX_BLOCKSIZE> out{};
+	std::array<SIMDF, MAX_BLOCKSIZE> out;
 
 	static constexpr float kMinNyquistMult = 0.48f;
 	static constexpr float kMaxRads = 0.499f * juce::MathConstants<float>::pi;
@@ -91,7 +91,7 @@ public:
 
 	virtual void init(SIMDF cutoff, SIMDF resonance, bool reset, SIMDM mask) = 0;
 	virtual void clear(SIMDF sample, SIMDM mask) = 0;
-	virtual void processBlock(float* buf, int startSample, int nsamps, int blocksize, SIMDM mask) = 0;
+	virtual void processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int startSample, int nsamps, int blocksize, SIMDF mask) = 0;
 
 	inline static float getCoeff(float freq, float srate) {
 		freq = jlimit(20.0f, srate * kMinNyquistMult, freq);

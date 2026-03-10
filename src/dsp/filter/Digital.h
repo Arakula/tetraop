@@ -26,10 +26,10 @@ public:
 	void init(SIMDF cutoff, SIMDF resonance, bool reset, SIMDM mask) override;
 	void clear(SIMDF sample, SIMDM mask) override;
 	void setDrive(SIMDF drive, SIMDM mask) override;
-	void processBlock(float* buf, int start, int nsamps, int blocksize, SIMDM mask) override;
+	void processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blocksize, SIMDF mask) override;
 
 	template<Mode, Slope>
-	void _processBlock(float* buf, int start, int nsamps, int blocksize, SIMDM mask);
+	void _processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blocksize, SIMDF mask);
 
 private:
 	SIMDF ic1 = 0.f;

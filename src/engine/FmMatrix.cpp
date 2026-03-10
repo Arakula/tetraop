@@ -108,39 +108,16 @@ void FmMatrix::setLayout(Layout l)
         return !matrix[row][0] && !matrix[row][1] && !matrix[row][2] && !matrix[row][3];
     };
 
-    AisOut = isoutput(0); isOut[0] = AisOut;
-    BisOut = isoutput(1); isOut[1] = BisOut;
-    CisOut = isoutput(2); isOut[2] = CisOut;
-    DisOut = isoutput(3); isOut[3] = DisOut;
+    AisOut = isoutput(0) ? 1.f : 0.f; isOut[0] = AisOut;
+    BisOut = isoutput(1) ? 1.f : 0.f; isOut[1] = BisOut;
+    CisOut = isoutput(2) ? 1.f : 0.f; isOut[2] = CisOut;
+    DisOut = isoutput(3) ? 1.f : 0.f; isOut[3] = DisOut;
 }
 
 void FmMatrix::prepare(float _srate)
 {
     srate = _srate;
     morphAlpha = 1.f - std::exp(-1.f / (MORPH_SECONDS * srate));
-}
-
-bool FmMatrix::isNoise(int oscId)
-{
-    auto& wt = audioProcessor.wavetables[oscId];
-    return wt.mode == TetraOPAudioProcessor::WhiteNoise || wt.mode == TetraOPAudioProcessor::PinkNoise;
-}
-
-void FmMatrix::fetchNoiseGenerators(int oscId, SIMDI voiceId)
-{
-    (void)oscId;
-    (void)voiceId;
-    //auto& wt = audioProcessor.wavetables[oscId];
-    //bool isWhiteNoise = wt.mode == TetraOPAudioProcessor::WhiteNoise;
-    //
-    //for (int i = 0; i < SIMDSZ; ++i) 
-    //{
-    //    auto* voice = (Voice*)audioProcessor.synth->getVoice(voiceId.get(i));
-    //    if (!voice) continue;
-    //    auto& osc = voice->osc[oscId];
-    //    auto& ng = noiseGens[oscId];
-    //    ng[i] = isWhiteNoise ? (NoiseGen*)&osc.noiseGen : (NoiseGen*)&osc.pinkNoiseGen;
-    //}
 }
 
 static inline SIMDF renderUnison(const float* table1, const float* table2, const int size, SIMDF phase, float morph)
@@ -188,7 +165,7 @@ static inline std::pair<SIMDF, SIMDF> processUnison(
     SIMDF morph,
     DistFn dist,
     WindowFn window,
-    SIMDM voiceMask
+    SIMDF voiceMask
 )
 {
     alignas(sizeof(SIMDF)) float accL[4] = { 0.f, 0.f, 0.f, 0.f };
@@ -224,7 +201,7 @@ static inline std::pair<SIMDF, SIMDF> processUnison(
 }
 
 // SIMD'ed voices rendering
-void FmMatrix::processBlock(SIMDVox& vox, int numSamples, int activeVoice, SIMDM vmask)
+void FmMatrix::processBlock(SIMDVox& vox, int numSamples, int activeVoice, SIMDF vmask)
 {
     prepareDistortions(vox);
 
@@ -269,11 +246,11 @@ static inline SIMDF getMorph(OSC::SIMDOSC& osc, FmMatrix::TablesData& tables)
 {
     float tablesf = static_cast<float>(tables.numTables);
     auto tablepos = (osc.morph * tablesf).min(tablesf - 1.f);
-    return tablepos - tablepos.trunc();
+    return (tablepos - tablepos.trunc()) * tables.isMorphing;
 }
 
 template<bool AOn, bool BOn, bool COn, bool DOn>
-void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIMDM vmask)
+void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIMDF vmask)
 {
     auto& A = vox.osc[0];
     auto& B = vox.osc[1];
@@ -319,29 +296,24 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
         D.pitch_ratio_step = (D.pitch_ratio_targ - D.pitch_ratio) * isamps;
     }
 
-    const bool AisNoise = AOn && isNoise(0);
-    const bool BisNoise = BOn && isNoise(1);
-    const bool CisNoise = COn && isNoise(2);
-    const bool DisNoise = DOn && isNoise(3);
+    const bool AisNoise = AOn && (a_tables.isWhiteNoise || a_tables.isPinkNoise);
+    const bool BisNoise = BOn && (b_tables.isWhiteNoise || b_tables.isPinkNoise);
+    const bool CisNoise = COn && (c_tables.isWhiteNoise || c_tables.isPinkNoise);
+    const bool DisNoise = DOn && (d_tables.isWhiteNoise || d_tables.isPinkNoise);
 
-    const bool AhasUnison = AisOut && A.unison->voices > 1 && !AisNoise;
-    const bool BhasUnison = BisOut && B.unison->voices > 1 && !BisNoise;
-    const bool ChasUnison = CisOut && C.unison->voices > 1 && !CisNoise;
-    const bool DhasUnison = DisOut && D.unison->voices > 1 && !DisNoise;
+    const bool AhasUnison = AisOut.hmax() > 0.f && A.unison->voices > 1 && !AisNoise;
+    const bool BhasUnison = BisOut.hmax() > 0.f && B.unison->voices > 1 && !BisNoise;
+    const bool ChasUnison = CisOut.hmax() > 0.f && C.unison->voices > 1 && !CisNoise;
+    const bool DhasUnison = DisOut.hmax() > 0.f && D.unison->voices > 1 && !DisNoise;
 
-    std::array<NoiseGen*, 4>* ANoiseGen = nullptr;
-    std::array<NoiseGen*, 4>* BNoiseGen = nullptr;
-    std::array<NoiseGen*, 4>* CNoiseGen = nullptr;
-    std::array<NoiseGen*, 4>* DNoiseGen = nullptr;
-    //if (AisNoise) { fetchNoiseGenerators(0, vox.voice.id); ANoiseGen = &noiseGens[0]; };
-    //if (BisNoise) { fetchNoiseGenerators(1, vox.voice.id); BNoiseGen = &noiseGens[1]; };
-    //if (CisNoise) { fetchNoiseGenerators(2, vox.voice.id); CNoiseGen = &noiseGens[2]; };
-    //if (DisNoise) { fetchNoiseGenerators(3, vox.voice.id); DNoiseGen = &noiseGens[3]; };
-
-    const RenderFn renderA = isNoise(0) ? renderNoise : AisOut ? renderWaveCubic : renderWaveLinear;
-    const RenderFn renderB = isNoise(1) ? renderNoise : BisOut ? renderWaveCubic : renderWaveLinear;
-    const RenderFn renderC = isNoise(2) ? renderNoise : CisOut ? renderWaveCubic : renderWaveLinear;
-    const RenderFn renderD = isNoise(3) ? renderNoise : DisOut ? renderWaveCubic : renderWaveLinear;
+    const RenderFn renderA = a_tables.isWhiteNoise ? renderWhiteNoise : a_tables.isPinkNoise ? renderPinkNoise 
+        : AisOut.hmax() > 0.f ? renderWaveCubic : renderWaveLinear;
+    const RenderFn renderB = b_tables.isWhiteNoise ? renderWhiteNoise : b_tables.isPinkNoise ? renderPinkNoise
+        : BisOut.hmax() > 0.f ? renderWaveCubic : renderWaveLinear;
+    const RenderFn renderC = c_tables.isWhiteNoise ? renderWhiteNoise : c_tables.isPinkNoise ? renderPinkNoise
+        : CisOut.hmax() > 0.f ? renderWaveCubic : renderWaveLinear;
+    const RenderFn renderD = d_tables.isWhiteNoise ? renderWhiteNoise : d_tables.isPinkNoise ? renderPinkNoise
+        : DisOut.hmax() > 0.f ? renderWaveCubic : renderWaveLinear;
 
     // temp vars
     SIMDF la, lb, lc, ld, fm_phase; 
@@ -375,28 +347,28 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
         {
             fm_phase = A.phase + A.phase_offset + offsetA;
             Utils::wrapPhase(fm_phase);
-            A.out = renderA(a_tables.data, a_tables.size, Adist(fm_phase, A.dist_amt), a_morph, ANoiseGen) * A.level;
+            A.out = renderA(a_tables.data, a_tables.size, Adist(fm_phase, A.dist_amt), a_morph, A) * A.level;
             Awindow(A.out, fm_phase); // apply window function (formant distortion only)
         }
         if constexpr (BOn)
         {
             fm_phase = B.phase + B.phase_offset + offsetB;
             Utils::wrapPhase(fm_phase);
-            B.out = renderB(b_tables.data, b_tables.size, Bdist(fm_phase, B.dist_amt), b_morph, BNoiseGen) * B.level;
+            B.out = renderB(b_tables.data, b_tables.size, Bdist(fm_phase, B.dist_amt), b_morph, B) * B.level;
             Bwindow(B.out, fm_phase);
         }
         if constexpr (COn)
         {
             fm_phase = C.phase + C.phase_offset + offsetC;
             Utils::wrapPhase(fm_phase);
-            C.out = renderC(c_tables.data, c_tables.size, Cdist(fm_phase, C.dist_amt), c_morph, CNoiseGen) * C.level;
+            C.out = renderC(c_tables.data, c_tables.size, Cdist(fm_phase, C.dist_amt), c_morph, C) * C.level;
             Cwindow(C.out, fm_phase);
         }
         if constexpr (DOn)
         {
             fm_phase = D.phase + D.phase_offset + offsetD;
             Utils::wrapPhase(fm_phase);
-            D.out = renderD(d_tables.data, d_tables.size, Ddist(fm_phase, D.dist_amt), d_morph, DNoiseGen) * D.level;
+            D.out = renderD(d_tables.data, d_tables.size, Ddist(fm_phase, D.dist_amt), d_morph, D) * D.level;
             Dwindow(D.out, D.phase);
         }
 
@@ -439,7 +411,6 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
         }
 
         // increment phases and interpolate
-
         if constexpr (AOn) 
         {
             if (AisMorphing)
@@ -454,7 +425,6 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
             A.pitch_ratio += A.pitch_ratio_step;
             Utils::wrapPhase(A.phase); 
         }
-
         if constexpr (BOn) 
         { 
             if (BisMorphing) 
@@ -469,7 +439,6 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
             B.pitch_ratio += B.pitch_ratio_step;
             Utils::wrapPhase(B.phase); 
         }
-
         if constexpr (COn) 
         { 
             if (CisMorphing) 
@@ -484,7 +453,6 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
             C.pitch_ratio += C.pitch_ratio_step;
             Utils::wrapPhase(C.phase); 
         }
-
         if constexpr (DOn) 
         {
             if (DisMorphing) 
@@ -509,16 +477,46 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
             if constexpr (DOn) sampleOscilloscope(D, DoutL, DoutR, 3, activeVoice);
         }
 
-        // scale outputs by FM matrix outputs
-        if constexpr (AOn) { AoutL *= AisOut; AoutR *= AisOut; }
-        if constexpr (BOn) { BoutL *= BisOut; BoutR *= BisOut; }
-        if constexpr (COn) { CoutL *= CisOut; CoutR *= CisOut; }
-        if constexpr (DOn) { DoutL *= DisOut; DoutR *= DisOut; }
+        // scale and filter outputs
+        if constexpr (AOn) { AoutL *= AisOut * vmask; AoutR *= AisOut * vmask; }
+        if constexpr (BOn) { BoutL *= BisOut * vmask; BoutR *= BisOut * vmask; }
+        if constexpr (COn) { CoutL *= CisOut * vmask; CoutR *= CisOut * vmask; }
+        if constexpr (DOn) { DoutL *= DisOut * vmask; DoutR *= DisOut * vmask; }
 
         // render stereo output
-        outL[i] = AoutL.fmadd(A.gain_l, BoutL.fmadd(B.gain_l, CoutL.fmadd(C.gain_l, DoutL * D.gain_l)));
-        outR[i] = AoutR.fmadd(A.gain_r, BoutR.fmadd(B.gain_r, CoutR.fmadd(C.gain_r, DoutR * D.gain_r)));
+        outL[0][i] = AoutL * A.gain_l; 
+        outL[1][i] = BoutL * B.gain_l;
+        outL[2][i] = CoutL * C.gain_l;
+        outL[3][i] = DoutL * D.gain_l;
+        outR[0][i] = AoutR * A.gain_r;
+        outR[1][i] = BoutR * B.gain_r;
+        outR[2][i] = CoutR * C.gain_r;
+        outR[3][i] = DoutR * D.gain_r;
     }
+
+    // finish block
+
+    if constexpr (AOn)
+    {
+        A.level = A.level_targ;
+        A.pitch_ratio = A.pitch_ratio_targ;
+    }
+    if constexpr (BOn)
+    {
+        B.level = B.level_targ;
+        B.pitch_ratio = B.pitch_ratio_targ;
+    }
+    if constexpr (COn)
+    {
+        C.level = C.level_targ;
+        C.pitch_ratio = C.pitch_ratio_targ;
+    }
+    if constexpr (DOn)
+    {
+        D.level = D.level_targ;
+        D.pitch_ratio = D.pitch_ratio_targ;
+    }
+
 }
 
 // fetches 1 table per voice + 1 morphing table per voice
@@ -531,6 +529,9 @@ FmMatrix::TablesData FmMatrix::getTables(SIMDVox& vox, int oscId, bool isMorphin
     auto& tables = audioProcessor.wavetables[oscId];
     out.numTables = tables.numTables;
     out.size = tables.tableSize;
+    out.isWhiteNoise = (int)tables.mode == TetraOPAudioProcessor::WTMode::WhiteNoise;
+    out.isPinkNoise = (int)tables.mode == TetraOPAudioProcessor::WTMode::PinkNoise;
+    out.isMorphing = isMorphing;
 
     for (int i = 0; i < SIMDSZ; ++i) // for each voice get OSC wavetables
     {

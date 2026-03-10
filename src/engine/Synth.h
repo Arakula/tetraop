@@ -22,16 +22,23 @@ public:
 
     void prepare();
     void clear();
-    void initFilters(int f);
-    void prepareFilters(int voiceId, float cutoff, float resonance);
+    void createFilters(int f);
+    void initFilters(int voiceId, float cutoff, float resonance);
+    void updateFilters(int voiceId, float cutoff, float resonance);
     void renderNextSubBlock(AudioBuffer<float>& outputAudio, int startSample, int numSamples) override;
     void handleMidiEvent(const juce::MidiMessage& m) override;
     std::array<SIMDVox, MAX_POLYPHONY / SIMDSZ> vox{};
 
 private:
-    std::array<std::unique_ptr<Filter>, MAX_POLYPHONY / SIMDSZ> filterL;
-    std::array<std::unique_ptr<Filter>, MAX_POLYPHONY / SIMDSZ> filterR;
-    std::array<std::array<SIMDF, MAX_BLOCKSIZE>, MAX_POLYPHONY / SIMDSZ> filterIO;
+    std::array<std::unique_ptr<Filter>, MAX_POLYPHONY / SIMDSZ> f1L;
+    std::array<std::unique_ptr<Filter>, MAX_POLYPHONY / SIMDSZ> f1R;
+
+    std::array<SIMDF, MAX_BLOCKSIZE> filterInL;
+    std::array<SIMDF, MAX_BLOCKSIZE> filterInR;
+    std::array<SIMDF, MAX_BLOCKSIZE> filterOutL;
+    std::array<SIMDF, MAX_BLOCKSIZE> filterOutR;
+    std::array<SIMDF, MAX_BLOCKSIZE> outL;
+    std::array<SIMDF, MAX_BLOCKSIZE> outR;
 
     DCBlocker dcBlockerL{};
     DCBlocker dcBlockerR{};
