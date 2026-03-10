@@ -89,7 +89,7 @@ public:
     void prepareDistortions(SIMDVox& vox);
     void setLayout(Layout l);
     void prepare(float _srate);
-    void processBlock(SIMDVox& data, int numSamples, int activeVoiceLane);
+    void processBlock(SIMDVox& data, int numSamples, int activeVoiceLane, SIMDM vmask);
     bool isNoise(int oscId);
 
     // Noise generators belong to each oscillator so they can retrigger with same seed if phase_rand is zero
@@ -218,7 +218,7 @@ private:
     TablesData getTables(SIMDVox& vox, int oscidx, bool isMorphing);
 
     template<bool AOn, bool BOn, bool COn, bool DOn>
-    void _process(SIMDVox& data, int numSamples, const int activeVoiceLane);
+    void _process(SIMDVox& data, int numSamples, const int activeVoiceLane, SIMDM vmask);
     float morphAlpha = 0.f; // exponential param smoother
 
 	TetraOPAudioProcessor& audioProcessor;

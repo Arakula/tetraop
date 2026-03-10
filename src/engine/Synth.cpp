@@ -135,7 +135,7 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
                 activeVoice = batch * 4 + lane;
 
         auto& v = vox[batch];
-        fm->processBlock(v, numSamples, activeVoice);
+        fm->processBlock(v, numSamples, activeVoice, mask);
 
         for (int s = 0; s < numSamples; ++s)
         {

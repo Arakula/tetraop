@@ -143,7 +143,6 @@ void FmMatrix::fetchNoiseGenerators(int oscId, SIMDI voiceId)
     //}
 }
 
-
 static inline SIMDF renderUnison(const float* table1, const float* table2, const int size, SIMDF phase, float morph)
 {
     static constexpr float almostOne = 1.f - std::numeric_limits<float>::epsilon();
@@ -188,7 +187,8 @@ static inline std::pair<SIMDF, SIMDF> processUnison(
     int size,
     SIMDF morph,
     DistFn dist,
-    WindowFn window
+    WindowFn window,
+    SIMDM voiceMask
 )
 {
     alignas(sizeof(SIMDF)) float accL[4] = { 0.f, 0.f, 0.f, 0.f };
@@ -196,6 +196,7 @@ static inline std::pair<SIMDF, SIMDF> processUnison(
 
     for (int lane = 0; lane < 4; ++lane) // for each voice
     {
+        if (!voiceMask.get(lane)) continue;
         auto& U = osc.unison[lane];
         const int batch = (U.voices + 3) >> 2;
         const auto offset = SIMDF(phaseOffset.get(lane) + osc.phase_offset.get(lane));
@@ -223,7 +224,7 @@ static inline std::pair<SIMDF, SIMDF> processUnison(
 }
 
 // SIMD'ed voices rendering
-void FmMatrix::processBlock(SIMDVox& vox, int numSamples, int activeVoice)
+void FmMatrix::processBlock(SIMDVox& vox, int numSamples, int activeVoice, SIMDM vmask)
 {
     prepareDistortions(vox);
 
@@ -236,22 +237,22 @@ void FmMatrix::processBlock(SIMDVox& vox, int numSamples, int activeVoice)
 
     switch (mask)
     {
-    case 0b0000: _process<false, false, false, false>(vox, numSamples, activeVoice); break;
-    case 0b0001: _process<false, false, false, true>(vox, numSamples, activeVoice); break;
-    case 0b0010: _process<false, false, true, false>(vox, numSamples, activeVoice); break;
-    case 0b0011: _process<false, false, true, true>(vox, numSamples, activeVoice); break;
-    case 0b0100: _process<false, true, false, false>(vox, numSamples, activeVoice); break;
-    case 0b0101: _process<false, true, false, true>(vox, numSamples, activeVoice); break;
-    case 0b0110: _process<false, true, true, false>(vox, numSamples, activeVoice); break;
-    case 0b0111: _process<false, true, true, true>(vox, numSamples, activeVoice); break;
-    case 0b1000: _process<true, false, false, false>(vox, numSamples, activeVoice); break;
-    case 0b1001: _process<true, false, false, true>(vox, numSamples, activeVoice); break;
-    case 0b1010: _process<true, false, true, false>(vox, numSamples, activeVoice); break;
-    case 0b1011: _process<true, false, true, true>(vox, numSamples, activeVoice); break;
-    case 0b1100: _process<true, true, false, false>(vox, numSamples, activeVoice); break;
-    case 0b1101: _process<true, true, false, true>(vox, numSamples, activeVoice); break;
-    case 0b1110: _process<true, true, true, false>(vox, numSamples, activeVoice); break;
-    case 0b1111: _process<true, true, true, true>(vox, numSamples, activeVoice); break;
+    case 0b0000: _process<false, false, false, false>(vox, numSamples, activeVoice, vmask); break;
+    case 0b0001: _process<false, false, false, true>(vox, numSamples, activeVoice, vmask); break;
+    case 0b0010: _process<false, false, true, false>(vox, numSamples, activeVoice, vmask); break;
+    case 0b0011: _process<false, false, true, true>(vox, numSamples, activeVoice, vmask); break;
+    case 0b0100: _process<false, true, false, false>(vox, numSamples, activeVoice, vmask); break;
+    case 0b0101: _process<false, true, false, true>(vox, numSamples, activeVoice, vmask); break;
+    case 0b0110: _process<false, true, true, false>(vox, numSamples, activeVoice, vmask); break;
+    case 0b0111: _process<false, true, true, true>(vox, numSamples, activeVoice, vmask); break;
+    case 0b1000: _process<true, false, false, false>(vox, numSamples, activeVoice, vmask); break;
+    case 0b1001: _process<true, false, false, true>(vox, numSamples, activeVoice, vmask); break;
+    case 0b1010: _process<true, false, true, false>(vox, numSamples, activeVoice, vmask); break;
+    case 0b1011: _process<true, false, true, true>(vox, numSamples, activeVoice, vmask); break;
+    case 0b1100: _process<true, true, false, false>(vox, numSamples, activeVoice, vmask); break;
+    case 0b1101: _process<true, true, false, true>(vox, numSamples, activeVoice, vmask); break;
+    case 0b1110: _process<true, true, true, false>(vox, numSamples, activeVoice, vmask); break;
+    case 0b1111: _process<true, true, true, true>(vox, numSamples, activeVoice, vmask); break;
     }
 }
 
@@ -272,7 +273,7 @@ static inline SIMDF getMorph(OSC::SIMDOSC& osc, FmMatrix::TablesData& tables)
 }
 
 template<bool AOn, bool BOn, bool COn, bool DOn>
-void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
+void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIMDM vmask)
 {
     auto& A = vox.osc[0];
     auto& B = vox.osc[1];
@@ -408,7 +409,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
         if constexpr (AOn)
         if (AhasUnison)
         {
-            auto [uniL, uniR] = processUnison(A, offsetA, a_tables.data, a_tables.size, a_morph, Adist, Awindow);
+            auto [uniL, uniR] = processUnison(A, offsetA, a_tables.data, a_tables.size, a_morph, Adist, Awindow, vmask);
             AoutL = uniL * A.level;
             AoutR = uniR * A.level;
         }
@@ -416,7 +417,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
         if constexpr (BOn)
         if (BhasUnison)
         {
-            auto [uniL, uniR] = processUnison(B, offsetB, b_tables.data, b_tables.size, b_morph, Bdist, Bwindow);
+            auto [uniL, uniR] = processUnison(B, offsetB, b_tables.data, b_tables.size, b_morph, Bdist, Bwindow, vmask);
             BoutL = uniL * B.level;
             BoutR = uniR * B.level;
         }
@@ -424,7 +425,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
         if constexpr (COn)
         if (ChasUnison)
         {
-            auto [uniL, uniR] = processUnison(C, offsetC, c_tables.data, c_tables.size, c_morph, Cdist, Cwindow);
+            auto [uniL, uniR] = processUnison(C, offsetC, c_tables.data, c_tables.size, c_morph, Cdist, Cwindow, vmask);
             CoutL = uniL * C.level;
             CoutR = uniR * C.level;
         }
@@ -432,7 +433,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
         if constexpr (DOn)
         if (DhasUnison)
         {
-            auto [uniL, uniR] = processUnison(D, offsetD, d_tables.data, d_tables.size, d_morph, Ddist, Dwindow);
+            auto [uniL, uniR] = processUnison(D, offsetD, d_tables.data, d_tables.size, d_morph, Ddist, Dwindow, vmask);
             DoutL = uniL * D.level;
             DoutR = uniR * D.level;
         }
