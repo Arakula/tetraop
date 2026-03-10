@@ -575,7 +575,7 @@ void TetraOPAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
         synth->renderNextBlock(buffer, midiMessages, pos, thisBlock);
         pos += thisBlock;
         todo -= thisBlock;
-        modulation->finishBlock(thisBlock);
+        modulation->endBlock(thisBlock);
     }
     synth->endBlock(numSamples);
 

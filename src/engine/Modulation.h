@@ -77,7 +77,7 @@ public:
 	void subTick(); // intrablock update
 	void tickConnections();
 	void tickMacros();
-	void finishBlock(int nsamples);
+	void endBlock(int nsamples);
 	void resetSmooth(const juce::String& pname);
 	void connect(const juce::String& src, const juce::String& dst, int sliderId = 0);
 	void disconnect(const juce::String& src, const juce::String& dst);

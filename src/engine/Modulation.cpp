@@ -326,7 +326,7 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
     tickMacros();
 }
 
-void Modulation::finishBlock(int nsamples)
+void Modulation::endBlock(int nsamples)
 {
     auto dt = nsamples / audioProcessor.osrate;
     for (auto it = smoothedParams.begin(); it != smoothedParams.end(); )

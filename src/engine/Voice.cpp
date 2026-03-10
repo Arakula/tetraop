@@ -4,6 +4,8 @@
 Voice::Voice (TetraOPAudioProcessor& p, int _id)
     : audioProcessor (p)
 	, id(_id)
+    , batch(_id / SIMDSZ)
+    , lane(_id % SIMDSZ)
 {
     osc.reserve(4);
     for (int i = 0; i < MAX_OSCILLATORS; ++i)
@@ -47,9 +49,9 @@ void Voice::noteStarted()
         osc[i].trigger(note.initialNote, srate);
     }
 
-    f1_cut = audioProcessor.modulation->getPolyValue("f1_cut", id, 0);
-    f1_res = audioProcessor.modulation->getPolyValue("f1_res", id, 0);
-    audioProcessor.synth->prepareFilters(id, f1_cut, f1_res);
+    //f1_cut = audioProcessor.modulation->getPolyValue("f1_cut", id, 0);
+    //f1_res = audioProcessor.modulation->getPolyValue("f1_res", id, 0);
+    //audioProcessor.synth->prepareFilters(id, f1_cut, f1_res);
 }
 
 void Voice::noteRetriggered()
@@ -128,18 +130,24 @@ void Voice::setCurrentSampleRate (double newRate)
 
 void Voice::startBlock(int startSample, int numSamples)
 {
+    auto& voice = audioProcessor.synth->vox[batch].voice;
+    bool msk[4] = { false, false, false, false };
+    msk[lane] = true;
+    SIMDM mask = SIMDM(msk);
+
     (void)startSample;
     int blkoffset = numSamples; // TODO - fix this
+
     auto env_targ = audioProcessor.modulation->getEnvelopeValue(0, id, blkoffset);
     if (fastKill)
         env_targ *= 0.01f; // TODO use a proper fadeout
-    env_step = (env_targ - env) / numSamples;
-    vel_mult = vel * audioProcessor.velsense + 1.0f - audioProcessor.velsense;
+    Utils::setMasked(voice.env_step, (env_targ - voice.env.get(lane)) / numSamples, mask);
+    Utils::setMasked(voice.vel_mult, vel * audioProcessor.velsense + 1.0f - audioProcessor.velsense, mask);
 
-    f1_cut = audioProcessor.modulation->getPolyValue("f1_cut", id, blkoffset);
-    f1_res = audioProcessor.modulation->getPolyValue("f1_res", id, blkoffset);
-    f1_drive = audioProcessor.modulation->getPolyValue("f1_drive", id, blkoffset);
-    f1_mix = audioProcessor.modulation->getPolyValue("f1_mix", id, blkoffset);
+    //f1_cut = audioProcessor.modulation->getPolyValue("f1_cut", id, blkoffset);
+    //f1_res = audioProcessor.modulation->getPolyValue("f1_res", id, blkoffset);
+    //f1_drive = audioProcessor.modulation->getPolyValue("f1_drive", id, blkoffset);
+    //f1_mix = audioProcessor.modulation->getPolyValue("f1_mix", id, blkoffset);
 }
 
 void Voice::endBlock(int startSample, int numSamples)

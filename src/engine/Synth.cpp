@@ -100,15 +100,55 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
     if (activeVoices.empty())
         return;
 
-    static constexpr size_t W = 4;
-    size_t numActive = activeVoices.size();
-
-    for (auto& voice : activeVoices)
+    for (auto& voice : activeVoices) 
+    {
         voice->startBlock(startSample, numSamples);
+        for (auto& o : voice->osc)
+            o.startBlock(startSample, numSamples);
+    }
+
+    int maxVoice = 0;
+    for (auto& voice : activeVoices)
+        if (voice->id > maxVoice)
+            maxVoice = voice->id;
+
+    for (int batch = 0; batch <= maxVoice / SIMDSZ; ++batch)
+    {
+        bool maskarr[4] = { false, false, false, false };
+        for (int v = 0; v < SIMDSZ; ++v)
+        {
+            auto idx = batch * SIMDSZ + v;
+            auto voice = (Voice*)voices[idx];
+            if (voice->isActive())
+            {
+                maskarr[v] = true;
+            }
+        }
+        SIMDM mask = SIMDM(maskarr);
+
+        if (mask.testz())
+            continue; // all voices inactive
+
+        int activeVoice = -1; // used to retrieve oscillator outputs for visualization
+        for (int lane = 0; lane < SIMDSZ; ++lane)
+            if ((batch * 4 + lane) == audioProcessor.modulation->lastUsedVoice)
+                activeVoice = batch * 4 + lane;
+
+        auto& v = vox[batch];
+        fm->processBlock(v, numSamples, activeVoice);
+
+        for (int s = 0; s < numSamples; ++s)
+        {
+            left[startSample + s] += (fm->outL[s] * v.voice.env * v.voice.vel_mult).sum();
+            right[startSample + s] += (fm->outR[s] * v.voice.env * v.voice.vel_mult).sum();
+            v.voice.env += v.voice.env_step;
+        }
+    }
 
     // process active voices in batches
     // voices are serialized into SIMD registers and scattered after
     // its not a great approach but works well enough
+    /*
     for (size_t i = 0; i < numActive; i += W)
     {
         size_t batchSize = std::min(W, numActive - i);
@@ -162,12 +202,9 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
             for (int o = 0; o < MAX_OSCILLATORS; ++o)
                 activeVoices[i + lane]->osc[o].vecToState(oscVecOutTemp[o], lane);
         }
-    }
+    }*/
 
-    int maxVoice = 0;
-    for (auto& voice : activeVoices)
-        if (voice->id < maxVoice)
-            maxVoice = voice->id;
+    
 
     // process filters
     // filters are ordered by voice number in SIMD registers
@@ -235,6 +272,6 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
     for (auto& voice : activeVoices) {
         voice->endBlock(startSample, numSamples);
         for (int o = 0; o < MAX_OSCILLATORS; ++o)
-            voice->osc[o].finishBlock(numSamples);
+            voice->osc[o].endBlock(numSamples);
     }
 }

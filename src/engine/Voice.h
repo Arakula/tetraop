@@ -15,56 +15,14 @@ public:
     struct SIMDVoice
     {
         std::array<float, 4> key; // float 0...1 note pressed used to get wavetable
-        SIMDI id;
         SIMDF env;
         SIMDF vel_mult;
         SIMDF env_step;
     };
 
-    struct VoiceVec
-    {
-        std::array<float, 4> key;
-        alignas(sizeof(SIMDI)) int id[4];
-        alignas(sizeof(SIMDF)) float vel_mult[4];
-        alignas(sizeof(SIMDF)) float env[4];
-        alignas(sizeof(SIMDF)) float env_step[4];
-    };
-
-    void stateToVec(VoiceVec& vec, int lane) const
-    {
-        vec.key[lane] = key;
-        vec.env[lane] = env;
-        vec.vel_mult[lane] = vel_mult;
-        vec.env_step[lane] = env_step;
-        vec.id[lane] = id;
-    }
-
-    static SIMDVoice vecToSIMD(VoiceVec& vec)
-    {
-        SIMDVoice v;
-        v.id.load(vec.id);
-        v.key = vec.key;
-        v.env.load(vec.env);
-        v.vel_mult.load(vec.vel_mult);
-        v.env_step.load(vec.env_step);
-        return v;
-    }
-
-    static VoiceVec SIMDToVec(SIMDVoice simd)
-    {
-        VoiceVec vec{};
-        simd.vel_mult.store(vec.vel_mult);
-        simd.env.store(vec.env);
-        return vec;
-    }
-
-    void vecToState(VoiceVec& vec, int lane)
-    {
-        env = vec.env[lane];
-        vel_mult = vec.vel_mult[lane];
-    }
-
 	int id;
+    int batch; // SIMD group
+    int lane; // SIMD lane inside batch
     uint64_t pressed_ts = 1; // timestamp used for rand generators based on note start
     float srate = 44100.f;
     float israte = 0.0001f;
@@ -75,9 +33,6 @@ public:
     float vel = 0.f; // norm velocity
     float key = 0.f; // norm note used for keytracking
     int mpe_channel = 1;
-    float env = 0.f; // adsr envelope value
-    float env_step = 0.f;
-    float vel_mult = 1.f;
 
     // filters
     float f1_cut = 0.f;

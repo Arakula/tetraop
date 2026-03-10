@@ -26,18 +26,15 @@ public:
     void prepareFilters(int voiceId, float cutoff, float resonance);
     void renderNextSubBlock(AudioBuffer<float>& outputAudio, int startSample, int numSamples) override;
     void handleMidiEvent(const juce::MidiMessage& m) override;
+    std::array<SIMDVox, MAX_POLYPHONY / SIMDSZ> vox{};
 
 private:
     std::array<std::unique_ptr<Filter>, MAX_POLYPHONY / SIMDSZ> filterL;
     std::array<std::unique_ptr<Filter>, MAX_POLYPHONY / SIMDSZ> filterR;
+    std::array<std::array<SIMDF, MAX_BLOCKSIZE>, MAX_POLYPHONY / SIMDSZ> filterIO;
 
     DCBlocker dcBlockerL{};
     DCBlocker dcBlockerR{};
-    Voice::VoiceVec voiceVec{};
-    OSC::OSCVec oscVec[MAX_OSCILLATORS]{};
-    Voice::VoiceVec voiceVecOutTemp{};
-    OSC::OSCVec oscVecOutTemp[MAX_OSCILLATORS]{};
-    SIMDVox vox{};
 
 	TetraOPAudioProcessor& audioProcessor;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Synth)

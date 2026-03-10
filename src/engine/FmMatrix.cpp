@@ -128,17 +128,19 @@ bool FmMatrix::isNoise(int oscId)
 
 void FmMatrix::fetchNoiseGenerators(int oscId, SIMDI voiceId)
 {
-    auto& wt = audioProcessor.wavetables[oscId];
-    bool isWhiteNoise = wt.mode == TetraOPAudioProcessor::WhiteNoise;
-
-    for (int i = 0; i < SIMDSZ; ++i) 
-    {
-        auto* voice = (Voice*)audioProcessor.synth->getVoice(voiceId.get(i));
-        if (!voice) continue;
-        auto& osc = voice->osc[oscId];
-        auto& ng = noiseGens[oscId];
-        ng[i] = isWhiteNoise ? (NoiseGen*)&osc.noiseGen : (NoiseGen*)&osc.pinkNoiseGen;
-    }
+    (void)oscId;
+    (void)voiceId;
+    //auto& wt = audioProcessor.wavetables[oscId];
+    //bool isWhiteNoise = wt.mode == TetraOPAudioProcessor::WhiteNoise;
+    //
+    //for (int i = 0; i < SIMDSZ; ++i) 
+    //{
+    //    auto* voice = (Voice*)audioProcessor.synth->getVoice(voiceId.get(i));
+    //    if (!voice) continue;
+    //    auto& osc = voice->osc[oscId];
+    //    auto& ng = noiseGens[oscId];
+    //    ng[i] = isWhiteNoise ? (NoiseGen*)&osc.noiseGen : (NoiseGen*)&osc.pinkNoiseGen;
+    //}
 }
 
 
@@ -287,10 +289,34 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
     const bool CisMorphing = COn && (C.morph - C.morph_targ).abs().hmax() > 1e-4f;
     const bool DisMorphing = DOn && (D.morph - D.morph_targ).abs().hmax() > 1e-4f;
 
-    if constexpr (AOn) a_tables = getTables(vox, 0, AisMorphing);
-    if constexpr (BOn) b_tables = getTables(vox, 1, BisMorphing);
-    if constexpr (COn) c_tables = getTables(vox, 2, CisMorphing);
-    if constexpr (DOn) d_tables = getTables(vox, 3, DisMorphing);
+    auto isamps = 1.f / numSamples;
+    if constexpr (AOn)
+    {
+        a_tables = getTables(vox, 0, AisMorphing);
+        A.level_step = (A.level_targ - A.level) * isamps;
+        A.pitch_ratio_step = (A.pitch_ratio_targ - A.pitch_ratio) * isamps;
+    }
+
+    if constexpr (BOn)
+    {
+        b_tables = getTables(vox, 1, BisMorphing);
+        B.level_step = (B.level_targ - B.level) * isamps;
+        B.pitch_ratio_step = (B.pitch_ratio_targ - B.pitch_ratio) * isamps;
+    }
+
+    if constexpr (COn)
+    {
+        c_tables = getTables(vox, 2, CisMorphing);
+        C.level_step = (C.level_targ - C.level) * isamps;
+        C.pitch_ratio_step = (C.pitch_ratio_targ - C.pitch_ratio) * isamps;
+    }
+
+    if constexpr (DOn)
+    {
+        d_tables = getTables(vox, 3, DisMorphing);
+        D.level_step = (D.level_targ - D.level) * isamps;
+        D.pitch_ratio_step = (D.pitch_ratio_targ - D.pitch_ratio) * isamps;
+    }
 
     const bool AisNoise = AOn && isNoise(0);
     const bool BisNoise = BOn && isNoise(1);
@@ -306,10 +332,10 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice)
     std::array<NoiseGen*, 4>* BNoiseGen = nullptr;
     std::array<NoiseGen*, 4>* CNoiseGen = nullptr;
     std::array<NoiseGen*, 4>* DNoiseGen = nullptr;
-    if (AisNoise) { fetchNoiseGenerators(0, vox.voice.id); ANoiseGen = &noiseGens[0]; };
-    if (BisNoise) { fetchNoiseGenerators(1, vox.voice.id); BNoiseGen = &noiseGens[1]; };
-    if (CisNoise) { fetchNoiseGenerators(2, vox.voice.id); CNoiseGen = &noiseGens[2]; };
-    if (DisNoise) { fetchNoiseGenerators(3, vox.voice.id); DNoiseGen = &noiseGens[3]; };
+    //if (AisNoise) { fetchNoiseGenerators(0, vox.voice.id); ANoiseGen = &noiseGens[0]; };
+    //if (BisNoise) { fetchNoiseGenerators(1, vox.voice.id); BNoiseGen = &noiseGens[1]; };
+    //if (CisNoise) { fetchNoiseGenerators(2, vox.voice.id); CNoiseGen = &noiseGens[2]; };
+    //if (DisNoise) { fetchNoiseGenerators(3, vox.voice.id); DNoiseGen = &noiseGens[3]; };
 
     const RenderFn renderA = isNoise(0) ? renderNoise : AisOut ? renderWaveCubic : renderWaveLinear;
     const RenderFn renderB = isNoise(1) ? renderNoise : BisOut ? renderWaveCubic : renderWaveLinear;
