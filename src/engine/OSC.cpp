@@ -38,6 +38,7 @@ void OSC::trigger(int note, float srate)
 
 	bool isOn = mod->getValue(prefix + "on");
 	auto level = mod->getPolyValue(prefix + "level", voiceId, 0) * isOn;
+	osc.isOn = isOn;
 	Utils::setMasked(osc.level, level, mask);
 	Utils::setMasked(osc.level_targ, level, mask);
 
@@ -68,6 +69,7 @@ void OSC::startBlock(int startSample, int numSamples)
 	auto& mod = audioProcessor.modulation;
 
 	auto isOn = mod->getValue(prefix + "on");
+	osc.isOn = isOn;
 	Utils::setMasked(osc.level_targ, mod->getPolyValue(prefix + "level", voiceId, blkoffset) * isOn, mask);
 	if (osc.level.get(lane) < 1e-4f && osc.level_targ.get(lane) < 1e-4f) 
 		return; // oscillator is off
@@ -119,7 +121,7 @@ void OSC::startBlock(int startSample, int numSamples)
 		recalcUnison(unison);
 	}
 
-	bool isFMOutput = audioProcessor.synth->fm->isOut[id];
+	bool isFMOutput = audioProcessor.synth->fm->isOut[id].hmax() > 0.f;
 	if (!isFMOutput || (osc.level.get(lane) <= 1e-5f && osc.level_targ.get(lane) < 1e-5f))
 		unison.voices = 1; // TODO remove this?
 

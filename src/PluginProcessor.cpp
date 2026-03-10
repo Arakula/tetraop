@@ -79,7 +79,7 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         layout.add(std::make_unique<AudioParameterBool>(prefix + "inB", prefixnm + "In B", i < 1));
         layout.add(std::make_unique<AudioParameterBool>(prefix + "inC", prefixnm + "In C", i < 1));
         layout.add(std::make_unique<AudioParameterBool>(prefix + "inD", prefixnm + "In D", i < 1));
-        if (i > 1)
+        if (i > 0)
             layout.add(std::make_unique<AudioParameterBool>(prefix + "inF1", prefixnm + "In Filter1", true));
 
         layout.add(std::make_unique<AudioParameterChoice>(prefix + "type", prefixnm + "Type", StringArray{"Digital 12p", "Digital 24p", "Analog 12p", "Analog 24p", "Ladder 12p", "Ladder 24p", "303", "Phaser+", "Phaser-"}, 0));

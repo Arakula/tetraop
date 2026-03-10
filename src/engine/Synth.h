@@ -11,15 +11,30 @@ using namespace globals;
 
 class TetraOPAudioProcessor;
 
-class Synth : public gin::Synthesiser
+class Synth : public gin::Synthesiser, public juce::AudioProcessorValueTreeState::Listener
 {
 public:
+    struct FilterState
+    {
+        Filter::Type type;
+        Filter::Mode mode;
+        bool on;
+        bool ain; // a osc input
+        bool bin;
+        bool cin;
+        bool din;
+        bool fin; // other filter input
+        bool dirty;
+    };
+
     std::unique_ptr<FmMatrix> fm;
     bool lastEventWasNoteOff = false;
 
     Synth(TetraOPAudioProcessor& p);
     ~Synth() override;
+    void parameterChanged(const juce::String& paramId, float value) override;
 
+    void onFilterChange(int f);
     void prepare();
     void clear();
     void createFilters(int f);
@@ -32,11 +47,18 @@ public:
 private:
     std::array<std::unique_ptr<Filter>, MAX_POLYPHONY / SIMDSZ> f1L;
     std::array<std::unique_ptr<Filter>, MAX_POLYPHONY / SIMDSZ> f1R;
+    std::array<std::unique_ptr<Filter>, MAX_POLYPHONY / SIMDSZ> f2L;
+    std::array<std::unique_ptr<Filter>, MAX_POLYPHONY / SIMDSZ> f2R;
 
+    // filters
+    FilterState f1;
+    FilterState f2;
+    bool filterSeries = false;
     std::array<SIMDF, MAX_BLOCKSIZE> filterInL;
     std::array<SIMDF, MAX_BLOCKSIZE> filterInR;
     std::array<SIMDF, MAX_BLOCKSIZE> filterOutL;
     std::array<SIMDF, MAX_BLOCKSIZE> filterOutR;
+
     std::array<SIMDF, MAX_BLOCKSIZE> outL;
     std::array<SIMDF, MAX_BLOCKSIZE> outR;
 

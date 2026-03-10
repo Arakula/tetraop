@@ -23,18 +23,9 @@ public:
         SIMDF ratio[4];
     };
 
-    struct UnisonVec
-    {
-        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> phase{};
-        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> gain_l{};
-        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> gain_r{};
-        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> mask{};
-        alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> ratio{};
-        int voices = 1;
-    };
-
     struct SIMDOSC
     {
+        bool isOn;
         SIMDF phase;
         SIMDF phase_inc;
         SIMDF phase_offset;

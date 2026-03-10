@@ -11,14 +11,67 @@ Synth::Synth(TetraOPAudioProcessor& p) : audioProcessor(p)
         addVoice (voice);
     }
 
+    fm = std::make_unique<FmMatrix>(audioProcessor);
+
     createFilters(0);
     createFilters(1);
 
-    fm = std::make_unique<FmMatrix>(audioProcessor);
+    for (int i = 0; i < 2; ++i)
+    {
+        String prefix = i == 0 ? "f1_" : "f2";
+        audioProcessor.params.addParameterListener(prefix + "on", this);
+        audioProcessor.params.addParameterListener(prefix + "type", this);
+        audioProcessor.params.addParameterListener(prefix + "mode", this);
+        audioProcessor.params.addParameterListener(prefix + "inA", this);
+        audioProcessor.params.addParameterListener(prefix + "inB", this);
+        audioProcessor.params.addParameterListener(prefix + "inC", this);
+        audioProcessor.params.addParameterListener(prefix + "inD", this);
+    }
 }
 
 Synth::~Synth()
 {
+}
+
+void Synth::parameterChanged(const juce::String& paramId, float value)
+{
+    if (paramId.startsWith("f1_"))
+        f1.dirty = true;
+    else if (paramId.startsWith("f2_"))
+        f2.dirty = true;
+}
+
+void Synth::onFilterChange(int f)
+{
+    String prefix = f == 0 ? "f1_" : "f2_";
+    auto& filter = f == 0 ? f1 : f2;
+    filter.on = (bool)audioProcessor.params.getRawParameterValue(prefix + "on")->load();
+    filter.type = (Filter::Type)audioProcessor.params.getRawParameterValue(prefix + "type")->load();
+    filter.mode = (Filter::Mode)audioProcessor.params.getRawParameterValue(prefix + "mode")->load();
+    filter.ain = (bool)audioProcessor.params.getRawParameterValue(prefix + "inA")->load();
+    filter.bin = (bool)audioProcessor.params.getRawParameterValue(prefix + "inB")->load();
+    filter.cin = (bool)audioProcessor.params.getRawParameterValue(prefix + "inC")->load();
+    filter.din = (bool)audioProcessor.params.getRawParameterValue(prefix + "inD")->load();
+
+    auto& filtersL = f == 0 ? f1L : f2L;
+    auto& filtersR = f == 0 ? f1R : f2R;
+    
+    if (filter.type != filtersL[0]->type)
+    {
+        createFilters(f);
+    }
+    else if (filter.mode != filtersL[0]->filterMode)
+    {
+        for (auto& ff : filtersL)
+            ff->setMode(filter.mode);
+        for (auto& ff : filtersR)
+            ff->setMode(filter.mode);
+    }
+    
+    if (f == 1) 
+        filter.fin = audioProcessor.params.getRawParameterValue("f2_inF1")->load();
+
+    filterSeries = f1.on && f2.on && f2.fin;
 }
 
 void Synth::prepare()
@@ -58,10 +111,12 @@ void Synth::createFilters(int f)
 
     for (int i = 0; i < MAX_POLYPHONY / SIMDSZ; ++i)
     {
-        f1L[i] = makeFilter(type);
-        f1R[i] = makeFilter(type);
-        f1L[i]->setMode(mode);
-        f1R[i]->setMode(mode);
+        auto& fl = f == 0 ? f1L : f2L;
+        auto& fr = f == 0 ? f1R : f2R;
+        fl[i] = makeFilter(type);
+        fr[i] = makeFilter(type);
+        fl[i]->setMode(mode);
+        fr[i]->setMode(mode);
     }
 }
 
@@ -99,6 +154,18 @@ void Synth::handleMidiEvent (const juce::MidiMessage& m)
 
 void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int numSamples)
 {
+    if (f1.dirty)
+    {
+        onFilterChange(0);
+        f1.dirty = false;
+    }
+
+    if (f2.dirty)
+    {
+        onFilterChange(1);
+        f2.dirty = false;
+    }
+
     const ScopedLock sl(voicesLock);
     auto left = buffer.getWritePointer(0);
     auto right = buffer.getWritePointer(1);
@@ -149,23 +216,24 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
         auto& v = vox[batch];
         fm->processBlock(v, numSamples, activeVoice, Utils::maskToFloat(mask));
 
-        bool f1On = true;
-        bool filterSeries = false;
-        std::fill(filterInL.begin(), filterInL.begin() + numSamples, SIMDF(0.0f));
-        std::fill(filterInR.begin(), filterInR.begin() + numSamples, SIMDF(0.0f));
-        std::fill(filterOutL.begin(), filterOutL.begin() + numSamples, SIMDF(0.f));
-        std::fill(filterOutR.begin(), filterOutR.begin() + numSamples, SIMDF(0.f));
 
         // process filter 1
-        SIMDF routef1[MAX_OSCILLATORS] = { 1.f, 1.f, 1.f, 1.f };
-        if (f1On)
+        std::fill(filterOutL.begin(), filterOutL.begin() + numSamples, SIMDF(0.f));
+        std::fill(filterOutR.begin(), filterOutR.begin() + numSamples, SIMDF(0.f));
+        bool routef1[MAX_OSCILLATORS] = { f1.ain, f1.bin, f1.cin, f1.din };
+        if (f1.on)
         {
-            for (int i = 0; i < numSamples; ++i)
+            std::fill(filterInL.begin(), filterInL.begin() + numSamples, SIMDF(0.0f));
+            std::fill(filterInR.begin(), filterInR.begin() + numSamples, SIMDF(0.0f));
+            for (int o = 0; o < MAX_OSCILLATORS; ++o)
             {
-                for (int o = 0; o < MAX_OSCILLATORS; ++o)
+                if (!routef1[o] || !v.osc[o].isOn)
+                    continue;
+
+                for (int i = 0; i < numSamples; ++i)
                 {
-                    filterInL[i] += fm->outL[o][i] * routef1[o];
-                    filterInR[i] += fm->outR[o][i] * routef1[o];
+                    filterInL[i] += fm->outL[o][i];
+                    filterInR[i] += fm->outR[o][i];
                 }
             }
 
@@ -185,28 +253,71 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
             }
         }
 
-        bool f2On = false;
-        SIMDF routef2[MAX_OSCILLATORS] = { 1.f, 1.f, 1.f, 1.f };
+        // process filter 2
+        bool routef2[MAX_OSCILLATORS] = { f2.ain, f2.bin, f2.cin, f2.din };
+        if (f2.on)
+        {
+            std::fill(filterInL.begin(), filterInL.begin() + numSamples, SIMDF(0.0f));
+            std::fill(filterInR.begin(), filterInR.begin() + numSamples, SIMDF(0.0f));
+            for (int o = 0; o < MAX_OSCILLATORS; ++o)
+            {
+                if (!routef2[o] || !v.osc[o].isOn)
+                    continue;
+
+                for (int i = 0; i < numSamples; ++i)
+                {
+                    filterInL[i] += fm->outL[o][i];
+                    filterInR[i] += fm->outR[o][i];
+                }
+            }
+
+            if (filterSeries)
+            {
+                for (int i = 0; i < numSamples; ++i)
+                {
+                    filterInL[i] += filterOutL[i];
+                    filterInR[i] += filterOutR[i];
+                }
+                std::fill(filterOutL.begin(), filterOutL.begin() + numSamples, SIMDF(0.f));
+                std::fill(filterOutR.begin(), filterOutR.begin() + numSamples, SIMDF(0.f));
+            }
+
+            auto& fl = f2L[batch];
+            auto& fr = f2R[batch];
+
+            fl->processBlock(filterInL, startSample, numSamples, audioProcessor.currBlockSize, Utils::maskToFloat(mask));
+            fr->processBlock(filterInR, startSample, numSamples, audioProcessor.currBlockSize, Utils::maskToFloat(mask));
+
+            for (int i = 0; i < numSamples; ++i)
+            {
+                filterOutL[i] += fl->out[i];
+                filterOutR[i] += fr->out[i];
+            }
+        }
 
         // direct out are oscillators not routed to any filter
-        SIMDF routeDirOut[MAX_OSCILLATORS];
+        bool routeDirOut[MAX_OSCILLATORS]{};
         for (int i = 0; i < MAX_OSCILLATORS; ++i)
-            routeDirOut[i] = SIMDF(1.f) - ((routef1[i] * f1On) + routef2[i] * f2On).min(1.f);
+            routeDirOut[i] = !((routef1[i] && f1.on) || (routef2[i] && f2.on));
 
-        // mix output
         std::fill(outL.begin(), outL.begin() + numSamples, 0.f);
         std::fill(outR.begin(), outR.begin() + numSamples, 0.f);
 
-        for (int i = 0; i < numSamples; ++i)
+        // mix direct output
+        for (int o = 0; o < MAX_OSCILLATORS; ++o)
         {
-            for (int o = 0; o < MAX_OSCILLATORS; ++o)
+            if (!routeDirOut[o] || !v.osc[o].isOn)
+                continue; 
+
+            for (int i = 0; i < numSamples; ++i)
             {
                 outL[i] += (fm->outL[o][i] * routeDirOut[o]);
                 outR[i] += (fm->outR[o][i] * routeDirOut[o]);
             }
         }
 
-        if (f1On)
+        // mix filter output
+        if (f1.on || f2.on)
         {
             for (int i = 0; i < numSamples; ++i)
             {
@@ -215,6 +326,7 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
             }
         }
 
+        // final mix
         for (int s = 0; s < numSamples; ++s)
         {
             left[startSample + s] += (outL[s] * v.voice.env * v.voice.vel_mult).sum();
@@ -223,7 +335,7 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
         }
     }
 
-    // final dc blocking
+    // dc blocking
     for (int i = 0; i < numSamples; ++i)
     {
         left[startSample + i] = dcBlockerL.process(left[startSample + i]);
