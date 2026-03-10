@@ -160,7 +160,7 @@ void OSC::recalcUnison(SIMDUnison& unison) const
 		SIMDF p = mipp::load(&panarr[i]);
 		auto lr = Utils::panToGainCheap(p);
 		SIMDF gain = mipp::load(&gainarr[i]);
-		unison.gain_l[lane] = lr[0] * gain;
-		unison.gain_r[lane] = lr[1] * gain;
+		unison.gain_l[i / SIMDSZ] = lr[0] * gain;
+		unison.gain_r[i / SIMDSZ] = lr[1] * gain;
 	}
 }
