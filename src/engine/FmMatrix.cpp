@@ -205,10 +205,10 @@ void FmMatrix::processBlock(SIMDVox& vox, int numSamples, int activeVoice, SIMDF
 {
     prepareDistortions(vox);
 
-    bool aon = vox.osc[0].level.sum() > 1e-5 || vox.osc[0].level_step.sum() > 1e-5;
-    bool bon = vox.osc[1].level.sum() > 1e-5 || vox.osc[1].level_step.sum() > 1e-5;
-    bool con = vox.osc[2].level.sum() > 1e-5 || vox.osc[2].level_step.sum() > 1e-5;
-    bool don = vox.osc[3].level.sum() > 1e-5 || vox.osc[3].level_step.sum() > 1e-5;
+    bool aon = vox.osc[0].level.hmax() > 1e-5 || vox.osc[0].level_targ.hmax() > 1e-5;
+    bool bon = vox.osc[1].level.hmax() > 1e-5 || vox.osc[1].level_targ.hmax() > 1e-5;
+    bool con = vox.osc[2].level.hmax() > 1e-5 || vox.osc[2].level_targ.hmax() > 1e-5;
+    bool don = vox.osc[3].level.hmax() > 1e-5 || vox.osc[3].level_targ.hmax() > 1e-5;
 
     int mask = (aon << 3) | (bon << 2) | (con << 1) | (don << 0);
 
@@ -301,10 +301,19 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
     const bool CisNoise = COn && (c_tables.isWhiteNoise || c_tables.isPinkNoise);
     const bool DisNoise = DOn && (d_tables.isWhiteNoise || d_tables.isPinkNoise);
 
-    const bool AhasUnison = AisOut.hmax() > 0.f && A.unison->voices > 1 && !AisNoise;
-    const bool BhasUnison = BisOut.hmax() > 0.f && B.unison->voices > 1 && !BisNoise;
-    const bool ChasUnison = CisOut.hmax() > 0.f && C.unison->voices > 1 && !CisNoise;
-    const bool DhasUnison = DisOut.hmax() > 0.f && D.unison->voices > 1 && !DisNoise;
+    static auto hasUnisonVoices = [](const OSC::SIMDUnison* uni, const SIMDF& mask)
+        {
+            for (int i = 0; i < SIMDSZ; ++i)
+                if (uni[i].voices > 1 && mask.get(i) > 0.f)
+                    return true;
+
+            return false;
+        };
+
+    const bool AhasUnison = AOn && AisOut.hmax() > 0.f && hasUnisonVoices(A.unison, vmask) && !AisNoise;
+    const bool BhasUnison = BOn && BisOut.hmax() > 0.f && hasUnisonVoices(B.unison, vmask) && !BisNoise;
+    const bool ChasUnison = COn && CisOut.hmax() > 0.f && hasUnisonVoices(C.unison, vmask) && !CisNoise;
+    const bool DhasUnison = DOn && DisOut.hmax() > 0.f && hasUnisonVoices(D.unison, vmask) && !DisNoise;
 
     const RenderFn renderA = a_tables.isWhiteNoise ? renderWhiteNoise : a_tables.isPinkNoise ? renderPinkNoise 
         : AisOut.hmax() > 0.f ? renderWaveCubic : renderWaveLinear;

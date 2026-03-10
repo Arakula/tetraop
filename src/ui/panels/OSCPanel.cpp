@@ -179,7 +179,6 @@ void OSCPanel::toggleUIComponents()
 {
 	bool on = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "on")->load();
 	level->disabled = !on;
-	level->disabled = !on;
 	pan->disabled = !on;
 	phase->disabled = !on;
 	rand->disabled = !on;

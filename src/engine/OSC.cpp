@@ -103,14 +103,11 @@ void OSC::startBlock(int startSample, int numSamples)
 	auto unison_sprd = mod->getPolyValue(prefix + "unison_spread", voiceId, blkoffset);
 	auto unison_bld = mod->getPolyValue(prefix + "unison_blend", voiceId, blkoffset);
 
-	if (unison_v == 1)
-	{
-		unison.voices = unison_v;
-	}
-	else if (unison_v != unison.voices || unison_mod != unison_mode
+	
+	if (unison_v > 1 && (unison_v != unison.voices || unison_mod != unison_mode
 		|| unison_det != unison_detune || unison_st != unison_stereo
 		|| unison_sprd != unison_spread || unison_bld != unison_blend
-	)
+	))
 	{
 		unison.voices = unison_v;
 		unison_mode = unison_mod;
@@ -120,6 +117,7 @@ void OSC::startBlock(int startSample, int numSamples)
 		unison_blend = unison_bld;
 		recalcUnison(unison);
 	}
+	unison.voices = unison_v;
 
 	bool isFMOutput = audioProcessor.synth->fm->isOut[id].hmax() > 0.f;
 	if (!isFMOutput || (osc.level.get(lane) <= 1e-5f && osc.level_targ.get(lane) < 1e-5f))

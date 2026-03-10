@@ -82,7 +82,7 @@ void UIUtils::drawVSeparator(Graphics& g, Rectangle<float> bounds)
 
 void UIUtils::drawCheckmark(Graphics& g, Rectangle<float> bounds, Colour bg, Colour check, bool checked)
 {
-    auto b = Rectangle<float>(bounds.getCentreX() - 5, bounds.getCentreY() - 5, 10.f, 10.f);
+    auto b = Rectangle<float>(bounds.getCentreX() - 5, bounds.getCentreY() - 5, 10.f, 10.f).translated(0.5f, 0.5f);
     g.setColour(bg);
     g.fillRoundedRectangle(b, 1.f);
     if (checked)

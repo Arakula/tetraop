@@ -74,7 +74,7 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     {
         String prefix = i == 0 ? "f1_" : "f2_";
         String prefixnm = i == 0 ? "Filter1 " : "Filter2 ";
-        layout.add(std::make_unique<AudioParameterBool>(prefix + "on", prefixnm + "On", i < 1));
+        layout.add(std::make_unique<AudioParameterBool>(prefix + "on", prefixnm + "On", false));
         layout.add(std::make_unique<AudioParameterBool>(prefix + "inA", prefixnm + "In A", i < 1));
         layout.add(std::make_unique<AudioParameterBool>(prefix + "inB", prefixnm + "In B", i < 1));
         layout.add(std::make_unique<AudioParameterBool>(prefix + "inC", prefixnm + "In C", i < 1));
@@ -84,7 +84,7 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
 
         layout.add(std::make_unique<AudioParameterChoice>(prefix + "type", prefixnm + "Type", StringArray{"Digital 12p", "Digital 24p", "Analog 12p", "Analog 24p", "Ladder 12p", "Ladder 24p", "303", "Phaser+", "Phaser-"}, 0));
         layout.add(std::make_unique<AudioParameterChoice>(prefix + "mode", prefixnm + "Mode", StringArray{"LP", "BP", "HP", "BS", "PK"}, 0));
-        layout.add(std::make_unique<AudioParameterFloat>(prefix + "cut", prefixnm + "Cutoff", NormalisableRange<float>(20.f, 20000.f, 1.f, 0.35f), 2000.f));
+        layout.add(std::make_unique<AudioParameterFloat>(prefix + "cut", prefixnm + "Cutoff", NormalisableRange<float>(20.f, 20000.f, 1.f, 0.35f), 2500.f));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "res", prefixnm + "Resonance", 0.0, 1.f, 0.f));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "drive", prefixnm + "Drive", 0.0, 1.f, 0.f));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "mix", prefixnm + "Mix", 0.0, 1.f, 1.f));

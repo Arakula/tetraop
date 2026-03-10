@@ -25,6 +25,7 @@ namespace globals {
 
 	// Theme vars
 	constexpr int PANEL_PAD = 2;
+	constexpr int FILTER_PANEL_HMARGIN = 10;
 	constexpr float PANEL_CORNER = 0.f;
 	constexpr int PANEL_HEADER_HEIGHT = 24;
 	constexpr int KNOB_WIDTH = 60;
@@ -72,7 +73,7 @@ namespace globals {
 		colors["COLOR_BACKGROUND"] = Colour(0xff1A1A1A);
 		colors["COLOR_ACTIVE"] = Colour(0xff00C8FF);
 		colors["COLOR_PANEL"] = Colour(0xff3F3F3F);
-		colors["COLOR_BEVEL"] = Colour(0xff252424);
+		colors["COLOR_BEVEL"] = Colour(0xff1a1a1a);
 		colors["COLOR_PANEL_HEADER"] = Colour(0xffBABABA);
 		colors["COLOR_PANEL_HEADER_TEXT"] = Colour(0xff141414);
 		colors["COLOR_KNOB"] = Colour(0xff626262);

@@ -14,6 +14,7 @@
 #include "PluginProcessor.h"
 #include "ui/ModulatedParam.h"
 #include "ui/panels/OSCPanel.h"
+#include "ui/panels/FilterPanel.h"
 #include "ui/panels/AboutDialog.h"
 #include "ui/CustomLookAndFeel.h"
 //#include "ui/widgets/Modulator.h"
@@ -21,13 +22,13 @@
 
 using namespace globals;
 
-class TMP 
+class TMP
     : public juce::Component
     , private juce::Timer
 {
 public:
     TetraOPAudioProcessor& audioProcessor;
-    TMP(TetraOPAudioProcessor& p) : audioProcessor(p) 
+    TMP(TetraOPAudioProcessor& p) : audioProcessor(p)
     {
         startTimerHz(30);
     };
@@ -124,6 +125,8 @@ public:
     std::unique_ptr<OSCPanel> oscB;
     std::unique_ptr<OSCPanel> oscC;
     std::unique_ptr<OSCPanel> oscD;
+    std::unique_ptr<FilterPanel> filter1;
+    std::unique_ptr<FilterPanel> filter2;
     std::unique_ptr<AboutDialog> aboutDialog;
 
     std::unique_ptr<CustomLookAndFeel> customLookAndFeel;

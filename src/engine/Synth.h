@@ -45,15 +45,14 @@ public:
     std::array<SIMDVox, MAX_POLYPHONY / SIMDSZ> vox{};
 
 private:
-    std::array<std::unique_ptr<Filter>, MAX_POLYPHONY / SIMDSZ> f1L;
-    std::array<std::unique_ptr<Filter>, MAX_POLYPHONY / SIMDSZ> f1R;
-    std::array<std::unique_ptr<Filter>, MAX_POLYPHONY / SIMDSZ> f2L;
-    std::array<std::unique_ptr<Filter>, MAX_POLYPHONY / SIMDSZ> f2R;
-
     // filters
     FilterState f1;
     FilterState f2;
     bool filterSeries = false;
+    std::array<std::unique_ptr<Filter>, MAX_POLYPHONY / SIMDSZ> f1L;
+    std::array<std::unique_ptr<Filter>, MAX_POLYPHONY / SIMDSZ> f1R;
+    std::array<std::unique_ptr<Filter>, MAX_POLYPHONY / SIMDSZ> f2L;
+    std::array<std::unique_ptr<Filter>, MAX_POLYPHONY / SIMDSZ> f2R;
     std::array<SIMDF, MAX_BLOCKSIZE> filterInL;
     std::array<SIMDF, MAX_BLOCKSIZE> filterInR;
     std::array<SIMDF, MAX_BLOCKSIZE> filterOutL;

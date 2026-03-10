@@ -8,7 +8,7 @@ TetraOPAudioProcessorEditor::TetraOPAudioProcessorEditor(TetraOPAudioProcessor& 
     : AudioProcessorEditor(p)
     , audioProcessor(p)
 {
-    setSize(1000, 575);
+    setSize(KNOB_WIDTH * (2+2+2+2 + 3) +KNOB_WIDTH_SM * 6 + PANEL_PAD * 4 + int(FILTER_PANEL_HMARGIN * 2.5), 575);
     Desktop::getInstance().setGlobalScaleFactor(audioProcessor.scale);
     startTimerHz(60);
 
@@ -77,6 +77,14 @@ void TetraOPAudioProcessorEditor::buildUI()
     oscD = std::make_unique<OSCPanel>(*this, 3);
     addAndMakeVisible(oscD.get());
     oscD->setBounds(oscA->getBounds().translated(oscA->getWidth() + PANEL_PAD, oscA->getHeight() + PANEL_PAD));
+
+    filter1 = std::make_unique<FilterPanel>(*this, 0);
+    addAndMakeVisible(filter1.get());
+    filter1->setBounds(oscB->getBounds().translated(oscB->getWidth() + PANEL_PAD, 0).withWidth(KNOB_WIDTH * 3 + int(FILTER_PANEL_HMARGIN * 2.5)));
+
+    filter2 = std::make_unique<FilterPanel>(*this, 1);
+    addAndMakeVisible(filter2.get());
+    filter2->setBounds(filter1->getBounds().translated(0, filter1->getHeight() + PANEL_PAD));
 
     tmp = std::make_unique<TMP>(audioProcessor);
     addAndMakeVisible(tmp.get());
