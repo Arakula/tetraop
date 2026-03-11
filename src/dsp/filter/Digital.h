@@ -38,9 +38,6 @@ private:
 	SIMDF ic3 = 0.f;
 	SIMDF ic4 = 0.f;
 
-	SIMDF drive = 1.f;
-	SIMDF idrive = 1.f;
-
 	SIMDF g = 0.f;
 	SIMDF g_targ = 0.f;
 	SIMDF g_step = 0.f;

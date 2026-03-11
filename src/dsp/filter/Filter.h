@@ -51,6 +51,10 @@ public:
 	SIMDF res = 0.f;
 	SIMDF res_targ = 0.f;
 
+	SIMDF drivenorm = 0.f;
+	SIMDF drive = 1.f;
+	SIMDF idrive = 1.f;
+
 	std::array<SIMDF, MAX_BLOCKSIZE> out;
 
 	static constexpr float kMinNyquistMult = 0.48f;
@@ -78,6 +82,7 @@ public:
 	{
 		srate = srate_;
 		freqScale = MathConstants<float>::pi / srate;
+		init(cut_targ, res_targ, true, { true, true, true, true });
 	}
 	virtual void setMode(Mode mode) { filterMode = mode; }
 	virtual void setSlope(Slope slope) { filterSlope = slope; }

@@ -1,15 +1,15 @@
-// Copyright 2025 tilr
+// Copyright 2026 tilr
 // Based off Vital synth one_pole
 #pragma once
 #include <JuceHeader.h>
-#include <cmath>
 #include "Filter.h"
+#include "../../engine/Utils.h"
 
 class OnePole {
 public:
-    double coeff = 0.0;
-    double state = 0.0;
-    double curr = 0.0;
+    SIMDF coeff = 0.0;
+    SIMDF state = 0.0;
+    SIMDF curr = 0.0;
 
     OnePole() {}
 

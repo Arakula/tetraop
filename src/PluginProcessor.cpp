@@ -279,6 +279,7 @@ bool TetraOPAudioProcessor::loadWaveTable(gin::Wavetable& table, double sr, cons
             gin::Wavetable t;
             loadWavetables(t, sr, buf, reader->sampleRate, size);
 
+
             // pad tables for cubic interpolation
             for (int i = 0; i < t.getNumTables(); ++i)
             {

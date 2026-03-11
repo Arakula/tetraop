@@ -11,7 +11,7 @@ void Digital::init(SIMDF cutoff, SIMDF resonance, bool reset, SIMDM mask)
     auto x = cut_targ.min(srate * kMinNyquistMult) * freqScale;
     Utils::setMasked(g_targ, x.min(kMaxRads).tan(), mask);
     Utils::setMasked(k_targ, SIMDF(2.f) - q * 2.f, mask);
-    if (filterMode == BS) 
+    if (filterMode == BS)
         Utils::setMasked(k_targ, SIMDF(2.f) - k_targ, mask); // invert notch to k relation
 
     if (reset)
@@ -196,6 +196,9 @@ void Digital::clear(SIMDF sample, SIMDM mask)
 
 void Digital::setDrive(SIMDF drive_, SIMDM mask)
 {
+    if ((drivenorm - drive_).blend(0.f, mask).hmax() > 0.f)
+        return; // nothing changed
+    drivenorm = drive_;
     auto K = drive_ * MAX_FILTER_DRIVE * DB2LOG;
     Utils::setMasked(drive, K.exp(), mask);
     Utils::setMasked(idrive, (K * -0.6f).exp(), mask);

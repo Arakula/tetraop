@@ -316,13 +316,13 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
     const bool DhasUnison = DOn && DisOut.hmax() > 0.f && hasUnisonVoices(D.unison, vmask) && !DisNoise;
 
     const RenderFn renderA = a_tables.isWhiteNoise ? renderWhiteNoise : a_tables.isPinkNoise ? renderPinkNoise 
-        : AisOut.hmax() > 0.f ? renderWaveCubic : renderWaveLinear;
+        : AisOut.hmax() > 0.f ? renderWaveLinear : renderWaveLinear;
     const RenderFn renderB = b_tables.isWhiteNoise ? renderWhiteNoise : b_tables.isPinkNoise ? renderPinkNoise
-        : BisOut.hmax() > 0.f ? renderWaveCubic : renderWaveLinear;
+        : BisOut.hmax() > 0.f ? renderWaveLinear : renderWaveLinear;
     const RenderFn renderC = c_tables.isWhiteNoise ? renderWhiteNoise : c_tables.isPinkNoise ? renderPinkNoise
-        : CisOut.hmax() > 0.f ? renderWaveCubic : renderWaveLinear;
+        : CisOut.hmax() > 0.f ? renderWaveLinear : renderWaveLinear;
     const RenderFn renderD = d_tables.isWhiteNoise ? renderWhiteNoise : d_tables.isPinkNoise ? renderPinkNoise
-        : DisOut.hmax() > 0.f ? renderWaveCubic : renderWaveLinear;
+        : DisOut.hmax() > 0.f ? renderWaveLinear : renderWaveLinear;
 
     // temp vars
     SIMDF la, lb, lc, ld, fm_phase; 
