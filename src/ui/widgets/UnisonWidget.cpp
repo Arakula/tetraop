@@ -36,7 +36,11 @@ void UnisonWidget::mouseDown(const MouseEvent& e)
 {
     auto on = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "on")->load();
     if (mouse_down || !on) return;
-    mouse_down = true;
+
+    if (modeBounds.contains(e.getPosition().toFloat()))
+    {
+        showModeMenu();
+    }
 
     editingVoices = voiceBounds.contains(e.getPosition().toFloat());
     editingSpread = spreadBounds.contains(e.getPosition().toFloat());
@@ -206,4 +210,27 @@ void UnisonWidget::resized()
     voiceBounds = Rectangle<float>(left, b.getY(), 30, b.getHeight());
     modeBounds = Rectangle<float>(b.getX(), b.getY(), left, b.getHeight());
     spreadBounds = Rectangle<float>(voiceBounds.getRight(), b.getY(), b.getWidth() - voiceBounds.getRight(), b.getHeight());
+}
+
+void UnisonWidget::showModeMenu()
+{
+    auto mode = (Unison::Mode)editor.audioProcessor.params.getRawParameterValue(prefix + "unison_mode")->load();
+
+    PopupMenu menu;
+    menu.addItem(1, "Unison", true, mode == Unison::kUnison);
+    menu.addItem(2, "Gaussian", true, mode == Unison::kGaussian);
+    menu.addItem(3, "Alternate", true, mode == Unison::kAlternate);
+    menu.addItem(4, "Fifths", true, mode == Unison::kFifths);
+    menu.addItem(5, "Sub", true, mode == Unison::kSub);
+
+    auto menuPos = localPointToGlobal(modeBounds.getBottomLeft().toInt());
+    menu.showMenuAsync(PopupMenu::Options()
+        .withTargetComponent(*this)
+        .withTargetScreenArea({ menuPos.getX(), menuPos.getY(), 1, 1 }),
+        [this](int result) {
+            if (result == 0) return;
+
+            auto param = editor.audioProcessor.params.getParameter(prefix + "unison_mode");
+            param->setValueNotifyingHost(param->convertTo0to1((float)(result - 1)));
+        });
 }

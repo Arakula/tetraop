@@ -30,9 +30,9 @@ void Digital::init(SIMDF cutoff, SIMDF resonance, bool reset, SIMDM mask)
 
 void Digital::processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blocksize, SIMDF mask)
 {
-    switch (filterSlope)
+    switch (type)
     {
-        case k12p:
+        case kDigital12:
             switch(filterMode)
             {
                 case LP: _processBlock<Filter::LP, Filter::k12p>(input, start, nsamps, blocksize, mask); break;
@@ -42,7 +42,7 @@ void Digital::processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, i
                 case PK: _processBlock<Filter::PK, Filter::k12p>(input, start, nsamps, blocksize, mask); break;
             }
             break;
-        case k24p:
+        case kDigital24:
             switch(filterMode)
             {
                 case LP: _processBlock<Filter::LP, Filter::k24p>(input, start, nsamps, blocksize, mask); break;
@@ -70,6 +70,8 @@ void Digital::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, 
         }
     }
 
+    const bool hasDrive = drive.hmax() > 1.0001f;
+
     // process
     for (int i = 0; i < nsamps; ++i)
     {
@@ -91,7 +93,29 @@ void Digital::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, 
         else if constexpr (mode == BS) output = x - k * v1;
         else output = x + (SIMDF(2.0f) - k) * v1;
 
-        out[i] = output * mask;
+        if constexpr (slope == k12p)
+        {
+            if (hasDrive) output = hardTanh(output, drive > 1.f);
+            out[i] = output * idrive * mask;
+        }
+        else
+        {
+            // 24p second stage
+            v3 = output - ic4;
+            v1 = a1.fmadd(ic3, a2 * v3);
+            v2 = ic4 + a2.fmadd(ic3, a3 * v3);
+            ic3 = v1.fmadd(2.f, -ic3);
+            ic4 = v2.fmadd(2.f, -ic4);
+
+            if constexpr (mode == LP) output = v2;
+            else if constexpr (mode == BP) output = v1;
+            else if constexpr (mode == HP) output = output - k * v1 - v2;
+            else if constexpr (mode == BS) output = output - k * v1;
+            else output = output + (SIMDF(2.0f) - k) * v1; // peak
+
+            if (hasDrive) output = hardTanh(output, drive > 1.f);
+            out[i] = output * idrive * mask;
+        }
 
         // interpolate
         g += g_step;

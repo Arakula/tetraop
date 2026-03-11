@@ -33,7 +33,7 @@ Synth::~Synth()
 {
 }
 
-void Synth::parameterChanged(const juce::String& paramId, float value)
+void Synth::parameterChanged(const juce::String& paramId, float)
 {
     if (paramId.startsWith("f1_"))
         f1.dirty = true;
@@ -102,7 +102,8 @@ static std::unique_ptr<Filter> makeFilter(Filter::Type type)
 {
     switch (type)
     {
-    case Filter::kDigital12: return std::make_unique<Digital>(Filter::k12p);
+        case Filter::kDigital12: return std::make_unique<Digital>(Filter::k12p);
+        case Filter::kDigital24: return std::make_unique<Digital>(Filter::k24p);
         default: return std::make_unique<Digital>(Filter::k12p);
     }
 }
@@ -112,6 +113,7 @@ void Synth::createFilters(int f)
     String prefix = f == 0 ? "f1_" : "f2_";
     auto type = (Filter::Type)audioProcessor.params.getRawParameterValue(prefix + "type")->load();
     auto mode = (Filter::Mode)audioProcessor.params.getRawParameterValue(prefix + "mode")->load();
+    auto srate = (float)getSampleRate();
 
     for (int i = 0; i < MAX_POLYPHONY / SIMDSZ; ++i)
     {
@@ -121,6 +123,8 @@ void Synth::createFilters(int f)
         fr[i] = makeFilter(type);
         fl[i]->setMode(mode);
         fr[i]->setMode(mode);
+        fl[i]->prepare(srate);
+        fr[i]->prepare(srate);
     }
 }
 

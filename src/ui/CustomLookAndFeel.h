@@ -31,6 +31,11 @@ public:
         Rectangle<int> parentArea
     ) override;
 
+    Font getPopupMenuFont() override
+    {
+        return juce::Font(FontOptions(16.f));
+    }
+
 
 private:
     juce::Typeface::Ptr defaultFont;

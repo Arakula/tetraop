@@ -11,13 +11,14 @@
 class Digital : public Filter
 {
 public:
-	inline static float hardTanh(float value) {
+	inline static SIMDF hardTanh(SIMDF value, SIMDM mask) {
 		static constexpr float kHardness = 0.66f;
 		static constexpr float kHardnessInv = 1.0f - kHardness;
 		static constexpr float kHardnessInvRec = 1.0f / kHardnessInv;
 
-		float clamped = std::max(std::min(value, kHardness), -kHardness);
-		return clamped + tanhLUT((value - clamped) * kHardnessInvRec) * (1.0f - kHardness);
+		auto clamped = value.sat(-kHardness, kHardness);
+		auto val = clamped + ((value - clamped) * kHardnessInvRec).tanh() * (SIMDF(1.0f) - kHardness);
+		return val.blend(value, mask);
 	}
 
 	Digital(Slope p) : Filter(p == k12p ? kDigital12 : kDigital24) {}
