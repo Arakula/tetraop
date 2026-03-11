@@ -14,7 +14,7 @@ class Voice : public gin::SynthesiserVoice
 public:
     struct SIMDVoice
     {
-        std::array<float, 4> key; // float 0...1 note pressed used to get wavetable
+        std::array<float, 4> key; // float 0..127 note pressed used to get wavetable
         SIMDF env;
         SIMDF vel_mult;
         SIMDF env_step;

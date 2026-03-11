@@ -52,6 +52,9 @@ void Voice::noteStarted()
     auto f1_cut = audioProcessor.modulation->getPolyValue("f1_cut", id, 0);
     auto f1_res = audioProcessor.modulation->getPolyValue("f1_res", id, 0);
     audioProcessor.synth->initFilters(id, f1_cut, f1_res);
+
+    auto& voice = audioProcessor.synth->vox[batch].voice;
+    voice.key[lane] = note.initialNote;
 }
 
 void Voice::noteRetriggered()
@@ -85,6 +88,9 @@ void Voice::noteRetriggered()
     {
         noteSmoother.setValueUnsmoothed (key);
     }
+
+    auto& voice = audioProcessor.synth->vox[batch].voice;
+    voice.key[lane] = note.initialNote;
 }
 
 void Voice::noteStopped (bool allowTailOff)
