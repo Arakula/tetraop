@@ -6,6 +6,7 @@
 #include "FmMatrix.h"
 #include "../dsp/filter/Filter.h"
 #include "../dsp/filter/Digital.h"
+#include "../dsp/filter/Analog.h"
 
 using namespace globals;
 
@@ -16,7 +17,7 @@ class Synth : public gin::Synthesiser, public juce::AudioProcessorValueTreeState
 public:
     struct FilterState
     {
-        Filter::Type type;
+        Filter::Type type = Filter::kOff;
         Filter::Mode mode;
         bool on;
         bool ain; // a osc input

@@ -11,7 +11,7 @@ class Analog : public Filter
 {
 
 public:
-	static constexpr double kDriveResonanceBoost = 2.0;
+	static constexpr float kDriveResonanceBoost = 2.0f;
 
 	Analog(Slope p) : Filter(p == k12p ? kAnalog12 : kAnalog24) {}
 	~Analog(){}
@@ -31,6 +31,10 @@ private:
 	OnePole stage1;
 	OnePole stage2;
 
-	SIMDF g;
-	SIMDF k;
+	SIMDF g = 0.f;
+	SIMDF g_targ = 0.f;
+	SIMDF g_step = 0.f;
+	SIMDF k = 0.f;
+	SIMDF k_targ = 0.f;
+	SIMDF k_step = 0.f;
 };

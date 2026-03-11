@@ -5,19 +5,29 @@ void Analog::init(SIMDF cutoff, SIMDF resonance, bool reset, SIMDM mask)
 	Utils::setMasked(cut_targ, cutoff, mask);
     Utils::setMasked(res_targ, resonance, mask);
 
-	auto x = cut_targ.min(srate * kMinNyquistMult) * freqScale;
-    Utils::setMasked(g, x.min(kMaxRads).tan(), mask);
+	//auto x = (cut_targ.min(srate * kMinNyquistMult) * freqScale).min(kMaxRads);
+    //Utils::setMasked(g_targ, (x / (x + 1)).tan(), mask);
 
-	stage1.coeff = g;
-	stage2.coeff = g;
-	pre_stage1.coeff = g;
-	pre_stage2.coeff = g;
-	SIMDF k_t = filterMode == BS ? resonance : resonance * 2.15;
+    auto omega = (cutoff * MathConstants<float>::twoPi) / srate;
+    Utils::setMasked(g_targ, (SIMDF(1) - (-omega).exp()) * 0.5f, mask);
+
+	SIMDF k_t = filterMode == BS ? resonance : resonance * 2.15f;
 	k_t += drivenorm * resonance * kDriveResonanceBoost;
-	Utils::setMasked(k, k_t, mask);
+	Utils::setMasked(k_targ, k_t, mask);
 
-	SIMDF resScale = resonance * resonance * 2.0f + 1.0f;
-	Utils::setMasked(idrive, SIMDF(1.0) / (resScale * drive).sqrt(), mask);
+    if (reset)
+    {
+        Utils::setMasked(cut, cut_targ, mask);
+        Utils::setMasked(res, res_targ, mask);
+        Utils::setMasked(g, g_targ, mask);
+        Utils::setMasked(k, k_targ, mask);
+        Utils::setMasked(stage1.coeff, g, mask);
+	    Utils::setMasked(stage2.coeff, g, mask);
+	    Utils::setMasked(pre_stage1.coeff, g, mask);
+	    Utils::setMasked(pre_stage2.coeff, g, mask);
+        Utils::setMasked(k_step, 0.f, mask);
+        Utils::setMasked(g_step, 0.f, mask);
+    }
 }
 
 void Analog::processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blocksize, SIMDF mask)
@@ -56,10 +66,11 @@ void Analog::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, i
         if (!Utils::equal(cut, cut_targ) || !Utils::equal(res, res_targ))
         {
             init(cut_targ, res_targ, false, Utils::floatToMask(mask));
-            auto isize = 1.f / (blocksize - start);
-            g_step = (g_targ - g) * isize;
-            k_step = (k_targ - k) * isize;
         }
+        // steps always recalculated as drive may change k
+        auto isize = 1.f / (blocksize - start);
+        g_step = (g_targ - g) * isize;
+        k_step = (k_targ - k) * isize;
     }
 
     // process
@@ -79,7 +90,7 @@ void Analog::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, i
 		else
 		{
 			SIMDF feedback = -pre_stage1.state + pre_stage2.state;
-			s1in = sample - feedback;
+			s1in = x - feedback;
 			SIMDF s1out = pre_stage1.eval(s1in);
 			SIMDF s2out = pre_stage2.eval(s1out);
 			SIMDF lowout = s2out;
@@ -88,7 +99,7 @@ void Analog::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, i
 			SIMDF preout;
 			if constexpr (mode == LP) preout = lowout;
 			else if constexpr (mode == BP) preout = bandout;
-			else if constexpr (mode == PK) preout = sample + bandout;
+			else if constexpr (mode == PK) preout = x + bandout;
 			else preout = highout;
 			feedback = -stage1.state + stage2.state;
 			s1in = (drive * preout - k * feedback).tanh();
@@ -103,8 +114,8 @@ void Analog::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, i
 
 		if constexpr (mode == LP) output = low;
 		else if constexpr (mode == BP) output = band;
-		else if constexpr (mode == BS) output = sample - band;
-		else if constexpr (mode == PK) output = sample + band;
+		else if constexpr (mode == BS) output = x - band;
+		else if constexpr (mode == PK) output = x + band;
 		else output = high;
 
 		out[i] = output * idrive * mask;
@@ -112,6 +123,10 @@ void Analog::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, i
         // interpolate
         g += g_step;
         k += k_step;
+        stage1.coeff = g;
+        stage2.coeff = g;
+        pre_stage1.coeff = g;
+        pre_stage2.coeff = g;
     }
 
     // finish block
@@ -126,66 +141,28 @@ void Analog::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, i
     }
 }
 
-//double Analog::eval(double sample)
-//{
-//	double output = 0.0;
-//	double s1in = 0.0;
-//
-//	if (type == kAnalog12 || mode == BS) {
-//		double feedback = -stage1.state + stage2.state;
-//		s1in = tanhLUT(drive * sample - k.get() * feedback);
-//		double s1out = stage1.eval(s1in);
-//		stage2.eval(s1out);
-//	}
-//	else {
-//		double feedback = -pre_stage1.state + pre_stage2.state;
-//		s1in = sample - feedback;
-//		double s1out = pre_stage1.eval(s1in);
-//		double s2out = pre_stage2.eval(s1out);
-//		double lowout = s2out;
-//		double bandout = s1out - lowout;
-//		double highout = s1in - s1out + bandout;
-//		double preout = mode == LP ? lowout
-//			: mode == BP ? bandout
-//			: mode == PK ? sample + bandout
-//			: highout;
-//
-//		feedback = -stage1.state + stage2.state;
-//		s1in = tanhLUT(drive * preout - k.get() * feedback);
-//		s1out = stage1.eval(s1in);
-//		stage2.eval(s1out);
-//	}
-//
-//	double s2in = stage1.curr;
-//	double low = stage2.curr;
-//	double band = s2in - low;
-//	double high = s1in - s2in - band;
-//
-//	output = mode == LP ? low
-//		: mode == BP ? band
-//		: mode == BS ? sample - band
-//		: mode == PK ? sample + band
-//		: high;
-//
-//	return output * idrive;
-//}
-
-//void Analog::reset(double sample)
-//{
-//	stage1.reset(sample);
-//	stage2.reset(sample);
-//	pre_stage1.reset(sample);
-//	pre_stage2.reset(sample);
-//	g.reset();
-//	k.reset();
-//}
+void Analog::clear(SIMDF sample, SIMDM mask)
+{
+	stage1.reset(sample, mask);
+	stage2.reset(sample, mask);
+	pre_stage1.reset(sample, mask);
+	pre_stage2.reset(sample, mask);
+	Utils::setMasked(g, 0.f, mask);
+	Utils::setMasked(k, 0.f, mask);
+}
 
 void Analog::setDrive(SIMDF drive_, SIMDM mask)
 {
-    if ((drivenorm - drive_).blend(0.f, mask).testz())
+    if ((drivenorm - drive_).abs().blend(0.f, mask).hmax() < 1e-6f)
         return; // nothing changed
-    drivenorm = drive_;
+    Utils::setMasked(drivenorm, drive_, mask);
     auto K = drive_ * MAX_FILTER_DRIVE * DB2LOG;
-    Utils::setMasked(drive, K.exp(), mask);
-    //Utils::setMasked(idrive, (K * -0.6f).exp(), mask);
+    auto resScale = res_targ * res_targ * 2.0f + 1.0f;
+    Utils::setMasked(drive, K.exp() / resScale, mask);
+    Utils::setMasked(idrive, SIMDF(1.0) / (resScale * drive).sqrt(), mask);
+
+    // resonance depends on drive, update resonance
+    SIMDF k_t = filterMode == BS ? res_targ : res_targ * 2.15f;
+    k_t += drivenorm * res_targ * kDriveResonanceBoost;
+    Utils::setMasked(k_targ, k_t, mask);
 }

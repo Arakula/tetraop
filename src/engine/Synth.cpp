@@ -13,9 +13,6 @@ Synth::Synth(TetraOPAudioProcessor& p) : audioProcessor(p)
 
     fm = std::make_unique<FmMatrix>(audioProcessor);
 
-    createFilters(0);
-    createFilters(1);
-
     for (int i = 0; i < 2; ++i)
     {
         String prefix = i == 0 ? "f1_" : "f2";
@@ -56,7 +53,7 @@ void Synth::onFilterChange(int f)
     auto& filtersL = f == 0 ? f1L : f2L;
     auto& filtersR = f == 0 ? f1R : f2R;
     
-    if (filter.type != filtersL[0]->type)
+    if (filtersL[0] == nullptr || filter.type != filtersL[0]->type)
     {
         createFilters(f);
     }
@@ -81,10 +78,13 @@ void Synth::prepare()
     dcBlockerL.setSampleRate(srate);
     dcBlockerR.setSampleRate(srate);
 
-    for (auto& filter : f1L)
-        filter->prepare(srate);
-    for (auto& filter : f1R)
-        filter->prepare(srate);
+    if (f1L[0] != nullptr)
+    {
+        for (auto& filter : f1L)
+            filter->prepare(srate);
+        for (auto& filter : f1R)
+            filter->prepare(srate);
+    }
 }
 
 void Synth::clear()
@@ -104,6 +104,8 @@ static std::unique_ptr<Filter> makeFilter(Filter::Type type)
     {
         case Filter::kDigital12: return std::make_unique<Digital>(Filter::k12p);
         case Filter::kDigital24: return std::make_unique<Digital>(Filter::k24p);
+        case Filter::kAnalog12: return std::make_unique<Analog>(Filter::k12p);
+        case Filter::kAnalog24: return std::make_unique<Analog>(Filter::k24p);
         default: return std::make_unique<Digital>(Filter::k12p);
     }
 }
@@ -137,8 +139,8 @@ void Synth::createFilters(int f)
         fr = makeFilter(type);
         fl->setMode(mode);
         fr->setMode(mode);
-        fl->prepare(srate);
-        fr->prepare(srate);
+        fl->prepare(srate, false);
+        fr->prepare(srate, false);
         if (filterReplace)
         {
             SIMDM mask = { true, true, true, true };

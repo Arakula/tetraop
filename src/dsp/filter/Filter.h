@@ -10,10 +10,6 @@ using namespace globals;
 class Filter
 {
 public:
-	// ###################################
-	// group = voiceID / SIMD_WIDTH;
-	// lane  = voiceID % SIMD_WIDTH;
-
 	enum Type
 	{
 		kDigital12,
@@ -24,7 +20,8 @@ public:
 		kLadder24,
 		kTB303,
 		kPhaserPos,
-		kPhaserNeg
+		kPhaserNeg,
+		kOff,
 	};
 
 	enum Slope
@@ -62,29 +59,17 @@ public:
 	static constexpr float kMinNyquistMult = 0.48f;
 	static constexpr float kMaxRads = 0.499f * juce::MathConstants<float>::pi;
 
-	inline static LookupTable tanhLUT = LookupTable(
-		[](float x) { return std::tanh(x); },
-		-5.0, 5.0, 1024
-	);
-
-	inline static LookupTable coeffLUT = LookupTable(
-		[] (float ratio) {
-			float scaled = ratio * juce::MathConstants<float>::pi;
-			return std::tan(std::min(kMaxRads, scaled));
-		},
-		0.0f, 0.5f, 2048
-	);
-
 	float srate = 44100.f;
 	float freqScale = 0.f;
 
 	Filter(Type type) : type(type) {}
 	virtual ~Filter() {}
-	virtual void prepare(float srate_)
+	virtual void prepare(float srate_, bool recalc = true)
 	{
 		srate = srate_;
 		freqScale = MathConstants<float>::pi / srate;
-		init(cut_targ, res_targ, true, { true, true, true, true });
+		if (recalc)
+			init(cut_targ, res_targ, true, { true, true, true, true });
 	}
 	virtual void setMode(Mode mode) { filterMode = mode; }
 	virtual void setSlope(Slope slope) { filterSlope = slope; }
@@ -95,19 +80,7 @@ public:
 		Utils::setMasked(mix, m, mask);
 	}
 
-	void setTargets(SIMDF cut_, SIMDF res_, SIMDM mask)
-	{
-		Utils::setMasked(cut_targ, cut_, mask);
-		Utils::setMasked(res_targ, res_, mask);
-	}
-
 	virtual void init(SIMDF cutoff, SIMDF resonance, bool reset, SIMDM mask) = 0;
 	virtual void clear(SIMDF sample, SIMDM mask) = 0;
 	virtual void processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int startSample, int nsamps, int blocksize, SIMDF mask) = 0;
-
-	inline static float getCoeff(float freq, float srate) {
-		freq = jlimit(20.0f, srate * kMinNyquistMult, freq);
-		float ratio = jlimit(0.0f, 0.5f, freq / srate);
-		return coeffLUT.cubic(ratio);
-	}
 };
