@@ -83,18 +83,25 @@ void Analog::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, i
 
 		if constexpr (slope == k12p || mode == BS)
 		{
-            auto res = tuneResonance(k, g * 2.f);
+            auto tunedRes = tuneResonance(k, g * 2.f);
             SIMDF stg1_mult = g * 2.f - g * g - SIMDF(1.0f);
-            auto norm = SIMDF(1.0f) / (res * ((g * g)-g) + 1.0f);
+            auto norm = SIMDF(1.0f) / (tunedRes * ((g * g)-g) + 1.0f);
+
 			SIMDF feedback = stage1.state * stg1_mult + stage2.state * (-g + 1.f);
-			s1in = ((drive * x - res * feedback) * norm).tanh();
+			s1in = ((drive * x - tunedRes * feedback) * norm).tanh();
 			SIMDF s1out = stage1.eval(s1in);
 			stage2.eval(s1out);
 		}
 		else
 		{
-			SIMDF feedback = -pre_stage1.state + pre_stage2.state;
-			s1in = x - feedback;
+            auto g2 = g * g;
+            auto tunedRes = tuneResonance(k, g * 2.f);
+            SIMDF stg1_mult = g * 2.f - g2 - SIMDF(1.0f);
+            auto pre_norm = SIMDF(1.f) / (g2 + 1.f);
+            auto norm = SIMDF(1.0f) / (tunedRes * (g2 - g) + 1.0f);
+
+			SIMDF feedback = pre_stage1.state * stg1_mult + pre_stage2.state * (-g + 1.f);
+			s1in = (x - feedback) * pre_norm;
 			SIMDF s1out = pre_stage1.eval(s1in);
 			SIMDF s2out = pre_stage2.eval(s1out);
 			SIMDF lowout = s2out;
@@ -105,8 +112,8 @@ void Analog::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, i
 			else if constexpr (mode == BP) preout = bandout;
 			else if constexpr (mode == PK) preout = x + bandout;
 			else preout = highout;
-			feedback = -stage1.state + stage2.state;
-			s1in = (drive * preout - k * feedback).tanh();
+			feedback = stage1.state * stg1_mult + stage2.state * (-g + 1.f);
+			s1in = ((drive * preout - tunedRes * feedback) * norm).tanh();
 			s1out = stage1.eval(s1in);
 			stage2.eval(s1out);
 		}
