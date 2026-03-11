@@ -117,52 +117,75 @@ void Synth::createFilters(int f)
 
     for (int i = 0; i < MAX_POLYPHONY / SIMDSZ; ++i)
     {
-        auto& fl = f == 0 ? f1L : f2L;
-        auto& fr = f == 0 ? f1R : f2R;
-        SIMDF cutl, cutr, resl, resr;
+        auto& fl = f == 0 ? f1L[i] : f2L[i];
+        auto& fr = f == 0 ? f1R[i] : f2R[i];
+        SIMDF cutl, cutr, resl, resr, drivel, driver, mixl, mixr;
         bool filterReplace = false;
-        if (fl[i] != nullptr)
+        if (fl != nullptr)
         {
             filterReplace = true;
-            cutl = fl[i]->cut_targ;
-            cutr = fr[i]->cut_targ;
-            resl = fl[i]->res_targ;
-            resr = fr[i]->res_targ;
+            cutl = fl->cut_targ;
+            cutr = fr->cut_targ;
+            resl = fl->res_targ;
+            resr = fr->res_targ;
+            drivel = fl->drivenorm;
+            driver = fr->drivenorm;
+            mixl = fl->mix;
+            mixr = fr->mix;
         }
-        fl[i] = makeFilter(type);
-        fr[i] = makeFilter(type);
-        fl[i]->setMode(mode);
-        fr[i]->setMode(mode);
-        fl[i]->prepare(srate);
-        fr[i]->prepare(srate);
+        fl = makeFilter(type);
+        fr = makeFilter(type);
+        fl->setMode(mode);
+        fr->setMode(mode);
+        fl->prepare(srate);
+        fr->prepare(srate);
         if (filterReplace)
         {
-            fl[i]->init(cutl, resl, true, { true, true, true, true });
-            fr[i]->init(cutr, resr, true, { true, true, true, true });
+            SIMDM mask = { true, true, true, true };
+            fl->init(cutl, resl, true, mask);
+            fr->init(cutr, resr, true, mask);
+            fl->setDrive(drivel, mask);
+            fr->setDrive(driver, mask);
+            fl->setMix(mixl, mask);
+            fr->setMix(mixr, mask);
         }
     }
 }
 
-void Synth::initFilters(int voiceId, float cutoff, float resonance)
+void Synth::initFilters(int voiceId, int fid, float cutoff, float resonance, float drive, float mix)
 {
     auto group = voiceId / SIMDSZ;
     auto lane = voiceId % SIMDSZ;
 
     auto mask = Utils::laneToMask(lane);
-    f1L[group]->init(cutoff, resonance, true, mask);
-    f1R[group]->init(cutoff, resonance, true, mask);
+    auto& fl = fid == 0 ? f1L[group] : f2L[group];
+    auto& fr = fid == 0 ? f1R[group] : f2R[group];
+
+    fl->init(cutoff, resonance, true, mask);
+    fr->init(cutoff, resonance, true, mask);
+    fl->setDrive(drive, mask);
+    fr->setDrive(drive, mask);
+    fl->setMix(mix, mask);
+    fr->setMix(mix, mask);
 }
 
-void Synth::updateFilters(int voiceId, float cutoff, float resonance)
+void Synth::updateFilters(int voiceId, int fid, float cutoff, float resonance, float drive, float mix)
 {
     auto group = voiceId / SIMDSZ;
     auto lane = voiceId % SIMDSZ;
 
     auto mask = Utils::laneToMask(lane);
-    Utils::setMasked(f1L[group]->cut_targ, cutoff, mask);
-    Utils::setMasked(f1R[group]->cut_targ, cutoff, mask);
-    Utils::setMasked(f1L[group]->res_targ, resonance, mask);
-    Utils::setMasked(f1R[group]->res_targ, resonance, mask);
+    auto& fl = fid == 0 ? f1L[group] : f2L[group];
+    auto& fr = fid == 0 ? f1R[group] : f2R[group];
+
+    Utils::setMasked(fl->cut_targ, cutoff, mask);
+    Utils::setMasked(fr->cut_targ, cutoff, mask);
+    Utils::setMasked(fl->res_targ, resonance, mask);
+    Utils::setMasked(fr->res_targ, resonance, mask);
+    fl->setDrive(drive, mask);
+    fr->setDrive(drive, mask);
+    fl->setMix(mix, mask);
+    fr->setMix(mix, mask);
 }
 
 void Synth::handleMidiEvent (const juce::MidiMessage& m)

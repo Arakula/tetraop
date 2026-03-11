@@ -38,8 +38,8 @@ public:
     void prepare();
     void clear();
     void createFilters(int f);
-    void initFilters(int voiceId, float cutoff, float resonance);
-    void updateFilters(int voiceId, float cutoff, float resonance);
+    void initFilters(int voiceId, int fid, float cutoff, float resonance, float drive, float mix);
+    void updateFilters(int voiceId, int fid, float cutoff, float resonance, float drive, float mix);
     void renderNextSubBlock(AudioBuffer<float>& outputAudio, int startSample, int numSamples) override;
     void handleMidiEvent(const juce::MidiMessage& m) override;
     std::array<SIMDVox, MAX_POLYPHONY / SIMDSZ> vox{};

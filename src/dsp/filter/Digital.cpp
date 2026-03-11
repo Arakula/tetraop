@@ -137,50 +137,6 @@ void Digital::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, 
     }
 }
 
-/*
-float Digital::eval(float sample)
-{
-    sample *= drive;
-
-    // 12p first stage
-    auto v3 = sample - ic2;
-    auto v1 = a1.get() * ic1 + a2.get() * v3; // band
-    auto v2 = ic2 + a2.get() * ic1 + a3.get() * v3; // low
-    ic1 = 2.0 * v1 - ic1;
-    ic2 = 2.0 * v2 - ic2;
-
-    float output = 0.0;
-    if (mode == LP) output = v2;
-    else if (mode == BP) output = v1;
-    else if (mode == HP) output = sample - k.get() * v1 - v2;
-    else if (mode == BS) output = sample - k.get() * v1;
-    else output = sample + (2.0 - k.get()) * v1;
-
-
-
-    if (type == kDigital12) {
-        if (drive > 1.0) output = hardTanh(output);
-        return output * idrive;
-    }
-
-    // 24p second stage
-    v3 = output - ic4;
-    v1 = a1.get() * ic3 + a2.get() * v3;
-    v2 = ic4 + a2.get() * ic3 + a3.get() * v3;
-    ic3 = 2.0 * v1 - ic3;
-    ic4 = 2.0 * v2 - ic4;
-
-    if (mode == LP) output = v2;
-    else if (mode == BP) output = v1;
-    else if (mode == HP) output = output - k.get() * v1 - v2;
-    else if (mode == BS) output = output - k.get() * v1;
-    else output = output + (2.0 - k.get()) * v1; // peak
-
-    if (drive > 1.0) output = hardTanh(output);
-    return output * idrive;
-}
-*/
-
 void Digital::clear(SIMDF sample, SIMDM mask)
 {
     Utils::setMasked(ic1, sample, mask);
@@ -196,9 +152,9 @@ void Digital::clear(SIMDF sample, SIMDM mask)
 
 void Digital::setDrive(SIMDF drive_, SIMDM mask)
 {
-    if ((drivenorm - drive_).blend(0.f, mask).hmax() > 0.f)
+    if ((drivenorm - drive_).abs().blend(0.f, mask).hmax() < 1e-6f)
         return; // nothing changed
-    drivenorm = drive_;
+    Utils::setMasked(drivenorm, drive_, mask);
     auto K = drive_ * MAX_FILTER_DRIVE * DB2LOG;
     Utils::setMasked(drive, K.exp(), mask);
     Utils::setMasked(idrive, (K * -0.6f).exp(), mask);

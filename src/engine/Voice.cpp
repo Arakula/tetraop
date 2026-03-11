@@ -49,10 +49,7 @@ void Voice::noteStarted()
         osc[i].trigger(note.initialNote, srate);
     }
 
-    auto f1_cut = audioProcessor.modulation->getPolyValue("f1_cut", id, 0);
-    auto f1_res = audioProcessor.modulation->getPolyValue("f1_res", id, 0);
-    audioProcessor.synth->initFilters(id, f1_cut, f1_res);
-
+    updateFilters(true);
     auto& voice = audioProcessor.synth->vox[batch].voice;
     voice.key[lane] = note.initialNote;
 }
@@ -150,11 +147,7 @@ void Voice::startBlock(int startSample, int numSamples)
     Utils::setMasked(voice.env_step, (env_targ - voice.env.get(lane)) / numSamples, mask);
     Utils::setMasked(voice.vel_mult, vel * audioProcessor.velsense + 1.0f - audioProcessor.velsense, mask);
 
-    auto f1_cut = audioProcessor.modulation->getPolyValue("f1_cut", id, blkoffset);
-    auto f1_res = audioProcessor.modulation->getPolyValue("f1_res", id, blkoffset);
-    //auto f1_drive = audioProcessor.modulation->getPolyValue("f1_drive", id, blkoffset);
-    //auto f1_mix = audioProcessor.modulation->getPolyValue("f1_mix", id, blkoffset);
-    audioProcessor.synth->updateFilters(id, f1_cut, f1_res);
+    updateFilters(false);
 }
 
 void Voice::endBlock(int startSample, int numSamples)
@@ -171,5 +164,34 @@ void Voice::endBlock(int startSample, int numSamples)
     if (released && release_elapsed > audioProcessor.modulation->envs[0].rel)
     {
         clearCurrentNote();
+    }
+}
+
+void Voice::updateFilters(bool init)
+{
+    auto f1_on = (bool)audioProcessor.params.getRawParameterValue("f1_on")->load();
+    if (init || f1_on) 
+    {
+        auto f1_cut = audioProcessor.modulation->getPolyValue("f1_cut", id, 0);
+        auto f1_res = audioProcessor.modulation->getPolyValue("f1_res", id, 0);
+        auto f1_drive = audioProcessor.modulation->getPolyValue("f1_drive", id, 0);
+        auto f1_mix = audioProcessor.modulation->getPolyValue("f1_mix", id, 0);
+        if (init)
+            audioProcessor.synth->initFilters(id, 0, f1_cut, f1_res, f1_drive, f1_mix);
+        else
+            audioProcessor.synth->updateFilters(id, 0, f1_cut, f1_res, f1_drive, f1_mix);
+    }
+
+    auto f2_on = (bool)audioProcessor.params.getRawParameterValue("f2_on")->load();
+    if (init || f2_on)
+    {
+        auto f2_cut = audioProcessor.modulation->getPolyValue("f2_cut", id, 0);
+        auto f2_res = audioProcessor.modulation->getPolyValue("f2_res", id, 0);
+        auto f2_drive = audioProcessor.modulation->getPolyValue("f2_drive", id, 0);
+        auto f2_mix = audioProcessor.modulation->getPolyValue("f2_mix", id, 0);
+        if (init)
+            audioProcessor.synth->initFilters(id, 1, f2_cut, f2_res, f2_drive, f2_mix);
+        else
+            audioProcessor.synth->updateFilters(id, 1, f2_cut, f2_res, f2_drive, f2_mix);
     }
 }

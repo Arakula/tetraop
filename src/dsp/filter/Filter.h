@@ -55,6 +55,8 @@ public:
 	SIMDF drive = 1.f;
 	SIMDF idrive = 1.f;
 
+	SIMDF mix = 1.f;
+
 	std::array<SIMDF, MAX_BLOCKSIZE> out;
 
 	static constexpr float kMinNyquistMult = 0.48f;
@@ -87,6 +89,11 @@ public:
 	virtual void setMode(Mode mode) { filterMode = mode; }
 	virtual void setSlope(Slope slope) { filterSlope = slope; }
 	virtual void setDrive(SIMDF norm, SIMDM mask) { (void)norm; (void)mask; };
+
+	void setMix(SIMDF m, SIMDM mask)
+	{
+		Utils::setMasked(mix, m, mask);
+	}
 
 	void setTargets(SIMDF cut_, SIMDF res_, SIMDM mask)
 	{
