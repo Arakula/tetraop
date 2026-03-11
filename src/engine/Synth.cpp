@@ -119,12 +119,27 @@ void Synth::createFilters(int f)
     {
         auto& fl = f == 0 ? f1L : f2L;
         auto& fr = f == 0 ? f1R : f2R;
+        SIMDF cutl, cutr, resl, resr;
+        bool filterReplace = false;
+        if (fl[i] != nullptr)
+        {
+            filterReplace = true;
+            cutl = fl[i]->cut_targ;
+            cutr = fr[i]->cut_targ;
+            resl = fl[i]->res_targ;
+            resr = fr[i]->res_targ;
+        }
         fl[i] = makeFilter(type);
         fr[i] = makeFilter(type);
         fl[i]->setMode(mode);
         fr[i]->setMode(mode);
         fl[i]->prepare(srate);
         fr[i]->prepare(srate);
+        if (filterReplace)
+        {
+            fl[i]->init(cutl, resl, true, { true, true, true, true });
+            fr[i]->init(cutr, resr, true, { true, true, true, true });
+        }
     }
 }
 
