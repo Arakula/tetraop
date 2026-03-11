@@ -83,8 +83,11 @@ void Analog::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, i
 
 		if constexpr (slope == k12p || mode == BS)
 		{
-			SIMDF feedback = -stage1.state * (-g + 1.f) + stage2.state;
-			s1in = (drive * x - k * feedback).tanh();
+            auto res = tuneResonance(k, g * 2.f);
+            SIMDF stg1_mult = g * 2.f - g * g - SIMDF(1.0f);
+            auto norm = SIMDF(1.0f) / (res * ((g * g)-g) + 1.0f);
+			SIMDF feedback = stage1.state * stg1_mult + stage2.state * (-g + 1.f);
+			s1in = ((drive * x - res * feedback) * norm).tanh();
 			SIMDF s1out = stage1.eval(s1in);
 			stage2.eval(s1out);
 		}
