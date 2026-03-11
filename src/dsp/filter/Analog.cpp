@@ -1,15 +1,16 @@
 #include "Analog.h"
 
+static SIMDF tuneResonance(SIMDF resonance, SIMDF coefficient) {
+    return resonance / (coefficient * 0.09f + 0.97f).max(1.f);
+}
+
 void Analog::init(SIMDF cutoff, SIMDF resonance, bool reset, SIMDM mask)
 {
 	Utils::setMasked(cut_targ, cutoff, mask);
     Utils::setMasked(res_targ, resonance, mask);
 
-	//auto x = (cut_targ.min(srate * kMinNyquistMult) * freqScale).min(kMaxRads);
-    //Utils::setMasked(g_targ, (x / (x + 1)).tan(), mask);
-
-    auto omega = (cutoff * MathConstants<float>::twoPi) / srate;
-    Utils::setMasked(g_targ, (SIMDF(1) - (-omega).exp()) * 0.5f, mask);
+	auto x = (cut_targ.min(srate * kMinNyquistMult) * freqScale).min(kMaxRads);
+    Utils::setMasked(g_targ, (x / (x + 1)).tan(), mask);
 
 	SIMDF k_t = filterMode == BS ? resonance : resonance * 2.15f;
 	k_t += drivenorm * resonance * kDriveResonanceBoost;
@@ -82,7 +83,7 @@ void Analog::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, i
 
 		if constexpr (slope == k12p || mode == BS)
 		{
-			SIMDF feedback = -stage1.state + stage2.state;
+			SIMDF feedback = -stage1.state * (-g + 1.f) + stage2.state;
 			s1in = (drive * x - k * feedback).tanh();
 			SIMDF s1out = stage1.eval(s1in);
 			stage2.eval(s1out);

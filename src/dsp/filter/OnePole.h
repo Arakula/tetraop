@@ -19,7 +19,7 @@ public:
         coeff = x.min(kMaxRads).tan();
     }
 
-    SIMDF eval(SIMDF sample) {
+    inline SIMDF eval(SIMDF sample) {
         SIMDF delta = coeff * (sample - state);
         state += delta;
         curr = state;
