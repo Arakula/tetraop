@@ -1,5 +1,5 @@
 // Copyright 2025 tilr
-// Based of Vital Sallen-Key filter
+// Port of Vital Sallen-Key filter
 #pragma once
 
 #include <JuceHeader.h>

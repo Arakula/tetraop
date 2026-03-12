@@ -518,3 +518,48 @@ private:
         b = std::exp(-2.0f * juce::MathConstants<float>::pi * cutoff / sampleRate);
     }
 };
+
+
+class SIMDCBlocker
+{
+public:
+    SIMDCBlocker() {}
+    ~SIMDCBlocker() {}
+
+    void setSampleRate(float sampleRate_)
+    {
+        sampleRate = sampleRate_;
+        recalc();
+    }
+
+    void setCutoff(SIMDF cutoff_)
+    {
+        cutoff = cutoff_;
+        recalc();
+    }
+
+    SIMDF process(SIMDF x)
+    {
+        SIMDF y = x - z;
+        z = x - y * b;
+        return y;
+    }
+
+    void reset()
+    {
+        b = 0.f;
+        z = 0.f;
+    }
+
+private:
+    float sampleRate = 1;
+    SIMDF cutoff = 10.0f;
+
+    SIMDF b = 0.f;
+    SIMDF z = 0.f;
+
+    void recalc()
+    {
+        b = ((cutoff * -MathConstants<float>::twoPi) / sampleRate).exp();
+    }
+};

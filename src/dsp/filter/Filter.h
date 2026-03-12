@@ -43,8 +43,8 @@ public:
 	Mode filterMode{ LP };
 	Slope filterSlope{ k12p };
 
-	SIMDF cut = 0.f;
-	SIMDF cut_targ = 0.f;
+	SIMDF cut = 2000.f;
+	SIMDF cut_targ = 2000.f;
 	SIMDF res = 0.f;
 	SIMDF res_targ = 0.f;
 
@@ -60,6 +60,7 @@ public:
 	static constexpr float kMaxRads = 0.499f * juce::MathConstants<float>::pi;
 
 	float srate = 44100.f;
+	float israte = 0.f;
 	float freqScale = 0.f;
 
 	Filter(Type type) : type(type) {}
@@ -67,6 +68,7 @@ public:
 	virtual void prepare(float srate_, bool recalc = true)
 	{
 		srate = srate_;
+		israte = 1.f / srate;
 		freqScale = MathConstants<float>::pi / srate;
 		if (recalc)
 			init(cut_targ, res_targ, true, { true, true, true, true });

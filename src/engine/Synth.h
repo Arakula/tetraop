@@ -7,6 +7,8 @@
 #include "../dsp/filter/Filter.h"
 #include "../dsp/filter/Digital.h"
 #include "../dsp/filter/Analog.h"
+#include "../dsp/filter/Ladder.h"
+#include "../dsp/filter/TB303.h"
 
 using namespace globals;
 

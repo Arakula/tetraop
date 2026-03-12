@@ -52,20 +52,27 @@ void Synth::onFilterChange(int f)
 
     auto& filtersL = f == 0 ? f1L : f2L;
     auto& filtersR = f == 0 ? f1R : f2R;
-    
+
     if (filtersL[0] == nullptr || filter.type != filtersL[0]->type)
     {
         createFilters(f);
     }
     else if (filter.mode != filtersL[0]->filterMode)
     {
+        SIMDM mask = { true, true, true ,true };
         for (auto& ff : filtersL)
+        {
             ff->setMode(filter.mode);
+            ff->init(ff->cut_targ, ff->res_targ, true, mask);
+        }
         for (auto& ff : filtersR)
+        {
             ff->setMode(filter.mode);
+            ff->init(ff->cut_targ, ff->res_targ, true, mask);
+        }
     }
-    
-    if (f == 1) 
+
+    if (f == 1)
         filter.fin = audioProcessor.params.getRawParameterValue("f2_inF1")->load();
 
     filterSeries = f1.on && f2.on && f2.fin;
@@ -106,6 +113,9 @@ static std::unique_ptr<Filter> makeFilter(Filter::Type type)
         case Filter::kDigital24: return std::make_unique<Digital>(Filter::k24p);
         case Filter::kAnalog12: return std::make_unique<Analog>(Filter::k12p);
         case Filter::kAnalog24: return std::make_unique<Analog>(Filter::k24p);
+        case Filter::kLadder12: return std::make_unique<Ladder>(Filter::k12p);
+        case Filter::kLadder24: return std::make_unique<Ladder>(Filter::k24p);
+        case Filter::kTB303: return std::make_unique<TB303>();
         default: return std::make_unique<Digital>(Filter::k12p);
     }
 }
@@ -227,14 +237,14 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
     if (activeVoices.empty())
         return;
 
-    for (auto& voice : activeVoices) 
+    for (auto& voice : activeVoices)
     {
         voice->startBlock(startSample, numSamples);
         for (auto& osc : voice->osc)
             osc.startBlock(startSample, numSamples);
     }
 
-    int maxVoice = 0;
+    int maxVoice = -1;
     for (auto& voice : activeVoices)
         if (voice->id > maxVoice)
             maxVoice = voice->id;
@@ -291,13 +301,10 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
             fl->processBlock(filterInL, startSample, numSamples, audioProcessor.currBlockSize, Utils::maskToFloat(mask));
             fr->processBlock(filterInR, startSample, numSamples, audioProcessor.currBlockSize, Utils::maskToFloat(mask));
 
-            if (!filterSeries)
+            for (int i = 0; i < numSamples; ++i)
             {
-                for (int i = 0; i < numSamples; ++i)
-                {
-                    filterOutL[i] += fl->out[i];
-                    filterOutR[i] += fr->out[i];
-                }
+                filterOutL[i] += fl->out[i];
+                filterOutR[i] += fr->out[i];
             }
         }
 
@@ -355,7 +362,7 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
         for (int o = 0; o < MAX_OSCILLATORS; ++o)
         {
             if (!routeDirOut[o] || !v.osc[o].isOn)
-                continue; 
+                continue;
 
             for (int i = 0; i < numSamples; ++i)
             {
