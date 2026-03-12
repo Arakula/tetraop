@@ -31,35 +31,35 @@ void Analog::init(SIMDF cutoff, SIMDF resonance, bool reset, SIMDM mask)
     }
 }
 
-void Analog::processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blockoffset, int blocksize, SIMDF mask)
+void Analog::processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, SIMDF mask)
 {
     switch (type)
     {
         case kAnalog12:
             switch(filterMode)
             {
-                case LP: _processBlock<Filter::LP, Filter::k12p>(input, start, nsamps, blockoffset, blocksize, mask); break;
-                case HP: _processBlock<Filter::HP, Filter::k12p>(input, start, nsamps, blockoffset, blocksize, mask); break;
-                case BP: _processBlock<Filter::BP, Filter::k12p>(input, start, nsamps, blockoffset, blocksize, mask); break;
-                case BS: _processBlock<Filter::BS, Filter::k12p>(input, start, nsamps, blockoffset, blocksize, mask); break;
-                case PK: _processBlock<Filter::PK, Filter::k12p>(input, start, nsamps, blockoffset, blocksize, mask); break;
+                case LP: _processBlock<Filter::LP, Filter::k12p>(input, start, nsamps, mask); break;
+                case HP: _processBlock<Filter::HP, Filter::k12p>(input, start, nsamps, mask); break;
+                case BP: _processBlock<Filter::BP, Filter::k12p>(input, start, nsamps, mask); break;
+                case BS: _processBlock<Filter::BS, Filter::k12p>(input, start, nsamps, mask); break;
+                case PK: _processBlock<Filter::PK, Filter::k12p>(input, start, nsamps, mask); break;
             }
             break;
         case kAnalog24:
             switch(filterMode)
             {
-                case LP: _processBlock<Filter::LP, Filter::k24p>(input, start, nsamps, blockoffset, blocksize, mask); break;
-                case HP: _processBlock<Filter::HP, Filter::k24p>(input, start, nsamps, blockoffset, blocksize, mask); break;
-                case BP: _processBlock<Filter::BP, Filter::k24p>(input, start, nsamps, blockoffset, blocksize, mask); break;
-                case BS: _processBlock<Filter::BS, Filter::k24p>(input, start, nsamps, blockoffset, blocksize, mask); break;
-                case PK: _processBlock<Filter::PK, Filter::k24p>(input, start, nsamps, blockoffset, blocksize, mask); break;
+                case LP: _processBlock<Filter::LP, Filter::k24p>(input, start, nsamps, mask); break;
+                case HP: _processBlock<Filter::HP, Filter::k24p>(input, start, nsamps, mask); break;
+                case BP: _processBlock<Filter::BP, Filter::k24p>(input, start, nsamps, mask); break;
+                case BS: _processBlock<Filter::BS, Filter::k24p>(input, start, nsamps, mask); break;
+                case PK: _processBlock<Filter::PK, Filter::k24p>(input, start, nsamps, mask); break;
             }
             break;
     }
 }
 
 template<Filter::Mode mode, Filter::Slope slope>
-void Analog::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blockoffset, int blocksize, SIMDF mask)
+void Analog::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int, int nsamps, SIMDF mask)
 {
     if (!Utils::equal(cut, cut_targ) || !Utils::equal(res, res_targ))
     {

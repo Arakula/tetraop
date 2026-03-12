@@ -61,32 +61,30 @@ void TB303::init(SIMDF cutoff, SIMDF resonance, bool reset, SIMDM mask)
 
 
 
-void TB303::processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blockoffset, int blocksize, SIMDF mask)
+void TB303::processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, SIMDF mask)
 {
     switch(filterMode)
     {
-        case LP: _processBlock<Filter::LP>(input, start, nsamps, blockoffset, blocksize, mask); break;
-        case HP: _processBlock<Filter::HP>(input, start, nsamps, blockoffset, blocksize, mask); break;
-        case BP: _processBlock<Filter::BP>(input, start, nsamps, blockoffset, blocksize, mask); break;
-        default: _processBlock<Filter::LP>(input, start, nsamps, blockoffset, blocksize, mask); break;
+        case LP: _processBlock<Filter::LP>(input, start, nsamps, mask); break;
+        case HP: _processBlock<Filter::HP>(input, start, nsamps, mask); break;
+        case BP: _processBlock<Filter::BP>(input, start, nsamps, mask); break;
+        default: _processBlock<Filter::LP>(input, start, nsamps, mask); break;
     }
 }
 
 template<Filter::Mode mode>
-void TB303::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blockoffset, int blocksize, SIMDF mask)
+void TB303::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int, int nsamps, SIMDF mask)
 {
     // prepare block
-    if (blockoffset == 0)
+    if (!Utils::equal(cut, cut_targ) || !Utils::equal(res, res_targ))
     {
-        if (!Utils::equal(cut, cut_targ) || !Utils::equal(res, res_targ))
-        {
-            init(cut_targ, res_targ, false, Utils::floatToMask(mask));
-            auto isize = 1.f / blocksize;
-            b0_step = (b0_targ - b0) * isize;
-            a1_step = (a1_targ - a1) * isize;
-            k_step = (k_targ - k) * isize;
-        }
+        init(cut_targ, res_targ, false, Utils::floatToMask(mask));
     }
+
+    auto isize = 1.f / nsamps;
+    b0_step = (b0_targ - b0) * isize;
+    a1_step = (a1_targ - a1) * isize;
+    k_step = (k_targ - k) * isize;
 
     // process
     SIMDF y0;
@@ -102,7 +100,7 @@ void TB303::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, in
 
         SIMDF output = (c0*y0 + c1*y1 + c2*y2 + c3*y3 + c4*y4) * 8.f;
         output = (output * drive).tanh() * idrive;
-        out[i] = output * mask * (SIMDF(1.1f) + k/5.f); // some hacky gain compensation last term
+        out[i] = output * mask * (SIMDF(1.1f) + k/5.f); // some hacky gain compensation
 
         // interpolate
         b0 += b0_step;
@@ -111,17 +109,11 @@ void TB303::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, in
     }
 
     // finish block
-    if (blockoffset + nsamps >= blocksize)
-    {
-        cut = cut_targ;
-        res = res_targ;
-        b0 = b0_targ;
-        a1 = a1_targ;
-        k = k_targ;
-        b0_step = 0.f;
-        a1_step = 0.f;
-        k_step = 0.f;
-    }
+    cut = cut_targ;
+    res = res_targ;
+    b0 = b0_targ;
+    a1 = a1_targ;
+    k = k_targ;
 }
 
 void TB303::clear(SIMDF sample, SIMDM mask)

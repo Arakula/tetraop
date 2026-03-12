@@ -19,10 +19,10 @@ public:
 	void setMode(Mode mode_) override;
 	void updateState();
 
-	void processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blockoffset, int blocksize, SIMDF mask) override;
+	void processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, SIMDF mask) override;
 
 	template<Mode, Slope>
-	void _processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blockoffset, int blocksize, SIMDF mask);
+	void _processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, SIMDF mask);
 
 private:
 	SIMDF drive2 = 1.0;

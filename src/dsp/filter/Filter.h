@@ -84,5 +84,5 @@ public:
 
 	virtual void init(SIMDF cutoff, SIMDF resonance, bool reset, SIMDM mask) = 0;
 	virtual void clear(SIMDF sample, SIMDM mask) = 0;
-	virtual void processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int startSample, int nsamps, int blkoffset, int blocksize, SIMDF mask) = 0;
+	virtual void processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int startSample, int nsamps, SIMDF mask) = 0;
 };
