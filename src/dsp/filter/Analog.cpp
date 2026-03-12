@@ -161,9 +161,8 @@ void Analog::setDrive(SIMDF drive_, SIMDM mask)
         return; // nothing changed
     Utils::setMasked(drivenorm, drive_, mask);
     auto K = drive_ * MAX_FILTER_DRIVE * DB2LOG;
-    auto resScale = res_targ * res_targ * 2.0f + 1.0f;
-    Utils::setMasked(drive, K.exp() / resScale, mask);
-    Utils::setMasked(idrive, SIMDF(1.0) / (resScale * drive).sqrt(), mask);
+    Utils::setMasked(drive, K.exp(), mask);
+    Utils::setMasked(idrive, SIMDF(1.0) / (drive).sqrt(), mask);
 
     // resonance depends on drive, update resonance
     SIMDF k_t = filterMode == BS ? res_targ : res_targ * 2.15f;
