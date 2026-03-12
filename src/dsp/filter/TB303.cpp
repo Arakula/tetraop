@@ -45,9 +45,6 @@ void TB303::init(SIMDF cutoff, SIMDF resonance, bool reset, SIMDM mask)
         Utils::setMasked(a1, a1_targ, mask);
         Utils::setMasked(b0, b0_targ, mask);
         Utils::setMasked(k, k_targ, mask);
-        Utils::setMasked(a1_step, 0.f, mask);
-        Utils::setMasked(b0_step, 0.f, mask);
-        Utils::setMasked(k_step, 0.f, mask);
     }
 
     switch(filterMode)

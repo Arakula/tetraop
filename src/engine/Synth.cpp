@@ -116,6 +116,8 @@ static std::unique_ptr<Filter> makeFilter(Filter::Type type)
         case Filter::kLadder12: return std::make_unique<Ladder>(Filter::k12p);
         case Filter::kLadder24: return std::make_unique<Ladder>(Filter::k24p);
         case Filter::kTB303: return std::make_unique<TB303>();
+        case Filter::kPhaserPos: return std::make_unique<Phaser>(true);
+        case Filter::kPhaserNeg: return std::make_unique<Phaser>(false);
         default: return std::make_unique<Digital>(Filter::k12p);
     }
 }

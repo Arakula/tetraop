@@ -26,8 +26,6 @@ void Analog::init(SIMDF cutoff, SIMDF resonance, bool reset, SIMDM mask)
 	    Utils::setMasked(stage2.coeff, g, mask);
 	    Utils::setMasked(pre_stage1.coeff, g, mask);
 	    Utils::setMasked(pre_stage2.coeff, g, mask);
-        Utils::setMasked(k_step, 0.f, mask);
-        Utils::setMasked(g_step, 0.f, mask);
     }
 }
 

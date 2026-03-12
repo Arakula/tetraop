@@ -159,7 +159,8 @@ public:
 
     inline static bool equal(const SIMDF& r1, const SIMDF& r2)
     {
-        return ((r1 - r2).abs() > 0.000001f).testz();
+       SIMDM msk = ((r1 - r2).abs() > 0.000001f);
+       return msk.testz();
     }
 
     inline static bool allLanesZero (const SIMDF& reg)

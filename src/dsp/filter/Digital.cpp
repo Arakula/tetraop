@@ -23,8 +23,6 @@ void Digital::init(SIMDF cutoff, SIMDF resonance, bool reset, SIMDM mask)
         Utils::setMasked(a1, SIMDF(1.f) / (g * (g + k) + 1), mask);
         Utils::setMasked(a2, g * a1, mask);
         Utils::setMasked(a3, g * a2, mask);
-        Utils::setMasked(k_step, 0.f, mask);
-        Utils::setMasked(g_step, 0.f, mask);
     }
 }
 

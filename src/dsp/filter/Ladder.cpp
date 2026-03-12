@@ -16,8 +16,6 @@ void Ladder::init(SIMDF cutoff, SIMDF resonance, bool reset, SIMDM mask)
         Utils::setMasked(res, res_targ, mask);
         Utils::setMasked(f0, f0_targ, mask);
         Utils::setMasked(k, k_targ, mask);
-        Utils::setMasked(k_step, 0.f, mask);
-        Utils::setMasked(f0_step, 0.f, mask);
     }
 }
 

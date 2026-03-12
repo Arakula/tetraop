@@ -9,6 +9,7 @@
 #include "../dsp/filter/Analog.h"
 #include "../dsp/filter/Ladder.h"
 #include "../dsp/filter/TB303.h"
+#include "../dsp/filter/Phaser.h"
 
 using namespace globals;
 
