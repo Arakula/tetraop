@@ -91,7 +91,7 @@ void Ladder::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int, int nsa
         else if constexpr (mode == PK)
             out[i] = (x + (b - c)) * mask;
 
-        else out[i] = (a * A[0] + b * A[1] + c * A[2] + d * A[3] + e * A[4]) * mask;
+        else out[i] = x + mix * ((a * A[0] + b * A[1] + c * A[2] + d * A[3] + e * A[4]) * mask - x);
     }
 
     // finish block

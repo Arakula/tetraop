@@ -52,7 +52,8 @@ void Phaser::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int, int nsa
     if constexpr (type_ == kPhaserNeg) invert = -1.f;
     for (int i = 0; i < nsamps; ++i)
     {
-        SIMDF x = input[i];
+        SIMDF in = input[i];
+        SIMDF x = in;
 
         SIMDF peak1 = (one - morph * 2.f).sat(0.f, 1.f);
         SIMDF peak5 =  (morph * 2.f - 1.0).sat(0.f, 1.f);
@@ -68,7 +69,7 @@ void Phaser::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int, int nsa
         for (int j = 0; j < kPeakStage; ++j)
         {
             output = stages[j].eval(inp);
-            inp = inp + output * -2.0f;
+            inp = output.fmadd(-2.0f, inp);
         }
 
         SIMDF peak1out = inp;
@@ -76,7 +77,7 @@ void Phaser::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int, int nsa
         for (int j = kPeakStage; j < 2 * kPeakStage; ++j)
         {
             output = stages[j].eval(inp);
-            inp = inp + output * -2.0f;
+            inp = output.fmadd(-2.0f, inp);
         }
 
         SIMDF peak3out = inp;
@@ -84,14 +85,14 @@ void Phaser::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int, int nsa
         for (int j = 2 * kPeakStage; j < 3 * kPeakStage; ++j)
         {
             output = stages[j].eval(inp);
-            inp = inp + output * -2.0f;
+            inp = output.fmadd(-2.0f, inp);
         }
 
         SIMDF peak5out = inp;
         SIMDF peak13out = (peak1 * peak1out) + peak3 * peak3out;
         allpass_output = peak13out + peak5 * peak5out;
 
-        out[i] = (x + invert * allpass_output) * 0.5f * mask;
+        out[i] = in + mix * ((x + invert * allpass_output) * 0.5f * mask - in);
 
         // interpolation
         g += g_step;

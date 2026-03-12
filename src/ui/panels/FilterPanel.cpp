@@ -154,6 +154,12 @@ void FilterPanel::paint(Graphics& g)
 		case Filter::PK : text = "PK"; break;
 	}
 
+	if (type == Filter::kTB303 && (mode == Filter::BS || mode == Filter::PK))
+		text = "LP";
+
+	if (type == Filter::kPhaserNeg || type == Filter::kPhaserPos)
+		text = "---";
+
 	g.setColour(COLOR_ACTIVE());
 	g.drawText(text, modeBtn.getBounds(), Justification::centred);
 }
@@ -221,14 +227,21 @@ void FilterPanel::showTypeMenu()
 
 void FilterPanel::showModeMenu()
 {
+	auto type = (Filter::Type)editor.audioProcessor.params.getRawParameterValue(prefix + "type")->load();
+	if (type == Filter::kPhaserNeg || type == Filter::kPhaserPos)
+		return;
+
 	auto mode = (Filter::Mode)editor.audioProcessor.params.getRawParameterValue(prefix + "mode")->load();
 
 	PopupMenu menu;
 	menu.addItem(1, "LowPass", true, mode == Filter::LP);
 	menu.addItem(2, "BandPass", true, mode == Filter::BP);
 	menu.addItem(3, "HighPass", true, mode == Filter::HP);
-	menu.addItem(4, "BandStop", true, mode == Filter::BS);
-	menu.addItem(5, "Peak", true, mode == Filter::PK);
+	if (type != Filter::kTB303)
+	{
+		menu.addItem(4, "BandStop", true, mode == Filter::BS);
+		menu.addItem(5, "Peak", true, mode == Filter::PK);
+	}
 
 	auto menuPos = localPointToGlobal(modeBtn.getBounds().getBottomLeft());
 	menu.showMenuAsync(PopupMenu::Options()

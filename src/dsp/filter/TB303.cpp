@@ -97,7 +97,7 @@ void TB303::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int, int nsam
 
         SIMDF output = (c0*y0 + c1*y1 + c2*y2 + c3*y3 + c4*y4) * 8.f;
         output = (output * drive).tanh() * idrive;
-        out[i] = output * mask * (SIMDF(1.1f) + k/5.f); // some hacky gain compensation
+        out[i] = x + mix * (output * mask * (SIMDF(1.1f) + k/5.f) - x); // some hacky gain compensation
 
         // interpolate
         b0 += b0_step;

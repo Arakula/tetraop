@@ -73,8 +73,8 @@ void Digital::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int, int ns
     // process
     for (int i = 0; i < nsamps; ++i)
     {
-        SIMDF x = input[i];
-        x *= drive;
+        SIMDF in = input[i];
+        SIMDF x = input[i] * drive;
 
         // 12p first stage
         auto v3 = x - ic2;
@@ -94,7 +94,7 @@ void Digital::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int, int ns
         if constexpr (slope == k12p)
         {
             if (hasDrive) output = hardTanh(output, drive > 1.f);
-            out[i] = output * idrive * mask;
+            out[i] = in + mix * (output * idrive * mask - in);
         }
         else
         {
@@ -112,7 +112,7 @@ void Digital::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int, int ns
             else output = output + (SIMDF(2.0f) - k) * v1; // peak
 
             if (hasDrive) output = hardTanh(output, drive > 1.f);
-            out[i] = output * idrive * mask;
+            out[i] = in + mix * (output * idrive * mask - in);
         }
 
         // interpolate

@@ -123,7 +123,7 @@ void Analog::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int, int nsa
 		else if constexpr (mode == PK) output = x + band;
 		else output = high;
 
-		out[i] = output * idrive * mask;
+		out[i] = x + mix * (output * idrive * mask - x);
 
         // interpolate
         g += g_step;
