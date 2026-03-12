@@ -54,7 +54,7 @@ public:
     void startBlock(int startSample, int numSamples);
     void endBlock(int startSample, int numSamples);
 
-    void updateFilters(bool init);
+    void updateFilters(bool init, int blkoffset = 0);
 
 private:
     static inline uint64_t pressed_ts_counter = 1;

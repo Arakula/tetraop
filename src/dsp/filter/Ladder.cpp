@@ -21,43 +21,43 @@ void Ladder::init(SIMDF cutoff, SIMDF resonance, bool reset, SIMDM mask)
     }
 }
 
-void Ladder::processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blocksize, SIMDF mask)
+void Ladder::processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps,int blockoffset, int blocksize, SIMDF mask)
 {
     switch (type)
     {
         case kLadder12:
             switch(filterMode)
             {
-                case LP: _processBlock<Filter::LP, Filter::k12p>(input, start, nsamps, blocksize, mask); break;
-                case HP: _processBlock<Filter::HP, Filter::k12p>(input, start, nsamps, blocksize, mask); break;
-                case BP: _processBlock<Filter::BP, Filter::k12p>(input, start, nsamps, blocksize, mask); break;
-                case BS: _processBlock<Filter::BS, Filter::k12p>(input, start, nsamps, blocksize, mask); break;
-                case PK: _processBlock<Filter::PK, Filter::k12p>(input, start, nsamps, blocksize, mask); break;
+                case LP: _processBlock<Filter::LP, Filter::k12p>(input, start, nsamps, blockoffset, blocksize, mask); break;
+                case HP: _processBlock<Filter::HP, Filter::k12p>(input, start, nsamps, blockoffset, blocksize, mask); break;
+                case BP: _processBlock<Filter::BP, Filter::k12p>(input, start, nsamps, blockoffset, blocksize, mask); break;
+                case BS: _processBlock<Filter::BS, Filter::k12p>(input, start, nsamps, blockoffset, blocksize, mask); break;
+                case PK: _processBlock<Filter::PK, Filter::k12p>(input, start, nsamps, blockoffset, blocksize, mask); break;
             }
             break;
         case kLadder24:
             switch(filterMode)
             {
-                case LP: _processBlock<Filter::LP, Filter::k24p>(input, start, nsamps, blocksize, mask); break;
-                case HP: _processBlock<Filter::HP, Filter::k24p>(input, start, nsamps, blocksize, mask); break;
-                case BP: _processBlock<Filter::BP, Filter::k24p>(input, start, nsamps, blocksize, mask); break;
-                case BS: _processBlock<Filter::BS, Filter::k24p>(input, start, nsamps, blocksize, mask); break;
-                case PK: _processBlock<Filter::PK, Filter::k24p>(input, start, nsamps, blocksize, mask); break;
+                case LP: _processBlock<Filter::LP, Filter::k24p>(input, start, nsamps, blockoffset, blocksize, mask); break;
+                case HP: _processBlock<Filter::HP, Filter::k24p>(input, start, nsamps, blockoffset, blocksize, mask); break;
+                case BP: _processBlock<Filter::BP, Filter::k24p>(input, start, nsamps, blockoffset, blocksize, mask); break;
+                case BS: _processBlock<Filter::BS, Filter::k24p>(input, start, nsamps, blockoffset, blocksize, mask); break;
+                case PK: _processBlock<Filter::PK, Filter::k24p>(input, start, nsamps, blockoffset, blocksize, mask); break;
             }
             break;
     }
 }
 
 template<Filter::Mode mode, Filter::Slope slope>
-void Ladder::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blocksize, SIMDF mask)
+void Ladder::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blockoffset, int blocksize, SIMDF mask)
 {
     // prepare block
-    if (start == 0)
+    if (blockoffset == 0)
     {
         if (!Utils::equal(cut, cut_targ) || !Utils::equal(res, res_targ))
         {
             init(cut_targ, res_targ, false, Utils::floatToMask(mask));
-            auto isize = 1.f / (blocksize - start);
+            auto isize = 1.f / blocksize;
             f0_step = (f0_targ - f0) * isize;
             k_step = (k_targ - k) * isize;
         }
@@ -99,7 +99,7 @@ void Ladder::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, i
     }
 
     // finish block
-    if (start + nsamps >= blocksize)
+    if (blockoffset + nsamps >= blocksize)
     {
         cut = cut_targ;
         res = res_targ;

@@ -35,10 +35,10 @@ public:
 	void init(SIMDF cutoff, SIMDF resonance, bool reset, SIMDM mask) override;
 	void clear(SIMDF sample, SIMDM mask) override;
 	void setDrive(SIMDF drive, SIMDM mask) override;
-	void processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blocksize, SIMDF mask) override;
+	void processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blockoffset, int blocksize, SIMDF mask) override;
 
 	template<Mode>
-	void _processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blocksize, SIMDF mask);
+	void _processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blockoffset, int blocksize, SIMDF mask);
 
 private:
 	SIMDCBlocker highpass{};

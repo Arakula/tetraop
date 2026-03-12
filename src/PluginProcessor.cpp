@@ -572,6 +572,7 @@ void TetraOPAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     {
         int thisBlock = std::min(todo, MAX_BLOCKSIZE);
         currBlockSize = thisBlock;
+        currBlockPos = pos;
         modulation->tick((double)osrate, thisBlock, (float)secondsPerBeat);
         synth->renderNextBlock(buffer, midiMessages, pos, thisBlock);
         pos += thisBlock;

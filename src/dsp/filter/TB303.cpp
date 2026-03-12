@@ -45,6 +45,9 @@ void TB303::init(SIMDF cutoff, SIMDF resonance, bool reset, SIMDM mask)
         Utils::setMasked(a1, a1_targ, mask);
         Utils::setMasked(b0, b0_targ, mask);
         Utils::setMasked(k, k_targ, mask);
+        Utils::setMasked(a1_step, 0.f, mask);
+        Utils::setMasked(b0_step, 0.f, mask);
+        Utils::setMasked(k_step, 0.f, mask);
     }
 
     switch(filterMode)
@@ -58,27 +61,27 @@ void TB303::init(SIMDF cutoff, SIMDF resonance, bool reset, SIMDM mask)
 
 
 
-void TB303::processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blocksize, SIMDF mask)
+void TB303::processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blockoffset, int blocksize, SIMDF mask)
 {
     switch(filterMode)
     {
-        case LP: _processBlock<Filter::LP>(input, start, nsamps, blocksize, mask); break;
-        case HP: _processBlock<Filter::HP>(input, start, nsamps, blocksize, mask); break;
-        case BP: _processBlock<Filter::BP>(input, start, nsamps, blocksize, mask); break;
-        default: _processBlock<Filter::LP>(input, start, nsamps, blocksize, mask); break;
+        case LP: _processBlock<Filter::LP>(input, start, nsamps, blockoffset, blocksize, mask); break;
+        case HP: _processBlock<Filter::HP>(input, start, nsamps, blockoffset, blocksize, mask); break;
+        case BP: _processBlock<Filter::BP>(input, start, nsamps, blockoffset, blocksize, mask); break;
+        default: _processBlock<Filter::LP>(input, start, nsamps, blockoffset, blocksize, mask); break;
     }
 }
 
 template<Filter::Mode mode>
-void TB303::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blocksize, SIMDF mask)
+void TB303::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, int nsamps, int blockoffset, int blocksize, SIMDF mask)
 {
     // prepare block
-    if (start == 0)
+    if (blockoffset == 0)
     {
         if (!Utils::equal(cut, cut_targ) || !Utils::equal(res, res_targ))
         {
             init(cut_targ, res_targ, false, Utils::floatToMask(mask));
-            auto isize = 1.f / (blocksize - start);
+            auto isize = 1.f / blocksize;
             b0_step = (b0_targ - b0) * isize;
             a1_step = (a1_targ - a1) * isize;
             k_step = (k_targ - k) * isize;
@@ -108,7 +111,7 @@ void TB303::_processBlock(std::array<SIMDF, MAX_BLOCKSIZE>& input, int start, in
     }
 
     // finish block
-    if (start + nsamps >= blocksize)
+    if (blockoffset + nsamps >= blocksize)
     {
         cut = cut_targ;
         res = res_targ;

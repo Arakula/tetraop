@@ -57,7 +57,6 @@ void OSC::trigger(int note, float srate)
 
 void OSC::startBlock(int startSample, int numSamples)
 {
-	(void)startSample;
 	auto& vox = audioProcessor.synth->vox[batch];
 	auto& osc = vox.osc[id];
 	auto& unison = osc.unison[lane];
@@ -65,7 +64,7 @@ void OSC::startBlock(int startSample, int numSamples)
 	msk[lane] = true;
 	SIMDM mask = SIMDM(msk);
 
-	int blkoffset = numSamples; // TODO - should take into account subblock offset?
+	int blkoffset = startSample - audioProcessor.currBlockPos + numSamples;
 	auto& mod = audioProcessor.modulation;
 
 	auto isOn = mod->getValue(prefix + "on");

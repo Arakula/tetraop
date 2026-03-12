@@ -86,6 +86,7 @@ public:
     double timeInSeconds = 0.0;
     bool playing = false;
     int currBlockSize = 128;
+    int currBlockPos = 0;
 
     // UI
     float scale = 1.f;

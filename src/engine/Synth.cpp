@@ -298,8 +298,8 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
             auto& fl = f1L[batch];
             auto& fr = f1R[batch];
 
-            fl->processBlock(filterInL, startSample, numSamples, audioProcessor.currBlockSize, Utils::maskToFloat(mask));
-            fr->processBlock(filterInR, startSample, numSamples, audioProcessor.currBlockSize, Utils::maskToFloat(mask));
+            fl->processBlock(filterInL, startSample, numSamples, startSample - audioProcessor.currBlockPos, audioProcessor.currBlockSize, Utils::maskToFloat(mask));
+            fr->processBlock(filterInR, startSample, numSamples, startSample - audioProcessor.currBlockPos, audioProcessor.currBlockSize, Utils::maskToFloat(mask));
 
             for (int i = 0; i < numSamples; ++i)
             {
