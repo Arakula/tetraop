@@ -100,6 +100,7 @@ void OSC::startBlock(int startSample, int numSamples)
 	{
 		Utils::setMasked(osc.morph_targ, morph, mask);
 	}
+	osc.morph_snap = morph_snap;
 
 	Utils::setMasked(osc.feedback, mod->getPolyValue(prefix + "feedback", voiceId, blkoffset), mask);
 	auto pitch_cents = mod->getPolyValue(prefix + "pitch_cents", voiceId, blkoffset);
