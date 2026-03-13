@@ -262,10 +262,10 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
     TablesData c_tables{};
     TablesData d_tables{};
 
-    const bool AisMorphing = AOn && (A.morph - A.morph_targ).abs().hmax() > 1e-4f;
-    const bool BisMorphing = BOn && (B.morph - B.morph_targ).abs().hmax() > 1e-4f;
-    const bool CisMorphing = COn && (C.morph - C.morph_targ).abs().hmax() > 1e-4f;
-    const bool DisMorphing = DOn && (D.morph - D.morph_targ).abs().hmax() > 1e-4f;
+    const bool AisMorphing = AOn && (!A.morph_snap || (A.morph - A.morph_targ).abs().hmax() > 1e-4f);
+    const bool BisMorphing = BOn && (!B.morph_snap || (B.morph - B.morph_targ).abs().hmax() > 1e-4f);
+    const bool CisMorphing = COn && (!C.morph_snap || (C.morph - C.morph_targ).abs().hmax() > 1e-4f);
+    const bool DisMorphing = DOn && (!D.morph_snap || (D.morph - D.morph_targ).abs().hmax() > 1e-4f);
 
     auto isamps = 1.f / numSamples;
     if constexpr (AOn)

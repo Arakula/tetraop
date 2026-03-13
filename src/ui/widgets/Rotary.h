@@ -40,6 +40,10 @@ public:
         OSCMorphB,
         OSCMorphC,
         OSCMorphD,
+        OSCMorphA2f,
+        OSCMorphB2f,
+        OSCMorphC2f,
+        OSCMorphD2f,
     };
     float radius = KNOB_RADIUS;
     float yoffset = KNOB_YOFFSET;

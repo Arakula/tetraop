@@ -62,25 +62,28 @@ void WaveDisplay::timerCallback()
 {
     if (isOn && editor.audioProcessor.modulation->lastVoiceIsActive)
     {
-        mode = Oscilloscope;
+        if (mode != Oscilloscope)
+        {
+            mode = Oscilloscope;
+            toggleUIComponents();
+        }
         repaint();
     }
-    else if (isMorphing)
+    else if (show3D && mode != Wavetable)
     {
-        if (mode != Wavetable)
-        {
-            mode = Wavetable;
-            toggleUIComponents();
-        }
+        mode = Wavetable;
+        toggleUIComponents();
     }
-    else
+    else if (!show3D && mode != Waveform)
     {
-        if (mode != Waveform)
-        {
-            mode = Waveform;
-            toggleUIComponents();
-        }
+        mode = Waveform;
+        toggleUIComponents();
     }
+}
+
+void WaveDisplay::mouseDown(const MouseEvent& e)
+{
+    show3D = !show3D;
 }
 
 void WaveDisplay::paint(Graphics& g)
@@ -89,12 +92,26 @@ void WaveDisplay::paint(Graphics& g)
 
     if (mode == Waveform) {
         auto morph = editor.audioProcessor.params.getRawParameterValue(prefix + "morph")->load();
+        auto morphSnap = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "morph_snap")->load();
         auto& tables = editor.audioProcessor.wavetables[oscId];
-        int tablesz = tables.tableSize;
-        auto& table = tables.tables.getTable((int)std::round(((tables.numTables - 1) * morph)))->tableForNote(0.5f);
         auto phase = editor.audioProcessor.params.getRawParameterValue(prefix + "phase_offset")->load();
         auto distAmt = editor.audioProcessor.params.getRawParameterValue(prefix + "phase_dist_amt")->load();
         auto distMode = (PhaseDist::Mode)editor.audioProcessor.params.getRawParameterValue(prefix + "phase_dist_mode")->load();
+        int tablesz = tables.tableSize;
+        int ntables = tables.numTables;
+        auto idx = std::min(ntables - 1, int(float(ntables) * morph));
+        std::vector<float> table = tables.tables.getTable(idx)->tableForNote(0.f);
+
+        if (!morphSnap && idx < tables.numTables - 1)
+        {
+            auto& t2 = tables.tables.getTable(idx + 1)->tableForNote(0.f);
+            float pos = float(ntables) * morph;
+            float frac = pos - std::floor(pos);
+            for (int i = 0; i < tablesz; ++i)
+            {
+                table[i] = table[i] * (1 - frac) + t2[i] * frac;
+            }
+        }
 
         std::array<DistFn, 9> dists = {
             PhaseDist::bypass,

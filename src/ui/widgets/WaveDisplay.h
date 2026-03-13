@@ -26,13 +26,16 @@ public:
     void parameterChanged (const juce::String& parameterID, float newValue) override;
     void timerCallback() override;
 
+    void mouseDown(const MouseEvent& e) override;
+
     void paint(juce::Graphics& g) override;
     void drawWaveform(juce::Graphics& g, float* waveform, int size, float phase, DistFn dist, WindowFn distWindow, float distAmt);
     void toggleUIComponents();
     void resized() override;
     void setMode(Mode _mode);
 
-    bool isMorphing = false; // set from OSCPanel
+    bool isMorphing = false; // set from OSCPanel (deprecated)
+    bool show3D = false;
 private:
     Mode mode = Mode::Oscilloscope;
     bool isOn = false;

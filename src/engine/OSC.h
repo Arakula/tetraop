@@ -26,6 +26,7 @@ public:
     struct SIMDOSC
     {
         bool isOn;
+        bool morph_snap;
         SIMDF phase;
         SIMDF phase_inc;
         SIMDF phase_offset;
@@ -55,7 +56,6 @@ public:
     int voiceId = 0;
     int id = 0;
     float level_targ = 0.f;
-    float morph_targ = 0.f;
     float pitch_ratio_targ = 1.f;
     float pan = -2.f;
     int unison_mode = 0;

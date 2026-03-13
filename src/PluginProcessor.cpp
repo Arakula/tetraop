@@ -49,13 +49,14 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     {
         auto prefix = String(i == 0 ? "a_" : i == 1 ? "b_" : i == 2 ? "c_" : "d_");
         auto prefixnm = String(i == 0 ? "A " : i == 1 ? "B " : i == 2 ? "C " : "D ");
-        layout.add(std::make_unique<AudioParameterBool>(prefix + "on", prefixnm + "On", i < 2));
+        layout.add(std::make_unique<AudioParameterBool>(prefix + "on", prefixnm + "On", i == 0));
         layout.add(std::make_unique<AudioParameterBool>(prefix + "fixed", prefixnm + "Fixed", false));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "level", prefixnm + "Level", 0.f, 1.f, i == 0 ? 1.f : 0.f));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "pan", prefixnm + "Pan", 0.f, 1.f, 0.5f));
         layout.add(std::make_unique<AudioParameterInt>(prefix + "pitch_semis", prefixnm + "Pitch Semis", -36, 36, 0));
         layout.add(std::make_unique<AudioParameterInt>(prefix + "pitch_cents", prefixnm + "Pitch Cents", -100, 100, 0));
         layout.add(std::make_unique<AudioParameterInt>(prefix + "pitch_oct", prefixnm + "Pitch Cents", -4, 4, 0));
+        layout.add(std::make_unique<AudioParameterBool>(prefix + "morph_snap", prefixnm + "Frame Snap", true));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "morph", prefixnm + "Morph", NormalisableRange<float>(0.f, 1.f), 0.f));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "phase_offset", prefixnm + "Phase", 0.f, 1.f, 0.0f));
         layout.add(std::make_unique<AudioParameterFloat>(prefix + "phase_rand", prefixnm + "Phase Rand", 0.f, 1.f, 1.f));

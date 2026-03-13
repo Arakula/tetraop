@@ -27,6 +27,7 @@ public:
 
 	TextButton onBtn;
 	TextButton distBtn;
+	TextButton morphBtn;
 
 	std::unique_ptr<Rotary> level;
 	std::unique_ptr<Rotary> pan;

@@ -8,6 +8,7 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 {
 	editor.audioProcessor.params.addParameterListener(prefix + "on", this);
 	editor.audioProcessor.params.addParameterListener(prefix + "phase_dist_mode", this);
+	editor.audioProcessor.params.addParameterListener(prefix + "morph_snap", this);
 
 	addAndMakeVisible(onBtn);
 	onBtn.setAlpha(0.f);
@@ -68,6 +69,14 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 	distBtn.setAlpha(0.f);
 	distBtn.onClick = [this] { showDistortionMenu(); };
 
+	addAndMakeVisible(morphBtn);
+	morphBtn.setAlpha(0.f);
+	morphBtn.onClick = [this] 
+		{
+			auto param = editor.audioProcessor.params.getParameter(prefix + "morph_snap");
+			param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
+		};
+
 	unison = std::make_unique<UnisonWidget>(editor, oscId);
 	addAndMakeVisible(unison.get());
 
@@ -81,6 +90,7 @@ OSCPanel::~OSCPanel()
 {
 	editor.audioProcessor.params.removeParameterListener(prefix + "on", this);
 	editor.audioProcessor.params.removeParameterListener(prefix + "phase_dist_mode", this);
+	editor.audioProcessor.params.removeParameterListener(prefix + "morph_snap", this);
 }
 
 void OSCPanel::parameterChanged(const juce::String& paramId, float val)
@@ -110,11 +120,29 @@ void OSCPanel::paint(Graphics& g)
 	g.drawText(name, headerb.withWidth(20).translated(20, 0), Justification::centred);
 	g.restoreState();
 
+	auto distMode = (PhaseDist::Mode)editor.audioProcessor.params.getRawParameterValue(prefix + "phase_dist_mode")->load();
 	g.setFont(FontOptions(16.f));
 	g.setColour(Colours::black.withAlpha(0.15f));
-	g.fillRoundedRectangle(distBtn.getBounds().toFloat(), 3.f);
+	g.fillRoundedRectangle(distBtn.getBounds().toFloat().translated(0.5f,0.5f), 3.f);
+	if (distMode != PhaseDist::Off)
+	{
+		g.setColour(COLOR_ACTIVE().withAlpha(0.5f));
+		g.fillRoundedRectangle(distBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f);
+	}
+	g.setColour(Colours::black.withAlpha(0.35f));
+	g.drawRoundedRectangle(distBtn.getBounds().toFloat().translated(0.5f,0.5f), 3.f, 1.f);
 
-	auto distMode = (PhaseDist::Mode)editor.audioProcessor.params.getRawParameterValue(prefix + "phase_dist_mode")->load();
+	bool morphSnap = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "morph_snap")->load();
+	g.setColour(Colours::black.withAlpha(0.15f));
+	g.fillRoundedRectangle(morphBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f);
+	if (!morphSnap)
+	{
+		g.setColour(COLOR_ACTIVE().withAlpha(0.5f));
+		g.fillRoundedRectangle(morphBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f);
+	}
+	g.setColour(Colours::black.withAlpha(0.35f));
+	g.drawRoundedRectangle(morphBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f, 1.f);
+
 	auto text = "Off";
 	switch (distMode)
 	{
@@ -157,6 +185,7 @@ void OSCPanel::resized()
 	wide->setBounds(blend->getBounds().translated(KNOB_WIDTH_SM, 0));
 
 	distBtn.setBounds(dist->getBounds().removeFromBottom(20).reduced(4, 0));
+	morphBtn.setBounds(morph->getBounds().removeFromBottom(20).reduced(4, 0));
 
 	viewport = Rectangle<int>(KNOB_WIDTH * 2, PANEL_HEADER_HEIGHT + 5, KNOB_WIDTH_SM * 3, KNOB_HEIGHT + 8)
 		.toFloat().translated(0.5f, 0.5f).reduced(2.f, 0.f);
@@ -177,6 +206,7 @@ void OSCPanel::onMouseUpMorph() const
 
 void OSCPanel::toggleUIComponents()
 {
+	bool morphSnap = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "morph_snap")->load();
 	bool on = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "on")->load();
 	level->disabled = !on;
 	pan->disabled = !on;
@@ -189,6 +219,19 @@ void OSCPanel::toggleUIComponents()
 	wide->disabled = !on;
 	semis->disabled = !on;
 	cents->disabled = !on;
+
+	if (!morphSnap)
+	{
+		morph->format = oscId == 0 ? Rotary::OSCMorphA2f : oscId == 1 ? Rotary::OSCMorphB2f
+			: oscId == 1 ? Rotary::OSCMorphC2f : Rotary::OSCMorphD2f;
+		morph->name = "Morph";
+	}
+	else
+	{
+		morph->format = oscId == 0 ? Rotary::OSCMorphA : oscId == 1 ? Rotary::OSCMorphB
+			: oscId == 1 ? Rotary::OSCMorphC : Rotary::OSCMorphD;
+		morph->name = "Frame";
+	}
 
 	MessageManager::callAsync([this] { repaint(); });
 }

@@ -30,11 +30,17 @@ void OSC::trigger(int note, float srate)
 	for (int i = 0; i < MAX_UNISON / SIMDSZ; ++i)
 		osc.unison[lane].phase[i].load(&unison_phase[i * SIMDSZ]);
 
-	auto ntables = audioProcessor.wavetables[id].numTables;
-	auto idx = std::min(ntables - 1, int(float(ntables) * mod->getPolyValue(prefix + "morph", voiceId)));
-	auto morph = idx / (float)ntables + 1e-4f; // 1e-4 so that morph lerps to floor(morph) == tableIndex
+	bool morph_snap = (bool)audioProcessor.params.getRawParameterValue(prefix + "morph_snap")->load();
+	float morph = mod->getPolyValue(prefix + "morph", voiceId);
+	if (morph_snap)
+	{
+		auto ntables = audioProcessor.wavetables[id].numTables;
+		auto idx = std::min(ntables - 1, int(float(ntables) * morph));
+		morph = idx / (float)ntables + 1e-4f; // 1e-4 so that morph lerps to floor(morph) == tableIndex
+	}
 	Utils::setMasked(osc.morph, morph, mask);
-	Utils::setMasked(osc.morph_targ, morph_targ, mask);
+	Utils::setMasked(osc.morph_targ, morph, mask);
+	osc.morph_snap = morph_snap;
 
 	bool isOn = mod->getValue(prefix + "on");
 	auto level = mod->getPolyValue(prefix + "level", voiceId, 0) * isOn;
@@ -82,11 +88,20 @@ void OSC::startBlock(int startSample, int numSamples)
 		Utils::setMasked(osc.gain_r, std::sin(MathConstants<float>::halfPi * pan), mask);
 	}
 
-	auto ntables = audioProcessor.wavetables[id].numTables;
-	auto idx = std::min(ntables - 1, int(float(ntables) * mod->getPolyValue(prefix + "morph", voiceId, blkoffset)));
-	Utils::setMasked(osc.morph_targ, idx / (float)ntables + 1e-4f, mask); // 1e-4 so that morph lerps to floor(morph) == tableIndex
-	Utils::setMasked(osc.feedback, mod->getPolyValue(prefix + "feedback", voiceId, blkoffset), mask);
+	bool morph_snap = (bool)audioProcessor.params.getRawParameterValue(prefix + "morph_snap")->load();
+	float morph = mod->getPolyValue(prefix + "morph", voiceId, blkoffset);
+	if (morph_snap)
+	{
+		auto ntables = audioProcessor.wavetables[id].numTables;
+		auto idx = std::min(ntables - 1, int(float(ntables) * morph));
+		Utils::setMasked(osc.morph_targ, idx / (float)ntables + 1e-4f, mask); // 1e-4 so that morph lerps to floor(morph) == tableIndex
+	}
+	else
+	{
+		Utils::setMasked(osc.morph_targ, morph, mask);
+	}
 
+	Utils::setMasked(osc.feedback, mod->getPolyValue(prefix + "feedback", voiceId, blkoffset), mask);
 	auto pitch_cents = mod->getPolyValue(prefix + "pitch_cents", voiceId, blkoffset);
 	auto pitch_semis = mod->getPolyValue(prefix + "pitch_semis", voiceId, blkoffset);
 	auto pitch_oct = mod->getPolyValue(prefix + "pitch_oct", voiceId, blkoffset);
