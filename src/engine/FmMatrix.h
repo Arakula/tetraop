@@ -92,6 +92,7 @@ public:
     void setLayout(Layout l);
     void prepare(float _srate);
     void processBlock(SIMDVox& data, int numSamples, int activeVoiceLane, SIMDF vmask);
+    TablesData getTables(SIMDVox& vox, int oscidx, bool isMorphing, SIMDF isOut);
 
     inline static SIMDF renderSine(SIMDF phase)
     {
@@ -222,8 +223,6 @@ public:
     }
 
 private:
-    TablesData getTables(SIMDVox& vox, int oscidx, bool isMorphing);
-
     template<bool AOn, bool BOn, bool COn, bool DOn>
     void _process(SIMDVox& data, int numSamples, const int activeVoiceLane, SIMDF vmask);
     float morphAlpha = 0.f; // exponential param smoother

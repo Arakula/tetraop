@@ -81,7 +81,7 @@ void WaveDisplay::timerCallback()
     }
 }
 
-void WaveDisplay::mouseDown(const MouseEvent& e)
+void WaveDisplay::mouseDown(const MouseEvent&)
 {
     show3D = !show3D;
 }

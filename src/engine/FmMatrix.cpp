@@ -270,28 +270,28 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
     auto isamps = 1.f / numSamples;
     if constexpr (AOn)
     {
-        a_tables = getTables(vox, 0, AisMorphing);
+        a_tables = getTables(vox, 0, AisMorphing, AisOut);
         A.level_step = (A.level_targ - A.level) * isamps;
         A.pitch_ratio_step = (A.pitch_ratio_targ - A.pitch_ratio) * isamps;
     }
 
     if constexpr (BOn)
     {
-        b_tables = getTables(vox, 1, BisMorphing);
+        b_tables = getTables(vox, 1, BisMorphing, BisOut);
         B.level_step = (B.level_targ - B.level) * isamps;
         B.pitch_ratio_step = (B.pitch_ratio_targ - B.pitch_ratio) * isamps;
     }
 
     if constexpr (COn)
     {
-        c_tables = getTables(vox, 2, CisMorphing);
+        c_tables = getTables(vox, 2, CisMorphing, CisOut);
         C.level_step = (C.level_targ - C.level) * isamps;
         C.pitch_ratio_step = (C.pitch_ratio_targ - C.pitch_ratio) * isamps;
     }
 
     if constexpr (DOn)
     {
-        d_tables = getTables(vox, 3, DisMorphing);
+        d_tables = getTables(vox, 3, DisMorphing, DisOut);
         D.level_step = (D.level_targ - D.level) * isamps;
         D.pitch_ratio_step = (D.pitch_ratio_targ - D.pitch_ratio) * isamps;
     }
@@ -427,7 +427,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
                 A.morph = (A.morph_targ - A.morph).fmadd(morphAlpha, A.morph);
                 a_morph = getMorph(A, a_tables);
                 if (hasCurrTableChanged(A, a_tables))
-                    a_tables = getTables(vox, 0, AisMorphing);
+                    a_tables = getTables(vox, 0, AisMorphing, AisOut);
             }
             A.level += A.level_step;
             A.phase = A.phase_inc.fmadd(A.pitch_ratio, A.phase);
@@ -441,7 +441,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
                 B.morph = (B.morph_targ - B.morph).fmadd(morphAlpha, B.morph);
                 b_morph = getMorph(B, b_tables);
                 if (hasCurrTableChanged(B, b_tables))
-                    b_tables = getTables(vox, 1, BisMorphing);
+                    b_tables = getTables(vox, 1, BisMorphing, BisOut);
             }
             B.level += B.level_step;
             B.phase = B.phase_inc.fmadd(B.pitch_ratio, B.phase);
@@ -455,7 +455,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
                 C.morph = (C.morph_targ - C.morph).fmadd(morphAlpha, C.morph);
                 c_morph = getMorph(C, c_tables);
                 if (hasCurrTableChanged(C, c_tables))
-                    c_tables = getTables(vox, 2, CisMorphing);
+                    c_tables = getTables(vox, 2, CisMorphing, CisOut);
             }
             C.level += C.level_step;
             C.phase = C.phase_inc.fmadd(C.pitch_ratio, C.phase);
@@ -469,7 +469,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
                 D.morph = (D.morph_targ - D.morph).fmadd(morphAlpha, D.morph);
                 d_morph = getMorph(D, d_tables);
                 if (hasCurrTableChanged(D, d_tables))
-                    d_tables = getTables(vox, 3, DisMorphing);
+                    d_tables = getTables(vox, 3, DisMorphing, DisOut);
             }
             D.level += D.level_step;
             D.phase = D.phase_inc.fmadd(D.pitch_ratio, D.phase);
@@ -529,7 +529,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
 }
 
 // fetches 1 table per voice + 1 morphing table per voice
-FmMatrix::TablesData FmMatrix::getTables(SIMDVox& vox, int oscId, bool isMorphing)
+FmMatrix::TablesData FmMatrix::getTables(SIMDVox& vox, int oscId, bool isMorphing, SIMDF oscIsOut)
 {
     alignas(sizeof(SIMDF)) std::array<float, 4> currIndex{};
     alignas(sizeof(SIMDF)) std::array<float, 4> targIndex{};
@@ -541,13 +541,14 @@ FmMatrix::TablesData FmMatrix::getTables(SIMDVox& vox, int oscId, bool isMorphin
     out.isWhiteNoise = (int)tables.mode == TetraOPAudioProcessor::WTMode::WhiteNoise;
     out.isPinkNoise = (int)tables.mode == TetraOPAudioProcessor::WTMode::PinkNoise;
     out.isMorphing = isMorphing;
+    bool useBandLimiting = oscIsOut.hmax() > 1e-6;
 
     for (int i = 0; i < SIMDSZ; ++i) // for each voice get OSC wavetables
     {
         auto morph = vox.osc[oscId].morph.get(i);
         auto tableIndex = std::min(tables.numTables - 1, int(float(tables.numTables) * morph));
         auto* t1 = tables.tables.getUnchecked(tableIndex);
-        out.data[i] = t1->tableForNote(vox.voice.key[i]).data();
+        out.data[i] = t1->tableForNote(useBandLimiting ? vox.voice.key[i] : 0.f).data();
         currIndex[i] = (float)tableIndex;
 
         int t2idx = i + SIMDSZ;
@@ -555,7 +556,7 @@ FmMatrix::TablesData FmMatrix::getTables(SIMDVox& vox, int oscId, bool isMorphin
         {
             auto tableIdxTarg = std::min(tableIndex + 1, tables.numTables - 1);
             auto* t2 = tables.tables.getUnchecked(tableIdxTarg);
-            out.data[t2idx] = t2->tableForNote(vox.voice.key[i]).data();
+            out.data[t2idx] = t2->tableForNote(useBandLimiting ? vox.voice.key[i] : 0.f).data();
             targIndex[i] = (float)tableIdxTarg;
         }
         else
