@@ -114,8 +114,7 @@ void TablesManager::load(int oscId, WTMode mode, String path)
 	}
     else if (mode == UserTable)
     {
-        // TODO load user table
-        loadBasicShapes(oscId);
+        loadUserTable(oscId, path, table.b64);
         return;
     }
 
@@ -160,7 +159,52 @@ void TablesManager::load(int oscId, WTMode mode, String path)
     table.numTables = numTables;
     table.tableSize = tablesz;
     table.path = path;
+    table.srate = audioProcessor.osrate;
 	std::swap(table.tables, data);
+    UIDirty[oscId].store(true);
+}
+
+void TablesManager::loadUserTable(int oscId, String path, String b64)
+{
+    WTable& table = wavetables[oscId];
+    MemoryBlock block;
+    String format;
+
+    auto file = File(dir).getChildFile(path);
+    format = file.getFileExtension().substring(1);
+    table.fileId = -10;
+    table.name = file.getFileNameWithoutExtension();
+
+    juce::MemoryOutputStream stream(block, false);
+    if (!juce::Base64::convertFromBase64(stream, b64))
+    {
+        loadBasicShapes(oscId);
+        return;
+    }
+
+    auto data = loadWaveTable(audioProcessor.osrate, block, format, 0);
+    auto numTables = data.getNumTables();
+    if (numTables == 0)
+    {
+        loadBasicShapes(oscId);
+        return;
+    }
+
+    auto tablesz = data.getUnchecked(0)->tableSize;
+    if (tablesz == 0)
+    {
+        loadBasicShapes(oscId);
+        return;
+    }
+
+    table.b64 = b64;
+    juce::ScopedLock sl(audioProcessor.dspLock);
+    table.mode = UserTable;
+    table.numTables = numTables;
+    table.tableSize = tablesz;
+    table.path = path;
+    table.srate = audioProcessor.osrate;
+    std::swap(table.tables, data);
     UIDirty[oscId].store(true);
 }
 
@@ -181,6 +225,7 @@ void TablesManager::loadBasicShapes(int oscId)
     table.mode = BasicShapes;
     table.numTables = numTables;
     table.tableSize = tablesz;
+    table.srate = audioProcessor.osrate;
     std::swap(table.tables, data);
     UIDirty[oscId].store(true);
 }

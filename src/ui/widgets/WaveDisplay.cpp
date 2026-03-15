@@ -174,6 +174,12 @@ void WaveDisplay::paint(Graphics& g)
             drawWaveform(g, empty.data(), 2, 0, nullptr, nullptr, 0.f);
         }
     }
+
+    if (dragOver)
+    {
+        g.setColour(Colours::green.withAlpha(.25f));
+        g.fillRect(getLocalBounds().toFloat().reduced(2.f));
+    }
 }
 
 void WaveDisplay::resized()
@@ -239,4 +245,39 @@ void WaveDisplay::drawWaveform(Graphics& g, float* waveform, int size, float pha
 
     g.setColour(COLOR_ACTIVE());
     g.strokePath(p, juce::PathStrokeType(1.5f));
+}
+
+bool WaveDisplay::isInterestedInFileDrag(const juce::StringArray& files)
+{
+    if (files.size() == 1 && (juce::File(files[0]).hasFileExtension(".wav") || juce::File(files[0]).hasFileExtension(".flac")))
+        return true;
+
+    return false;
+}
+
+void WaveDisplay::fileDragEnter(const juce::StringArray&, int, int)
+{
+    dragOver = true;
+    repaint();
+}
+
+void WaveDisplay::fileDragExit(const juce::StringArray&)
+{
+    dragOver = false;
+    repaint();
+}
+
+void WaveDisplay::filesDropped(const juce::StringArray& files, int, int)
+{
+    dragOver = false;
+    repaint();
+
+    File file(files[0]);
+    MemoryBlock block;
+
+    if (file.loadFileAsData(block))
+    {
+        auto b64 = juce::Base64::toBase64(block.getData(), block.getSize());
+        editor.audioProcessor.tablesMgr->loadUserTable(oscId, file.getFileName(), b64);
+    }
 }

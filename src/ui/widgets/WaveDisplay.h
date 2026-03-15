@@ -13,6 +13,7 @@ using namespace globals;
 class WaveDisplay
     : public juce::Component
     , private juce::AudioProcessorValueTreeState::Listener
+    , public juce::FileDragAndDropTarget
     , private juce::Timer
 {
 public:
@@ -36,8 +37,14 @@ public:
     void resized() override;
     void setMode(Mode _mode);
 
+    bool isInterestedInFileDrag(const juce::StringArray& files) override;
+    void fileDragEnter(const juce::StringArray& files, int x, int y) override;
+    void fileDragExit(const juce::StringArray& files) override;
+    void filesDropped(const juce::StringArray& files, int x, int y) override;
+
     bool isMorphing = false; // set from OSCPanel (deprecated)
     bool show3D = false;
+    bool dragOver = false;
 private:
     Mode mode = Mode::Oscilloscope;
     bool isOn = false;
