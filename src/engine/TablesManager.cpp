@@ -133,8 +133,8 @@ void TablesManager::load(int oscId, WTMode mode, String path)
 	else if (mode == Table)
 	{
         auto file = File(dir).getChildFile(path);
-        auto ext = file.getFileExtension();
-        if (!file.existsAsFile() || (ext != "wav" && ext != "flac"))
+        format = file.getFileExtension().substring(1);
+        if (!file.existsAsFile() || (format != "wav" && format != "flac"))
         {
             return load(oscId, BasicShapes, "");
         }
@@ -149,6 +149,8 @@ void TablesManager::load(int oscId, WTMode mode, String path)
                 break;
             }
         }
+
+        table.name = file.getFileNameWithoutExtension();
 	}
 
 	auto data = loadWaveTable(audioProcessor.osrate, block, format, size);
@@ -179,6 +181,20 @@ gin::Wavetable TablesManager::loadWaveTable(float sr, const juce::MemoryBlock& w
         {
             if (size <= 0)
                 size = gin::getWavetableSize(wav);
+
+            if (size <= 0)
+                if (reader->lengthInSamples % 2048 == 0)
+                    size = 2048;
+                else if (reader->lengthInSamples % 1024 == 0)
+                    size = 1024;
+                else if (reader->lengthInSamples % 512 == 0)
+                    size = 512;
+                else if (reader->lengthInSamples % 256 == 0)
+                    size = 256;
+                else if (reader->lengthInSamples % 128 == 0)
+                    size = 128;
+                else
+                    size = int(reader->lengthInSamples / 2048);
 
             if (size > 0)
             {
@@ -223,6 +239,23 @@ gin::Wavetable TablesManager::loadWaveTable(float sr, const juce::MemoryBlock& w
         {
             juce::AudioSampleBuffer buf(1, int(reader->lengthInSamples));
             reader->read(&buf, 0, int(reader->lengthInSamples), 0, true, false);
+
+            if (size <= 0)
+                if (reader->lengthInSamples % 2048 == 0)
+                    size = 2048;
+                else if (reader->lengthInSamples % 1024 == 0)
+                    size = 1024;
+                else if (reader->lengthInSamples % 512 == 0)
+                    size = 512;
+                else if (reader->lengthInSamples % 256 == 0)
+                    size = 256;
+                else if (reader->lengthInSamples % 128 == 0)
+                    size = 128;
+                else
+                    size = (int)(reader->lengthInSamples / 2048);
+
+            if (size <= 0)
+                return {};
 
             gin::Wavetable t;
             loadWavetables(t, sr, buf, reader->sampleRate, size);
