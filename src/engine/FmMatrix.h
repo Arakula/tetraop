@@ -6,6 +6,7 @@
 #include "Voice.h"
 #include "Utils.h"
 #include "PhaseDist.h"
+#include "TablesManager.h"
 
 using namespace globals;
 using RenderFn = SIMDF(*)(const std::array<float*, 8>&, int, SIMDF, SIMDF, OSC::SIMDOSC&);

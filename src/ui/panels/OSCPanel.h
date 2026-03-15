@@ -5,17 +5,21 @@
 #include "../widgets/WaveDisplay.h"
 #include "../widgets/UnisonWidget.h"
 #include "../../engine/PhaseDist.h"
+#include "../../engine/TablesManager.h"
 
 class TetraOPAudioProcessorEditor;
 
 class OSCPanel
     : public juce::Component
     , private juce::AudioProcessorValueTreeState::Listener
+	, private juce::Timer
 {
 public:
 
     OSCPanel(TetraOPAudioProcessorEditor& e, int oscId);
     ~OSCPanel() override;
+
+	void timerCallback() override;
 
     void parameterChanged(const juce::String& parameterID, float newValue) override;
     void paint(Graphics& g) override;
@@ -24,10 +28,12 @@ public:
 	void onMouseDownMorph() const;
 	void onMouseUpMorph() const;
 	void showDistortionMenu();
+	void showWavetablesMenu();
 
 	TextButton onBtn;
 	TextButton distBtn;
 	TextButton morphBtn;
+	TextButton tableBtn;
 
 	std::unique_ptr<Rotary> level;
 	std::unique_ptr<Rotary> pan;

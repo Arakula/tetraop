@@ -535,11 +535,11 @@ FmMatrix::TablesData FmMatrix::getTables(SIMDVox& vox, int oscId, bool isMorphin
     alignas(sizeof(SIMDF)) std::array<float, 4> targIndex{};
 
     TablesData out{};
-    auto& tables = audioProcessor.wavetables[oscId];
+    auto& tables = audioProcessor.tablesMgr->wavetables[oscId];
     out.numTables = tables.numTables;
     out.size = tables.tableSize;
-    out.isWhiteNoise = (int)tables.mode == TetraOPAudioProcessor::WTMode::WhiteNoise;
-    out.isPinkNoise = (int)tables.mode == TetraOPAudioProcessor::WTMode::PinkNoise;
+    out.isWhiteNoise = (int)tables.mode == TablesManager::WTMode::WhiteNoise;
+    out.isPinkNoise = (int)tables.mode == TablesManager::WTMode::PinkNoise;
     out.isMorphing = isMorphing;
     bool useBandLimiting = oscIsOut.hmax() > 1e-6;
 

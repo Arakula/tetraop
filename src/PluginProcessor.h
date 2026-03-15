@@ -27,6 +27,7 @@
 #include "libMTSClient.h"
 #include "engine/Synth.h"
 #include "engine/Modulation.h"
+#include "engine/TablesManager.h"
 
 
 class TetraOPAudioProcessor
@@ -35,23 +36,7 @@ class TetraOPAudioProcessor
     , public juce::ValueTree::Listener
 {
 public:
-    enum WTMode
-    {
-        Table,
-        WhiteNoise,
-        PinkNoise,
-        UserTable
-    };
-
-    struct WTable
-    {
-        String name;
-        float srate;
-        gin::Wavetable tables;
-        int numTables;
-        int tableSize;
-        WTMode mode;
-    };
+    std::unique_ptr<TablesManager> tablesMgr;
 
     // synth
     std::unique_ptr<Synth> synth;
@@ -59,7 +44,6 @@ public:
     std::vector<float> leftBuf;
     std::vector<float> rightBuf;
     float velsense = 1.f; // velocity sensitivity
-    WTable wavetables[4];
 
     //
     int polyphony = 32;
@@ -100,10 +84,6 @@ public:
     TetraOPAudioProcessor();
     ~TetraOPAudioProcessor() override;
     void parameterChanged(const juce::String& parameterID, float newValue) override;
-
-    //==============================================================================
-    void reloadWavetables();
-    bool loadWaveTable(gin::Wavetable& table, double sr, const juce::MemoryBlock& wav, const juce::String& format, int size) const;
 
     //==============================================================================
     bool supportsMPE() const override { return true; }

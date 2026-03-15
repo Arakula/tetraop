@@ -34,7 +34,7 @@ void OSC::trigger(int note, float srate)
 	float morph = mod->getPolyValue(prefix + "morph", voiceId);
 	if (morph_snap)
 	{
-		auto ntables = audioProcessor.wavetables[id].numTables;
+		auto ntables = audioProcessor.tablesMgr->wavetables[id].numTables;
 		auto idx = std::min(ntables - 1, int(float(ntables) * morph));
 		morph = idx / (float)ntables + 1e-4f; // 1e-4 so that morph lerps to floor(morph) == tableIndex
 	}
@@ -92,7 +92,7 @@ void OSC::startBlock(int startSample, int numSamples)
 	float morph = mod->getPolyValue(prefix + "morph", voiceId, blkoffset);
 	if (morph_snap)
 	{
-		auto ntables = audioProcessor.wavetables[id].numTables;
+		auto ntables = audioProcessor.tablesMgr->wavetables[id].numTables;
 		auto idx = std::min(ntables - 1, int(float(ntables) * morph));
 		Utils::setMasked(osc.morph_targ, idx / (float)ntables + 1e-4f, mask); // 1e-4 so that morph lerps to floor(morph) == tableIndex
 	}

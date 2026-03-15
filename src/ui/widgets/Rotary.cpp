@@ -503,42 +503,42 @@ void Rotary::drawLabel(juce::Graphics& g, float slider_val)
             if (slider_val == 8) text = "1/128";
         }
         else if (format == Format::OSCMorphA) {
-            auto ntables = editor.audioProcessor.wavetables[0].numTables;
+            auto ntables = editor.audioProcessor.tablesMgr->wavetables[0].numTables;
             auto idx = std::min(ntables - 1, int(float(ntables) * slider_val)) + 1;
             text = String(idx);
         }
         else if (format == Format::OSCMorphB) {
-            auto ntables = editor.audioProcessor.wavetables[1].numTables;
+            auto ntables = editor.audioProcessor.tablesMgr->wavetables[1].numTables;
             auto idx = std::min(ntables - 1, int(float(ntables) * slider_val)) + 1;
             text = String(idx);
         }
         else if (format == Format::OSCMorphC) {
-            auto ntables = editor.audioProcessor.wavetables[2].numTables;
+            auto ntables = editor.audioProcessor.tablesMgr->wavetables[2].numTables;
             auto idx = std::min(ntables - 1, int(float(ntables) * slider_val)) + 1;
             text = String(idx);
         }
         else if (format == Format::OSCMorphD) {
-            auto ntables = editor.audioProcessor.wavetables[3].numTables;
+            auto ntables = editor.audioProcessor.tablesMgr->wavetables[3].numTables;
             auto idx = std::min(ntables - 1, int(float(ntables) * slider_val)) + 1;
             text = String(idx);
         }
         else if (format == Format::OSCMorphA2f) {
-            auto ntables = editor.audioProcessor.wavetables[0].numTables;
+            auto ntables = editor.audioProcessor.tablesMgr->wavetables[0].numTables;
             auto idx = ntables * slider_val;
             text = String(idx,2);
         }
         else if (format == Format::OSCMorphB2f) {
-            auto ntables = editor.audioProcessor.wavetables[1].numTables;
+            auto ntables = editor.audioProcessor.tablesMgr->wavetables[1].numTables;
             auto idx = ntables * slider_val;
             text = String(idx, 2);
         }
         else if (format == Format::OSCMorphC2f) {
-            auto ntables = editor.audioProcessor.wavetables[2].numTables;
+            auto ntables = editor.audioProcessor.tablesMgr->wavetables[2].numTables;
             auto idx = ntables * slider_val;
             text = String(idx, 2);
         }
         else if (format == Format::OSCMorphD2f) {
-            auto ntables = editor.audioProcessor.wavetables[3].numTables;
+            auto ntables = editor.audioProcessor.tablesMgr->wavetables[3].numTables;
             auto idx = ntables * slider_val;
             text = String(idx, 2);
         }

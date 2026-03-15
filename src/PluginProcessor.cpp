@@ -170,6 +170,16 @@ TetraOPAudioProcessor::TetraOPAudioProcessor()
         .getChildFile("presets")
         .getFullPathName();
 
+    String waveTablesFolder = options
+        .getDefaultFile()
+        .getParentDirectory()
+        .getChildFile("wavetables")
+        .getFullPathName();
+
+    loadSettings();
+
+    tablesMgr = std::make_unique<TablesManager>(*this, waveTablesFolder);
+
     synth = std::make_unique<Synth>(*this);
     modulation = std::make_unique<Modulation>(*this);
 
@@ -178,12 +188,6 @@ TetraOPAudioProcessor::TetraOPAudioProcessor()
     params.addParameterListener("mono", this);
     params.addParameterListener("mpe", this);
 
-    //for (int i = 0; i < MAX_OSCILLATORS; ++i)
-    //{
-    //    wavetables[i].mode = WaveMode::Sine;
-    //}
-
-    loadSettings();
 }
 
 TetraOPAudioProcessor::~TetraOPAudioProcessor()
@@ -200,116 +204,6 @@ void TetraOPAudioProcessor::parameterChanged(const juce::String& paramId, float 
 }
 
 // =================================================================
-
-void TetraOPAudioProcessor::reloadWavetables()
-{
-    for (int i = 0; i < MAX_OSCILLATORS; ++i)
-    {
-        auto& table = wavetables[i];
-        if (table.srate != osrate)
-        {
-            table.name = "Basic Shapes";
-            juce::MemoryBlock block(BinaryData::Basic_Shapes_wt2048, BinaryData::Basic_Shapes_wt2048Size);
-
-            loadWaveTable(table.tables, osrate, block, "flac", 2048);
-            table.numTables = table.tables.getNumTables();
-            table.tableSize = table.tables.getUnchecked(0)->tableSize;
-        }
-    }
-}
-
-
-bool TetraOPAudioProcessor::loadWaveTable(gin::Wavetable& table, double sr, const juce::MemoryBlock& wav, const juce::String& format, int size) const
-{
-    auto is = new juce::MemoryInputStream(wav, false);
-
-    if (format == "wav")
-    {
-        if (auto reader = std::unique_ptr<juce::AudioFormatReader>(juce::WavAudioFormat().createReaderFor(is, true)))
-        {
-            if (size <= 0)
-                size = gin::getWavetableSize(wav);
-
-            if (size > 0)
-            {
-                int samplesToUse = int(reader->lengthInSamples);
-                int frames = samplesToUse / size;
-
-                samplesToUse = frames * size;
-
-                juce::AudioSampleBuffer buf(1, samplesToUse);
-                reader->read(&buf, 0, samplesToUse, 0, true, false);
-
-                gin::Wavetable t;
-                loadWavetables(t, sr, buf, reader->sampleRate, size);
-
-                // pad tables for cubic interpolation
-                for (int i = 0; i < t.getNumTables(); ++i)
-                {
-                    auto& tables = t.getTable(i)->tables;
-                    auto ntables = tables.size();
-                    for (int j = 0; j < ntables; ++j)
-                    {
-                        auto& tbl = tables[j];
-                        size_t tablesz = tbl.size();
-                        float y0 = tbl[tablesz - 1];
-                        float y1 = tbl[0];
-                        float y2 = tbl[1];
-                        tbl.resize(tablesz + 3);
-                        memmove(&tbl[1], &tbl[0], tablesz * sizeof(float));
-                        tbl[0] = y0;
-                        tbl[tablesz + 1] = y1;
-                        tbl[tablesz + 2] = y2;
-                    }
-                }
-
-                juce::ScopedLock sl(dspLock);
-                std::swap(t, table);
-
-                return true;
-            }
-        }
-    }
-    else if (format == "flac")
-    {
-        if (auto reader = std::unique_ptr<juce::AudioFormatReader>(juce::FlacAudioFormat().createReaderFor(is, true)))
-        {
-            juce::AudioSampleBuffer buf(1, int(reader->lengthInSamples));
-            reader->read(&buf, 0, int(reader->lengthInSamples), 0, true, false);
-
-            gin::Wavetable t;
-            loadWavetables(t, sr, buf, reader->sampleRate, size);
-
-
-            // pad tables for cubic interpolation
-            for (int i = 0; i < t.getNumTables(); ++i)
-            {
-                auto& tables = t.getTable(i)->tables;
-                auto ntables = tables.size();
-                for (int j = 0; j < ntables; ++j)
-                {
-                    auto& tbl = tables[j];
-                    size_t tablesz = tbl.size();
-                    float y0 = tbl[tablesz - 1];
-                    float y1 = tbl[0];
-                    float y2 = tbl[1];
-                    tbl.resize(tablesz + 3);
-                    memmove(&tbl[1], &tbl[0], tablesz * sizeof(float));
-                    tbl[0] = y0;
-                    tbl[tablesz + 1] = y1;
-                    tbl[tablesz + 2] = y2;
-                }
-            }
-
-            juce::ScopedLock sl(dspLock);
-            std::swap(t, table);
-
-            return true;
-        }
-    }
-
-    return false;
-}
 
 void TetraOPAudioProcessor::loadSettings ()
 {
@@ -476,7 +370,7 @@ void TetraOPAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBloc
     synth->prepare();
     modulation->prepare();
 
-    reloadWavetables();
+    tablesMgr->reloadWavetables();
 }
 
 void TetraOPAudioProcessor::releaseResources()

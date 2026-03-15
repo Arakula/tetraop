@@ -14,7 +14,7 @@ WaveDisplay::WaveDisplay(TetraOPAudioProcessorEditor& e, int _oscId)
     isOn = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "on")->load();
 
     addAndMakeVisible(wtdisplay);
-    wtdisplay.setWavetables(&editor.audioProcessor.wavetables[oscId].tables);
+    wtdisplay.setWavetables(&editor.audioProcessor.tablesMgr->wavetables[oscId].tables);
     wtdisplay.setColour(WavetableDisplay::ColourIds::activeWaveColourId, COLOR_ACTIVE());
     wtdisplay.setColour(WavetableDisplay::ColourIds::waveColourId, COLOR_ACTIVE().darker(0.5f).withAlpha(0.5f));
     wtdisplay.setColour(WavetableDisplay::ColourIds::lineColourId, Colours::transparentBlack);
@@ -93,7 +93,7 @@ void WaveDisplay::paint(Graphics& g)
     if (mode == Waveform) {
         auto morph = editor.audioProcessor.params.getRawParameterValue(prefix + "morph")->load();
         auto morphSnap = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "morph_snap")->load();
-        auto& tables = editor.audioProcessor.wavetables[oscId];
+        auto& tables = editor.audioProcessor.tablesMgr->wavetables[oscId];
         auto phase = editor.audioProcessor.params.getRawParameterValue(prefix + "phase_offset")->load();
         auto distAmt = editor.audioProcessor.params.getRawParameterValue(prefix + "phase_dist_amt")->load();
         auto distMode = (PhaseDist::Mode)editor.audioProcessor.params.getRawParameterValue(prefix + "phase_dist_mode")->load();

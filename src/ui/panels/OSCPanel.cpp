@@ -6,6 +6,7 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 	, oscId(_oscId)
 	, prefix(_oscId == 0 ? "a_" : _oscId == 1 ? "b_" : _oscId == 2 ? "c_" : "d_")
 {
+	startTimerHz(10);
 	editor.audioProcessor.params.addParameterListener(prefix + "on", this);
 	editor.audioProcessor.params.addParameterListener(prefix + "phase_dist_mode", this);
 	editor.audioProcessor.params.addParameterListener(prefix + "morph_snap", this);
@@ -83,6 +84,10 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 	waveDisplay = std::make_unique<WaveDisplay>(editor, oscId);
 	addAndMakeVisible(waveDisplay.get());
 
+	addAndMakeVisible(tableBtn);
+	tableBtn.setAlpha(0.f);
+	tableBtn.onClick = [this] { showWavetablesMenu(); };
+
 	toggleUIComponents();
 }
 
@@ -100,6 +105,14 @@ void OSCPanel::parameterChanged(const juce::String& paramId, float val)
 	toggleUIComponents();
 }
 
+void OSCPanel::timerCallback()
+{
+	if (editor.audioProcessor.tablesMgr->UIDirty[oscId].exchange(false))
+	{
+		toggleUIComponents();
+	}
+}
+
 void OSCPanel::paint(Graphics& g)
 {
 	auto b = getLocalBounds().toFloat();
@@ -110,6 +123,11 @@ void OSCPanel::paint(Graphics& g)
 	g.fillRoundedRectangle(viewport.reduced(1).withTrimmedTop(1).withTrimmedLeft(1), 5.f);
 
 	auto headerb = b.withHeight(PANEL_HEADER_HEIGHT);
+	g.setColour(COLOR_PANEL_HEADER_TEXT());
+	auto& tableName = editor.audioProcessor.tablesMgr->wavetables[oscId].name;
+	g.setFont(FontOptions(16.f));
+	g.drawText(tableName, tableBtn.getBounds(), Justification::centred);
+
 	bool on = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "on")->load();
 	auto c = oscId == 0 ? COLOR_A() : oscId == 1 ? COLOR_B() : oscId == 2 ? COLOR_C() : COLOR_D();
 	UIUtils::drawCheckmark(g, onBtn.getBounds().toFloat(), COLOR_CHECKMARK_BG_LIGHT(), c, on);
@@ -166,8 +184,12 @@ void OSCPanel::paint(Graphics& g)
 void OSCPanel::resized()
 {
 	auto bounds = getLocalBounds();
-	onBtn.setBounds({ bounds.getX(), bounds.getY(), PANEL_HEADER_HEIGHT, PANEL_HEADER_HEIGHT});
+	auto headerb = bounds.withHeight(PANEL_HEADER_HEIGHT);
 
+	tableBtn.setBounds(Rectangle<int>{ KNOB_WIDTH_SM * 3, headerb.getHeight()}
+		.translated(headerb.getCentreX() - KNOB_WIDTH_SM * 3 / 2, 0));
+
+	onBtn.setBounds({ bounds.getX(), bounds.getY(), PANEL_HEADER_HEIGHT, PANEL_HEADER_HEIGHT});
 	bounds.translate(0, PANEL_HEADER_HEIGHT);
 	level->setBounds(bounds.getX(), bounds.getY(), KNOB_WIDTH, KNOB_HEIGHT);
 	pan->setBounds(level->getBounds().translated(KNOB_WIDTH, 0));
@@ -262,3 +284,52 @@ void OSCPanel::showDistortionMenu()
 			param->setValueNotifyingHost(param->convertTo0to1((float)(result - 1)));
 		});
 }
+
+static void buildWavetablesMenu(PopupMenu& menu, const std::vector<TablesManager::TableFolder>& folders, int selected)
+{
+	for (auto& folder : folders)
+	{
+		PopupMenu sub;
+
+		if (!folder.children.empty()) 
+		{
+			buildWavetablesMenu(sub, folder.children, selected);
+		}
+
+		if (!folder.files.empty())
+		{
+
+			for (auto& file : folder.files)
+			{
+				sub.addItem(file.id + 4, String(file.id + 4) + " " + file.name, true, selected == file.id);
+			}
+
+		}
+
+		menu.addSubMenu(folder.name, sub);
+	}
+}
+
+void OSCPanel::showWavetablesMenu()
+{
+	auto& table = editor.audioProcessor.tablesMgr->wavetables[oscId];
+
+	PopupMenu menu;
+	menu.addItem(1, "Basic Shapes", true, table.mode == TablesManager::BasicShapes);
+	menu.addItem(2, "White Noise", true, table.mode == TablesManager::WhiteNoise);
+	menu.addItem(3, "Pink Noise", true, table.mode == TablesManager::PinkNoise);
+	menu.addSeparator();
+
+	auto roots = editor.audioProcessor.tablesMgr->getFolderTree();
+
+	buildWavetablesMenu(menu, roots, table.fileId);
+
+	auto menuPos = localPointToGlobal(tableBtn.getBounds().getBottomLeft());
+	menu.showMenuAsync(PopupMenu::Options()
+		.withTargetComponent(*this)
+		.withTargetScreenArea({ menuPos.getX(), menuPos.getY(), 1, 1 }),
+		[this](int result) {
+			if (result == 0) return;
+		});
+}
+
