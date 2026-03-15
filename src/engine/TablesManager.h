@@ -60,6 +60,8 @@ public:
     void loadNoise(int oscId, bool pink);
     void loadUserTable(int oscId, String path, String b64);
     void loadFromId(int oscId, int id);
+    void loadNext(int oscId);
+    void loadPrev(int oscId);
     gin::Wavetable loadWaveTable(float sr, const juce::MemoryBlock& wav, const juce::String& format, int size) const;
     std::vector<TableFolder> getFolderTree();
     ValueTree serialize();

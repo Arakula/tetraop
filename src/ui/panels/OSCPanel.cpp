@@ -88,6 +88,20 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 	tableBtn.setAlpha(0.f);
 	tableBtn.onClick = [this] { showWavetablesMenu(); };
 
+	addAndMakeVisible(nextBtn);
+	nextBtn.setAlpha(0.f);
+	nextBtn.onClick = [this]
+		{
+			editor.audioProcessor.tablesMgr->loadNext(oscId);
+		};
+
+	addAndMakeVisible(prevBtn);
+	prevBtn.setAlpha(0.f);
+	prevBtn.onClick = [this]
+		{
+			editor.audioProcessor.tablesMgr->loadPrev(oscId);
+		};
+
 	toggleUIComponents();
 }
 
@@ -128,6 +142,8 @@ void OSCPanel::paint(Graphics& g)
 	auto& tableName = editor.audioProcessor.tablesMgr->wavetables[oscId].name;
 	g.setFont(FontOptions(16.f));
 	g.drawText(tableName, tableBtn.getBounds(), Justification::centred);
+	UIUtils::drawTriangle(g, prevBtn.getBounds().toFloat().reduced(7.f), 3, COLOR_PANEL_HEADER_TEXT());
+	UIUtils::drawTriangle(g, nextBtn.getBounds().toFloat().reduced(7.f), 1, COLOR_PANEL_HEADER_TEXT());
 
 	bool on = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "on")->load();
 	auto c = oscId == 0 ? COLOR_A() : oscId == 1 ? COLOR_B() : oscId == 2 ? COLOR_C() : COLOR_D();
@@ -189,6 +205,12 @@ void OSCPanel::resized()
 
 	tableBtn.setBounds(Rectangle<int>{ KNOB_WIDTH_SM * 3, headerb.getHeight()}
 		.translated(headerb.getCentreX() - KNOB_WIDTH_SM * 3 / 2, 0));
+
+	nextBtn.setBounds(Rectangle<int>(PANEL_HEADER_HEIGHT, PANEL_HEADER_HEIGHT)
+		.withX(tableBtn.getRight()));
+
+	prevBtn.setBounds(Rectangle<int>(PANEL_HEADER_HEIGHT, PANEL_HEADER_HEIGHT)
+		.withRightX(tableBtn.getX()));
 
 	onBtn.setBounds({ bounds.getX(), bounds.getY(), PANEL_HEADER_HEIGHT, PANEL_HEADER_HEIGHT});
 	bounds.translate(0, PANEL_HEADER_HEIGHT);
@@ -302,7 +324,7 @@ static void buildWavetablesMenu(PopupMenu& menu, const std::vector<TablesManager
 
 			for (auto& file : folder.files)
 			{
-				sub.addItem(file.id + 4, String(file.id + 4) + " " + file.name, true, selected == file.id);
+				sub.addItem(file.id + 4, file.name, true, selected == file.id);
 			}
 		}
 

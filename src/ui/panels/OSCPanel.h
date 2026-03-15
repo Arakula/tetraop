@@ -34,6 +34,8 @@ public:
 	TextButton distBtn;
 	TextButton morphBtn;
 	TextButton tableBtn;
+	TextButton nextBtn;
+	TextButton prevBtn;
 
 	std::unique_ptr<Rotary> level;
 	std::unique_ptr<Rotary> pan;

@@ -177,8 +177,8 @@ void WaveDisplay::paint(Graphics& g)
 
     if (dragOver)
     {
-        g.setColour(Colours::green.withAlpha(.25f));
-        g.fillRect(getLocalBounds().toFloat().reduced(2.f));
+        g.setColour(Colours::lightcyan.withAlpha(.25f));
+        g.fillRect(getLocalBounds().toFloat().reduced(2.f).withTrimmedLeft(1));
     }
 }
 

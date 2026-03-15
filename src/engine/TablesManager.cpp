@@ -208,6 +208,58 @@ void TablesManager::loadUserTable(int oscId, String path, String b64)
     UIDirty[oscId].store(true);
 }
 
+void TablesManager::loadNext(int oscId)
+{
+    auto& table = wavetables[oscId];
+    int id = table.fileId + 1;
+
+    if (id < -2 || id >= (int)tableList.size())
+        return loadBasicShapes(oscId);
+
+    if (id == -2)
+        return loadNoise(oscId, false);
+
+    if (id == -1)
+        return loadNoise(oscId, true);
+
+    if (tableList.empty())
+        return loadBasicShapes(oscId);
+
+    auto& file = tableList[id % tableList.size()];
+    load(oscId, Table, file.path);
+}
+
+void TablesManager::loadPrev(int oscId)
+{
+    auto& table = wavetables[oscId];
+    int id = table.fileId - 1;
+    
+    if (id < -3)
+    {
+        if (tableList.empty())
+            return loadNoise(oscId, true);
+
+        auto& file = tableList.back();
+        return load(oscId, Table, file.path);
+    }
+
+    if (id == -3)
+        return loadBasicShapes(oscId);
+
+    if (id == -2)
+        return loadNoise(oscId, false);
+
+    if (id == -1)
+        return loadNoise(oscId, true);
+
+    if (tableList.empty())
+        return loadNoise(oscId, true);
+
+    auto& file = tableList[id % tableList.size()];
+    load(oscId, Table, file.path);
+
+}
+
 void TablesManager::loadBasicShapes(int oscId)
 {
     WTable& table = wavetables[oscId];
