@@ -36,6 +36,7 @@ static void buildTableList(const juce::File& root, std::vector<TablesManager::Ta
                 tf.id = (int)list.size();
                 tf.name = file.getFileNameWithoutExtension();
                 tf.parent = file.getParentDirectory().getRelativePathFrom(root.getParentDirectory());
+                tf.path = file.getRelativePathFrom(root.getParentDirectory());
                 list.push_back(std::move(tf));
             }
         }
@@ -70,14 +71,32 @@ void TablesManager::reloadWavetables()
     }
 }
 
+void TablesManager::loadFromId(int oscId, int id)
+{
+    if (id == -3 || id >= (int)tableList.size())
+    {
+        load(oscId, WTMode::BasicShapes, "");
+    }
+    else if (id == -2)
+    {
+        load(oscId, WTMode::WhiteNoise, "");
+    }
+    else if (id == -1)
+    {
+        load(oscId, WTMode::PinkNoise, "");
+    }
+    else {
+        auto& t = tableList[id];
+        load(oscId, WTMode::Table, t.path);
+    }
+}
+
 void TablesManager::load(int oscId, WTMode mode, String path)
 {
 	WTable& table = wavetables[oscId];
 	MemoryBlock block;
 	String format;
 	int size = 0;
-
-	table.mode = mode;
 
 	if (mode == BasicShapes)
 	{
@@ -89,41 +108,62 @@ void TablesManager::load(int oscId, WTMode mode, String path)
 	}
 	else if (mode == WhiteNoise)
 	{
+        table.mode = mode;
         table.fileId = -2;
 		table.name = "White Noise";
+        UIDirty[oscId].store(true);
+        juce::ScopedLock sl(audioProcessor.dspLock);
+        table.tables = gin::Wavetable();
+        table.numTables = 0;
+        table.tableSize = 0;
 		return;
 	}
 	else if (mode == PinkNoise)
 	{
+        table.mode = mode;
         table.fileId = -1;
 		table.name = "Pink Noise";
+        juce::ScopedLock sl(audioProcessor.dspLock);
+        UIDirty[oscId].store(true);
+        table.tables = gin::Wavetable();
+        table.numTables = 0;
+        table.tableSize = 0;
 		return;
 	}
 	else if (mode == Table)
 	{
-		File file = File(path);
-		table.name = file.getFileNameWithoutExtension();
-		format = file.getFileExtension().toLowerCase();
-		if (format != "wav" || format != "flac")
-		{
-			return load(oscId, BasicShapes, "");
-		}
+        auto file = File(dir).getChildFile(path);
+        auto ext = file.getFileExtension();
+        if (!file.existsAsFile() || (ext != "wav" && ext != "flac"))
+        {
+            return load(oscId, BasicShapes, "");
+        }
 
-        // TODO attempt to find from relative path using dir and user dirs
-        // if found load block
-        // else load basic shapes
+        file.loadFileAsData(block);
+        table.fileId = -10;
+        for (int i = 0; i < tableList.size(); ++i)
+        {
+            if (tableList[i].path == path)
+            {
+                table.fileId = i;
+                break;
+            }
+        }
 	}
 
 	auto data = loadWaveTable(audioProcessor.osrate, block, format, size);
-	table.numTables = data.getNumTables();
-	table.tableSize = data.getUnchecked(0)->tableSize;
+    auto numTables = data.getNumTables();
+    auto tablesz = data.getUnchecked(0)->tableSize;
 
-	if (table.numTables == 0 || table.tableSize == 0)
+	if (numTables == 0 || tablesz == 0)
 	{
 		return load(oscId, BasicShapes, "");
 	}
 
 	juce::ScopedLock sl(audioProcessor.dspLock);
+    table.mode = mode;
+    table.numTables = numTables;
+    table.tableSize = tablesz;
 	std::swap(table.tables, data);
     UIDirty[oscId].store(true);
 }

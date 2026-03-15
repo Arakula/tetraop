@@ -35,8 +35,15 @@ void OSC::trigger(int note, float srate)
 	if (morph_snap)
 	{
 		auto ntables = audioProcessor.tablesMgr->wavetables[id].numTables;
-		auto idx = std::min(ntables - 1, int(float(ntables) * morph));
-		morph = idx / (float)ntables + 1e-4f; // 1e-4 so that morph lerps to floor(morph) == tableIndex
+		if (ntables == 0)
+		{
+			morph = 0.f;
+		}
+		else
+		{
+			auto idx = std::min(ntables - 1, int(float(ntables) * morph));
+			morph = idx / (float)ntables + 1e-4f; // 1e-4 so that morph lerps to floor(morph) == tableIndex
+		}
 	}
 	Utils::setMasked(osc.morph, morph, mask);
 	Utils::setMasked(osc.morph_targ, morph, mask);
@@ -93,8 +100,15 @@ void OSC::startBlock(int startSample, int numSamples)
 	if (morph_snap)
 	{
 		auto ntables = audioProcessor.tablesMgr->wavetables[id].numTables;
-		auto idx = std::min(ntables - 1, int(float(ntables) * morph));
-		Utils::setMasked(osc.morph_targ, idx / (float)ntables + 1e-4f, mask); // 1e-4 so that morph lerps to floor(morph) == tableIndex
+		if (ntables == 0)
+		{
+			Utils::setMasked(osc.morph_targ, 0.f, mask);
+		} 
+		else
+		{
+			auto idx = std::min(ntables - 1, int(float(ntables) * morph));
+			Utils::setMasked(osc.morph_targ, idx / (float)ntables + 1e-4f, mask); // 1e-4 so that morph lerps to floor(morph) == tableIndex
+		}
 	}
 	else
 	{

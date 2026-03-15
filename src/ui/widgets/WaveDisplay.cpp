@@ -97,19 +97,42 @@ void WaveDisplay::paint(Graphics& g)
         auto phase = editor.audioProcessor.params.getRawParameterValue(prefix + "phase_offset")->load();
         auto distAmt = editor.audioProcessor.params.getRawParameterValue(prefix + "phase_dist_amt")->load();
         auto distMode = (PhaseDist::Mode)editor.audioProcessor.params.getRawParameterValue(prefix + "phase_dist_mode")->load();
+
         int tablesz = tables.tableSize;
         int ntables = tables.numTables;
         auto idx = std::min(ntables - 1, int(float(ntables) * morph));
-        std::vector<float> table = tables.tables.getTable(idx)->tableForNote(0.f);
+        std::vector<float> table;
 
-        if (!morphSnap && idx < tables.numTables - 1)
+        if (tables.mode == TablesManager::PinkNoise)
         {
-            auto& t2 = tables.tables.getTable(idx + 1)->tableForNote(0.f);
-            float pos = float(ntables) * morph;
-            float frac = pos - std::floor(pos);
+            distMode = PhaseDist::Off;
+            PinkNoiseGen gen(1000);
+            tablesz = 1024;
+            table.reserve(tablesz);
             for (int i = 0; i < tablesz; ++i)
+                table.push_back(gen.next());
+        }
+        else if (tables.mode == TablesManager::WhiteNoise)
+        {
+            distMode = PhaseDist::Off;
+            WhiteNoiseGen gen(1000);
+            tablesz = 1024;
+            table.reserve(tablesz);
+            for (int i = 0; i < tablesz; ++i)
+                table.push_back(gen.next());
+        }
+        else
+        {
+            table = tables.tables.getTable(idx)->tableForNote(0.f);
+            if (!morphSnap && idx < tables.numTables - 1)
             {
-                table[i] = table[i] * (1 - frac) + t2[i] * frac;
+                auto& t2 = tables.tables.getTable(idx + 1)->tableForNote(0.f);
+                float pos = float(ntables) * morph;
+                float frac = pos - std::floor(pos);
+                for (int i = 0; i < tablesz; ++i)
+                {
+                    table[i] = table[i] * (1 - frac) + t2[i] * frac;
+                }
             }
         }
 

@@ -110,6 +110,7 @@ void OSCPanel::timerCallback()
 	if (editor.audioProcessor.tablesMgr->UIDirty[oscId].exchange(false))
 	{
 		toggleUIComponents();
+		waveDisplay->toggleUIComponents();
 	}
 }
 
@@ -164,14 +165,14 @@ void OSCPanel::paint(Graphics& g)
 	auto text = "Off";
 	switch (distMode)
 	{
-	case PhaseDist::Bend: text = "Bend"; break;
-	case PhaseDist::Bias: text = "Bias"; break;
-	case PhaseDist::Fold: text = "Fold"; break;
-	case PhaseDist::Formant: text = "Formt"; break;
-	case PhaseDist::Pulse: text = "Pulse"; break;
-	case PhaseDist::Quantize: text = "Qnt"; break;
-	case PhaseDist::Skew: text = "Skew"; break;
-	case PhaseDist::Sync: text = "Sync"; break;
+		case PhaseDist::Bend: text = "Bend"; break;
+		case PhaseDist::Bias: text = "Bias"; break;
+		case PhaseDist::Fold: text = "Fold"; break;
+		case PhaseDist::Formant: text = "Formt"; break;
+		case PhaseDist::Pulse: text = "Pulse"; break;
+		case PhaseDist::Quantize: text = "Qnt"; break;
+		case PhaseDist::Skew: text = "Skew"; break;
+		case PhaseDist::Sync: text = "Sync"; break;
 	}
 
 	if (!isMouseDownDist)
@@ -303,7 +304,6 @@ static void buildWavetablesMenu(PopupMenu& menu, const std::vector<TablesManager
 			{
 				sub.addItem(file.id + 4, String(file.id + 4) + " " + file.name, true, selected == file.id);
 			}
-
 		}
 
 		menu.addSubMenu(folder.name, sub);
@@ -330,6 +330,7 @@ void OSCPanel::showWavetablesMenu()
 		.withTargetScreenArea({ menuPos.getX(), menuPos.getY(), 1, 1 }),
 		[this](int result) {
 			if (result == 0) return;
+			editor.audioProcessor.tablesMgr->loadFromId(oscId, result - 4);
 		});
 }
 

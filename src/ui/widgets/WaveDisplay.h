@@ -4,6 +4,8 @@
 #include "../../Globals.h"
 #include "WavetableDisplay.h"
 #include "../../engine/PhaseDist.h"
+#include "../../engine/TablesManager.h"
+#include "../../engine/Utils.h"
 
 class TetraOPAudioProcessorEditor;
 using namespace globals;

@@ -543,26 +543,29 @@ FmMatrix::TablesData FmMatrix::getTables(SIMDVox& vox, int oscId, bool isMorphin
     out.isMorphing = isMorphing;
     bool useBandLimiting = oscIsOut.hmax() > 1e-6;
 
-    for (int i = 0; i < SIMDSZ; ++i) // for each voice get OSC wavetables
+    if (!out.isWhiteNoise && !out.isPinkNoise)
     {
-        auto morph = vox.osc[oscId].morph.get(i);
-        auto tableIndex = std::min(tables.numTables - 1, int(float(tables.numTables) * morph));
-        auto* t1 = tables.tables.getUnchecked(tableIndex);
-        out.data[i] = t1->tableForNote(useBandLimiting ? vox.voice.key[i] : 0.f).data();
-        currIndex[i] = (float)tableIndex;
+        for (int i = 0; i < SIMDSZ; ++i) // for each voice get OSC wavetables
+        {
+            auto morph = vox.osc[oscId].morph.get(i);
+            auto tableIndex = std::min(tables.numTables - 1, int(float(tables.numTables) * morph));
+            auto* t1 = tables.tables.getUnchecked(tableIndex);
+            out.data[i] = t1->tableForNote(useBandLimiting ? vox.voice.key[i] : 0.f).data();
+            currIndex[i] = (float)tableIndex;
 
-        int t2idx = i + SIMDSZ;
-        if (isMorphing && tableIndex < tables.numTables - 1)
-        {
-            auto tableIdxTarg = std::min(tableIndex + 1, tables.numTables - 1);
-            auto* t2 = tables.tables.getUnchecked(tableIdxTarg);
-            out.data[t2idx] = t2->tableForNote(useBandLimiting ? vox.voice.key[i] : 0.f).data();
-            targIndex[i] = (float)tableIdxTarg;
-        }
-        else
-        {
-            out.data[t2idx] = out.data[i];
-            targIndex[i] = (float)tableIndex;
+            int t2idx = i + SIMDSZ;
+            if (isMorphing && tableIndex < tables.numTables - 1)
+            {
+                auto tableIdxTarg = std::min(tableIndex + 1, tables.numTables - 1);
+                auto* t2 = tables.tables.getUnchecked(tableIdxTarg);
+                out.data[t2idx] = t2->tableForNote(useBandLimiting ? vox.voice.key[i] : 0.f).data();
+                targIndex[i] = (float)tableIdxTarg;
+            }
+            else
+            {
+                out.data[t2idx] = out.data[i];
+                targIndex[i] = (float)tableIndex;
+            }
         }
     }
 

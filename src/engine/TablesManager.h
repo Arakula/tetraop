@@ -34,6 +34,7 @@ public:
         int id;
         String name;
         String parent;
+        String path;
     };
 
     struct TableFolder
@@ -54,6 +55,7 @@ public:
     void scanTables();
 	void reloadWavetables();
 	void load(int oscId, WTMode mode, String path);
+    void loadFromId(int oscId, int id);
     gin::Wavetable loadWaveTable(float sr, const juce::MemoryBlock& wav, const juce::String& format, int size) const;
     std::vector<TableFolder> getFolderTree();
 

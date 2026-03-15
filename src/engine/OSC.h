@@ -25,8 +25,8 @@ public:
 
     struct SIMDOSC
     {
-        bool isOn;
-        bool morph_snap;
+        bool isOn = false;
+        bool morph_snap = false;
         SIMDF phase;
         SIMDF phase_inc;
         SIMDF phase_offset;
