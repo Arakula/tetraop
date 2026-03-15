@@ -96,77 +96,106 @@ void TablesManager::load(int oscId, WTMode mode, String path)
 	WTable& table = wavetables[oscId];
 	MemoryBlock block;
 	String format;
-	int size = 0;
 
 	if (mode == BasicShapes)
 	{
-        table.fileId = -3;
-		table.name = "Basic Shapes";
-		block = MemoryBlock(BinaryData::Basic_Shapes_wt2048, BinaryData::Basic_Shapes_wt2048Size);
-		format = "flac";
-		size = 2048;
+        loadBasicShapes(oscId);
+        return;
 	}
 	else if (mode == WhiteNoise)
 	{
-        table.mode = mode;
-        table.fileId = -2;
-		table.name = "White Noise";
-        UIDirty[oscId].store(true);
-        juce::ScopedLock sl(audioProcessor.dspLock);
-        table.tables = gin::Wavetable();
-        table.numTables = 0;
-        table.tableSize = 0;
+        loadNoise(oscId, false);
 		return;
 	}
 	else if (mode == PinkNoise)
 	{
-        table.mode = mode;
-        table.fileId = -1;
-		table.name = "Pink Noise";
-        juce::ScopedLock sl(audioProcessor.dspLock);
-        UIDirty[oscId].store(true);
-        table.tables = gin::Wavetable();
-        table.numTables = 0;
-        table.tableSize = 0;
+        loadNoise(oscId, true);
 		return;
 	}
-	else if (mode == Table)
-	{
-        auto file = File(dir).getChildFile(path);
-        format = file.getFileExtension().substring(1);
-        if (!file.existsAsFile() || (format != "wav" && format != "flac"))
+    else if (mode == UserTable)
+    {
+        // TODO load user table
+        loadBasicShapes(oscId);
+        return;
+    }
+
+    auto file = File(dir).getChildFile(path);
+    format = file.getFileExtension().substring(1);
+    if (!file.existsAsFile() || (format != "wav" && format != "flac"))
+    {
+        loadBasicShapes(oscId);
+        return;
+    }
+
+    file.loadFileAsData(block);
+    table.fileId = -10;
+    for (int i = 0; i < tableList.size(); ++i)
+    {
+        if (tableList[i].path == path)
         {
-            return load(oscId, BasicShapes, "");
+            table.fileId = i;
+            break;
         }
+    }
 
-        file.loadFileAsData(block);
-        table.fileId = -10;
-        for (int i = 0; i < tableList.size(); ++i)
-        {
-            if (tableList[i].path == path)
-            {
-                table.fileId = i;
-                break;
-            }
-        }
+    table.name = file.getFileNameWithoutExtension();
 
-        table.name = file.getFileNameWithoutExtension();
-	}
-
-	auto data = loadWaveTable(audioProcessor.osrate, block, format, size);
+	auto data = loadWaveTable(audioProcessor.osrate, block, format, 0);
     auto numTables = data.getNumTables();
-    auto tablesz = data.getUnchecked(0)->tableSize;
+    if (numTables == 0)
+    {
+        loadBasicShapes(oscId);
+        return;
+    }
 
-	if (numTables == 0 || tablesz == 0)
+    auto tablesz = data.getUnchecked(0)->tableSize;
+	if (tablesz == 0)
 	{
-		return load(oscId, BasicShapes, "");
+        loadBasicShapes(oscId);
+        return;
 	}
 
 	juce::ScopedLock sl(audioProcessor.dspLock);
     table.mode = mode;
     table.numTables = numTables;
     table.tableSize = tablesz;
+    table.path = path;
 	std::swap(table.tables, data);
+    UIDirty[oscId].store(true);
+}
+
+void TablesManager::loadBasicShapes(int oscId)
+{
+    WTable& table = wavetables[oscId];
+    MemoryBlock block(BinaryData::Basic_Shapes_wt2048, BinaryData::Basic_Shapes_wt2048Size);
+    table.fileId = -3;
+    table.name = "Basic Shapes";
+    table.path = "";
+    block = MemoryBlock(BinaryData::Basic_Shapes_wt2048, BinaryData::Basic_Shapes_wt2048Size);
+    
+    auto data = loadWaveTable(audioProcessor.osrate, block, "flac", 2048);
+    auto numTables = data.getNumTables();
+    auto tablesz = data.getUnchecked(0)->tableSize;
+
+    juce::ScopedLock sl(audioProcessor.dspLock);
+    table.mode = BasicShapes;
+    table.numTables = numTables;
+    table.tableSize = tablesz;
+    std::swap(table.tables, data);
+    UIDirty[oscId].store(true);
+}
+
+void TablesManager::loadNoise(int oscId, bool pink)
+{
+    WTable& table = wavetables[oscId];
+    table.fileId = pink ? -1 : -2;
+    table.name = pink ? "Pink Noise" : "White Noise";
+    table.path = "";
+    juce::ScopedLock sl(audioProcessor.dspLock);
+    table.mode = pink ? PinkNoise : WhiteNoise;
+    table.tables = gin::Wavetable();
+    table.numTables = 0;
+    table.tableSize = 0;
     UIDirty[oscId].store(true);
 }
 
@@ -316,4 +345,40 @@ std::vector<TablesManager::TableFolder> TablesManager::getFolderTree()
     }
 
     return root.children;
+}
+
+ValueTree TablesManager::serialize()
+{
+    auto tree = ValueTree("WAVETABLES");
+
+    int i = 0;
+    for (const auto& table : wavetables)
+    {
+        auto element = ValueTree("Table");
+        element.setProperty("id", var(i), nullptr);
+        element.setProperty("path", var(table.path), nullptr);
+        element.setProperty("mode", var(table.mode), nullptr);
+        element.setProperty("data", table.mode == UserTable ? var(table.b64) : var(""), nullptr);
+        tree.appendChild(element, nullptr);
+        i += 1;
+    }
+
+    return tree;
+}
+
+void TablesManager::unserialize(const ValueTree state)
+{
+    for (int i = 0; i < state.getNumChildren(); ++i) {
+        ValueTree tree = state.getChild(i);
+
+        const auto id = (int)tree.getProperty("id");
+        const auto mode = (WTMode)(int)tree.getProperty("mode");
+        const auto path = tree.getProperty("path").toString();
+        const auto data = tree.getProperty("data").toString();
+
+        auto& table = wavetables[id];
+        table.b64 = data;
+
+        load(id, mode, path);
+    }
 }

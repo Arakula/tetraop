@@ -513,6 +513,9 @@ void TetraOPAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
     }
     state.appendChild(macros, nullptr);
 
+    auto tables = tablesMgr->serialize();
+    state.appendChild(tables, nullptr);
+
     std::unique_ptr<juce::XmlElement> xml(state.createXml());
     copyXmlToBinary(*xml, destData);
 }
@@ -533,6 +536,7 @@ void TetraOPAudioProcessor::setStateInformation (const void* data, int sizeInByt
     auto lfos = state.getChildWithName("LFOS");
     auto mods = state.getChildWithName("MODULATIONS");
     auto macros = state.getChildWithName("MACROS");
+    auto tables = state.getChildWithName("WAVETABLES");
 
     if (parameters.isValid()) {
         params.replaceState(parameters);
@@ -564,6 +568,11 @@ void TetraOPAudioProcessor::setStateInformation (const void* data, int sizeInByt
                 modulation->macroNames[i] = name;
             }
         }
+    }
+
+    if (tables.isValid())
+    {
+        tablesMgr->unserialize(tables);
     }
 }
 
