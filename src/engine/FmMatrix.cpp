@@ -179,6 +179,7 @@ static inline std::pair<SIMDF, SIMDF> processUnison(
         const auto offset = SIMDF(phaseOffset.get(lane) + osc.phase_offset.get(lane));
         const int t2lane = lane + 4;
         const float pitch_ratio = osc.pitch_ratio.get(lane);
+        const float phase_inc = osc.phase_inc.get(lane);
 
         SIMDF phs;
         for (int v = 0; v < batch; ++v) // for each unison voice
@@ -192,7 +193,7 @@ static inline std::pair<SIMDF, SIMDF> processUnison(
             accR[lane] += (s * U.gain_r[v]).sum();
 
             auto& phase = U.phase[v];
-            phase = U.inc[v].fmadd(pitch_ratio, phase);
+            phase = U.ratio[v].fmadd(phase_inc * pitch_ratio, phase);
             Utils::wrapPhase(U.phase[v]);
         }
     }

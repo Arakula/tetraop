@@ -151,10 +151,6 @@ void OSC::startBlock(int startSample, int numSamples)
 	bool isFMOutput = audioProcessor.synth->fm->isOut[id].hmax() > 0.f;
 	if (!isFMOutput || (osc.level.get(lane) <= 1e-5f && osc.level_targ.get(lane) < 1e-5f))
 		unison.voices = 1; // TODO remove this?
-
-	if (unison.voices > 1)
-		for (int i = 0; i < 4; ++i)
-			unison.inc[i] = osc.phase_inc * unison.ratio[i];
 }
 
 void OSC::recalcUnison(SIMDUnison& unison) const

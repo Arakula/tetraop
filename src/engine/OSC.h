@@ -16,7 +16,6 @@ public:
     {
         int voices = 1;
         SIMDF phase[4]; // four batches for each lane == MAX 16 unison voices per osc per voice
-        SIMDF inc[4];
         SIMDF mask[4];
         SIMDF gain_l[4];
         SIMDF gain_r[4];
