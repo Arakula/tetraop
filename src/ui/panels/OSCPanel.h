@@ -6,6 +6,7 @@
 #include "../widgets/UnisonWidget.h"
 #include "../../engine/PhaseDist.h"
 #include "../../engine/TablesManager.h"
+#include "../widgets/ValuePicker.h"
 
 class TetraOPAudioProcessorEditor;
 
@@ -48,6 +49,8 @@ public:
 	std::unique_ptr<Rotary> wide;
 	std::unique_ptr<Rotary> semis;
 	std::unique_ptr<Rotary> cents;
+	std::unique_ptr<ValuePicker> feedback;
+	std::unique_ptr<ValuePicker> octave;
 
 	std::unique_ptr<UnisonWidget> unison;
 	std::unique_ptr<WaveDisplay> waveDisplay;

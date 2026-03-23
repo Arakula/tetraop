@@ -33,6 +33,7 @@ git clone --recurse-submodules https://github.com/tiagolr/tetraop.git
 
 # windows
 cmake -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=Release -S . -B ./build
+cmake --build build
 
 # linux
 sudo apt update

@@ -93,3 +93,17 @@ void UIUtils::drawCheckmark(Graphics& g, Rectangle<float> bounds, Colour bg, Col
         g.fillRect(b.reduced(2.f));
     }
 }
+
+void UIUtils::drawFeedback(Graphics& g, Rectangle<float> b, Colour c)
+{
+    b.reduce(0.5f, 3.5f);
+    Path p;
+    p.startNewSubPath(b.getTopLeft().translated(3, 0));
+    p.lineTo(b.getTopRight());
+    p.lineTo(b.getBottomRight());
+    p.lineTo(b.getBottomLeft().translated(3, 0));
+
+    g.setColour(c);
+    g.strokePath(p, PathStrokeType(1.f));
+    UIUtils::drawTriangle(g, b.withWidth(6.f).withHeight(6.f).withBottomY(b.getBottom()).translated(0, 3.f), 3, c);
+}

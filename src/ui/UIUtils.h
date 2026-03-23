@@ -13,4 +13,5 @@ public:
 	static void drawPanel(Graphics& g, Rectangle<float> bounds, bool drawHeader);
 	static void drawVSeparator(Graphics& g, Rectangle<float> bounds);
 	static void drawCheckmark(Graphics& g, Rectangle<float> bounds, Colour bg, Colour check, bool checked);
+	static void drawFeedback(Graphics& g, Rectangle<float> bounds, Colour c);
 };
