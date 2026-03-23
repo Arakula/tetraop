@@ -36,7 +36,7 @@ FmMatrix::FmMatrix(TetraOPAudioProcessor& p) : audioProcessor(p)
     layouts[int(DB_CB_BA)][2][1] = 1.f; // CB
     layouts[int(DB_CB_BA)][1][0] = 1.f; // BA
 
-    setLayout(Layout::DCBA);
+    setLayout(Layout::BA_CA_DA);
 }
 
 FmMatrix::~FmMatrix()

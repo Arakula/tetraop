@@ -53,7 +53,7 @@ void Synth::onFilterChange(int f)
     auto& filtersL = f == 0 ? f1L : f2L;
     auto& filtersR = f == 0 ? f1R : f2R;
 
-    if (filtersL[0] == nullptr || filter.type != filtersL[0]->type)
+    if (filter.type != filtersL[0]->type)
     {
         createFilters(f);
     }
@@ -85,13 +85,16 @@ void Synth::prepare()
     dcBlockerL.setSampleRate(srate);
     dcBlockerR.setSampleRate(srate);
 
-    if (f1L[0] != nullptr)
+    if (f1L[0] == nullptr)
     {
-        for (auto& filter : f1L)
-            filter->prepare(srate);
-        for (auto& filter : f1R)
-            filter->prepare(srate);
+        createFilters(0);
+        createFilters(1);
     }
+    
+    for (auto& filter : f1L)
+        filter->prepare(srate, true);
+    for (auto& filter : f1R)
+        filter->prepare(srate, true);
 }
 
 void Synth::clear()
@@ -122,7 +125,7 @@ static std::unique_ptr<Filter> makeFilter(Filter::Type type)
     }
 }
 
-void Synth::createFilters(int f)
+void Synth::createFilters(int f) // f: f1 or f2
 {
     String prefix = f == 0 ? "f1_" : "f2_";
     auto type = (Filter::Type)audioProcessor.params.getRawParameterValue(prefix + "type")->load();
