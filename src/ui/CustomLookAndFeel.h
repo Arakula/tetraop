@@ -36,6 +36,17 @@ public:
         return juce::Font(FontOptions(16.f));
     }
 
+    void drawCallOutBoxBackground(juce::CallOutBox&,
+        juce::Graphics& g,
+        const juce::Path& path,
+        juce::Image&) override
+    {
+        g.setColour(COLOR_BACKGROUND().darker(0.5f));
+        g.fillPath(path);
+        g.setColour(juce::Colours::white.darker(0.5f));
+        g.strokePath(path, juce::PathStrokeType(1.0f));
+    }
+
 
 private:
     juce::Typeface::Ptr defaultFont;
