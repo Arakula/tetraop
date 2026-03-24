@@ -47,6 +47,7 @@ public:
         DC_CA_CB,
         DC_DB_BA_CA,
         DB_CB_BA,
+        Custom,
         kLayouts,
     };
 

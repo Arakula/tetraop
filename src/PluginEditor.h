@@ -16,6 +16,7 @@
 #include "ui/panels/OSCPanel.h"
 #include "ui/panels/FilterPanel.h"
 #include "ui/panels/AboutDialog.h"
+#include "ui/panels/GlobalsPanel.h"
 #include "ui/CustomLookAndFeel.h"
 //#include "ui/widgets/Modulator.h"
 //#include "ui/widgets/Macro.h"
@@ -127,6 +128,7 @@ public:
     std::unique_ptr<OSCPanel> oscD;
     std::unique_ptr<FilterPanel> filter1;
     std::unique_ptr<FilterPanel> filter2;
+    std::unique_ptr<GlobalsPanel> globals;
     std::unique_ptr<AboutDialog> aboutDialog;
 
     std::unique_ptr<CustomLookAndFeel> customLookAndFeel;

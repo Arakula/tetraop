@@ -115,7 +115,7 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 	octave->color = COLOR_KNOB_LABEL();
 	octave->precision = 0;
 	octave->fontSize = 14.f;
-	octave->prefix = "OCT";
+	octave->prefix = "Oct";
 	addAndMakeVisible(octave.get());
 
 	toggleUIComponents();
@@ -216,11 +216,9 @@ void OSCPanel::paint(Graphics& g)
 	UIUtils::drawFeedback(g, feedback->getBounds().withWidth(PANEL_HEADER_HEIGHT)
 		.withX(feedback->getX() -15).reduced(5, 5).toFloat(), COLOR_PANEL_HEADER_TEXT().brighter(0.25f));
 
-	auto r = octave->getBounds().reduced(8, 3).translated(-13.f, 0.f).toFloat().translated(0.5f, 0.5f);
+	auto r = octave->getBounds().reduced(8, 4).translated(-13, 0).toFloat().translated(0.5f, 0.5f);
 	g.setColour(Colours::black.brighter(0.5f));
 	g.fillRoundedRectangle(r, 3.f);
-	g.setColour(COLOR_BEVEL());
-	g.drawRoundedRectangle(r, 3.f, 1.f);
 }
 
 void OSCPanel::resized()

@@ -86,6 +86,10 @@ void TetraOPAudioProcessorEditor::buildUI()
     addAndMakeVisible(filter2.get());
     filter2->setBounds(filter1->getBounds().translated(0, filter1->getHeight() + PANEL_PAD));
 
+    globals = std::make_unique<GlobalsPanel>(*this);
+    addAndMakeVisible(globals.get());
+    globals->setBounds(filter2->getBounds().withY(filter2->getBottom() + PANEL_PAD).withBottom(getHeight() - PANEL_PAD));
+
     tmp = std::make_unique<TMP>(audioProcessor);
     addAndMakeVisible(tmp.get());
     tmp->setBounds(100, 400, 100, 20);
