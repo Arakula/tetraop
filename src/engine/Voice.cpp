@@ -50,8 +50,12 @@ void Voice::noteStarted()
     }
 
     updateFilters(true);
+
     auto& voice = audioProcessor.synth->vox[batch].voice;
     voice.key[lane] = note.initialNote;
+
+    if (audioProcessor.synth->fm->layout == FmMatrix::Layout::Custom)
+        updateMatrix(voice);
 }
 
 void Voice::noteRetriggered()
@@ -147,6 +151,8 @@ void Voice::startBlock(int startSample, int numSamples)
     Utils::setMasked(voice.vel_mult, vel * audioProcessor.velsense + 1.0f - audioProcessor.velsense, mask);
 
     updateFilters(false, blkoffset);
+    if (audioProcessor.synth->fm->layout == FmMatrix::Layout::Custom)
+        updateMatrix(voice, blkoffset);
 }
 
 void Voice::endBlock(int startSample, int numSamples)
@@ -193,4 +199,56 @@ void Voice::updateFilters(bool init, int blkoffset)
         else
             audioProcessor.synth->updateFilters(id, 1, f2_cut, f2_res, f2_drive, f2_mix);
     }
+}
+
+/*
+* Expensive matrix update per voice per block so that the matrix is fully modulatable
+*/
+void Voice::updateMatrix(SIMDVoice& voice, int blkoffset)
+{
+    bool msk[4] = { false, false, false, false };
+    msk[lane] = true;
+    SIMDM mask = SIMDM(msk);
+
+    auto& mod = audioProcessor.modulation;
+    Utils::setMasked(voice.fm_ab, mod->getPolyValue("fm_ab", id, blkoffset), mask);
+    Utils::setMasked(voice.fm_ac, mod->getPolyValue("fm_ac", id, blkoffset), mask);
+    Utils::setMasked(voice.fm_ad, mod->getPolyValue("fm_ad", id, blkoffset), mask);
+
+    Utils::setMasked(voice.fm_ba, mod->getPolyValue("fm_ba", id, blkoffset), mask);
+    Utils::setMasked(voice.fm_bc, mod->getPolyValue("fm_bc", id, blkoffset), mask);
+    Utils::setMasked(voice.fm_bd, mod->getPolyValue("fm_bd", id, blkoffset), mask);
+
+    Utils::setMasked(voice.fm_ca, mod->getPolyValue("fm_ca", id, blkoffset), mask);
+    Utils::setMasked(voice.fm_cb, mod->getPolyValue("fm_cb", id, blkoffset), mask);
+    Utils::setMasked(voice.fm_cd, mod->getPolyValue("fm_cd", id, blkoffset), mask);
+
+    Utils::setMasked(voice.fm_da, mod->getPolyValue("fm_da", id, blkoffset), mask);
+    Utils::setMasked(voice.fm_db, mod->getPolyValue("fm_db", id, blkoffset), mask);
+    Utils::setMasked(voice.fm_dc, mod->getPolyValue("fm_dc", id, blkoffset), mask);
+
+    Utils::setMasked(voice.fm_aout, mod->getPolyValue("fm_aout", id, blkoffset), mask);
+    Utils::setMasked(voice.fm_bout, mod->getPolyValue("fm_bout", id, blkoffset), mask);
+    Utils::setMasked(voice.fm_cout, mod->getPolyValue("fm_cout", id, blkoffset), mask);
+    Utils::setMasked(voice.fm_dout, mod->getPolyValue("fm_dout", id, blkoffset), mask);
+
+    Utils::setMasked(voice.rm_aa, mod->getPolyValue("rm_aa", id, blkoffset), mask);
+    Utils::setMasked(voice.rm_ab, mod->getPolyValue("rm_ab", id, blkoffset), mask);
+    Utils::setMasked(voice.rm_ac, mod->getPolyValue("rm_ac", id, blkoffset), mask);
+    Utils::setMasked(voice.rm_ad, mod->getPolyValue("rm_ad", id, blkoffset), mask);
+
+    Utils::setMasked(voice.rm_ba, mod->getPolyValue("rm_ba", id, blkoffset), mask);
+    Utils::setMasked(voice.rm_bb, mod->getPolyValue("rm_bb", id, blkoffset), mask);
+    Utils::setMasked(voice.rm_bc, mod->getPolyValue("rm_bc", id, blkoffset), mask);
+    Utils::setMasked(voice.rm_bd, mod->getPolyValue("rm_bd", id, blkoffset), mask);
+
+    Utils::setMasked(voice.rm_ca, mod->getPolyValue("rm_ca", id, blkoffset), mask);
+    Utils::setMasked(voice.rm_cb, mod->getPolyValue("rm_cb", id, blkoffset), mask);
+    Utils::setMasked(voice.rm_cc, mod->getPolyValue("rm_cc", id, blkoffset), mask);
+    Utils::setMasked(voice.rm_cd, mod->getPolyValue("rm_cd", id, blkoffset), mask);
+
+    Utils::setMasked(voice.rm_da, mod->getPolyValue("rm_da", id, blkoffset), mask);
+    Utils::setMasked(voice.rm_db, mod->getPolyValue("rm_db", id, blkoffset), mask);
+    Utils::setMasked(voice.rm_dc, mod->getPolyValue("rm_dc", id, blkoffset), mask);
+    Utils::setMasked(voice.rm_dd, mod->getPolyValue("rm_dd", id, blkoffset), mask);
 }

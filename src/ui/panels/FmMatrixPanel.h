@@ -13,6 +13,10 @@ class FmMatrixPanel
 {
 public:
 
+    std::unique_ptr<Rotary> fm[16];
+    std::unique_ptr<Rotary> rm[16];
+    std::unique_ptr<Rotary> out[4];
+
     FmMatrixPanel(TetraOPAudioProcessorEditor& e);
     ~FmMatrixPanel() override;
 

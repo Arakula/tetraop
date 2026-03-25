@@ -8,7 +8,7 @@ TetraOPAudioProcessorEditor::TetraOPAudioProcessorEditor(TetraOPAudioProcessor& 
     : AudioProcessorEditor(p)
     , audioProcessor(p)
 {
-    setSize(KNOB_WIDTH * (2+2+2+2 + 3) +KNOB_WIDTH_SM * 6 + PANEL_PAD * 4 + int(FILTER_PANEL_HMARGIN * 2.5), 575);
+    setSize(KNOB_WIDTH * (2+2+2+2 + 3) +KNOB_WIDTH_SM * 6 + PANEL_PAD * 4 + int(FILTER_PANEL_HMARGIN * 2.5), 620);
     Desktop::getInstance().setGlobalScaleFactor(audioProcessor.scale);
     startTimerHz(60);
 
@@ -88,7 +88,13 @@ void TetraOPAudioProcessorEditor::buildUI()
 
     globals = std::make_unique<GlobalsPanel>(*this);
     addAndMakeVisible(globals.get());
+    globals->setVisible(!audioProcessor.fmMatrixVisible);
     globals->setBounds(filter2->getBounds().withY(filter2->getBottom() + PANEL_PAD).withBottom(getHeight() - PANEL_PAD));
+
+    fmMatrix = std::make_unique<FmMatrixPanel>(*this);
+    addAndMakeVisible(fmMatrix.get());
+    fmMatrix->setVisible(audioProcessor.fmMatrixVisible);
+    fmMatrix->setBounds(globals->getBounds());
 
     tmp = std::make_unique<TMP>(audioProcessor);
     addAndMakeVisible(tmp.get());
@@ -96,6 +102,15 @@ void TetraOPAudioProcessorEditor::buildUI()
 
     juce::Desktop::getInstance().addGlobalMouseListener(this);
     audioProcessor.modulation->UIDirty.store(true); // refresh connections on startup
+
+    toggleFmMatrix(); // REMOVE ME
+}
+
+void TetraOPAudioProcessorEditor::toggleFmMatrix()
+{
+    audioProcessor.fmMatrixVisible = !audioProcessor.fmMatrixVisible;
+    globals->setVisible(!audioProcessor.fmMatrixVisible);
+    fmMatrix->setVisible(audioProcessor.fmMatrixVisible);
 }
 
 void TetraOPAudioProcessorEditor::rebuild()

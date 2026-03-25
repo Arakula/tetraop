@@ -75,6 +75,7 @@ public:
     // UI
     float scale = 1.f;
     int selectedTab = 0;
+    bool fmMatrixVisible = false;
     String displayMod;
 
     juce::AudioProcessorValueTreeState params;

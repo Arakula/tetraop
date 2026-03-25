@@ -62,6 +62,7 @@ public:
     Colour colorValue = COLOR_ACTIVE();
     Colour colorModValue = COLOR_ACTIVE();
     bool disabled = false;
+    bool isDark = false;
     juce::String name;
 
     Rotary(TetraOPAudioProcessorEditor& e, juce::String paramId, juce::String name, Format format, bool isSymmetric = false);
@@ -70,6 +71,7 @@ public:
     void setParamId(String pid);
     void setModId(String mid) override;
     void setSmall();
+    void setDarkSmall();
 
     void paint(juce::Graphics& g) override;
     void mouseDown(const juce::MouseEvent& e) override;

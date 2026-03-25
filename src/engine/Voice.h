@@ -19,6 +19,9 @@ public:
         SIMDF vel_mult;
         SIMDF env_step;
 
+        // matrix coefficients
+        // these are updated per block so that the FM matrix is fully modulatable (when layout is custom)
+        // feedback is not present as it is updated per oscillator instead
         SIMDF fm_ab;
         SIMDF fm_ac;
         SIMDF fm_ad;
@@ -90,6 +93,7 @@ public:
     void endBlock(int startSample, int numSamples);
 
     void updateFilters(bool init, int blkoffset = 0);
+    void updateMatrix(SIMDVoice& voice, int blkoffset = 0);
 
 private:
     static inline uint64_t pressed_ts_counter = 1;

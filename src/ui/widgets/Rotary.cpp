@@ -84,6 +84,15 @@ void Rotary::setSmall()
     isSmall = true;
 }
 
+void Rotary::setDarkSmall()
+{
+    radius = KNOB_RADIUS_SM;
+    yoffset = KNOB_YOFFSET_SM;
+    value_offset = KNOB_VALUE_OFFSET_SM;
+    isSmall = true;
+    isDark = true;
+}
+
 void Rotary::mouseDown(const juce::MouseEvent& e)
 {
     if (e.mods.isRightButtonDown()) {
@@ -229,39 +238,42 @@ void Rotary::drawRotary(juce::Graphics& g, float slider_pos) {
 
     // draw knob base
     auto circle = Rectangle<float>({ center.x - radius, center.y - radius, radius * 2, radius * 2 });
-    g.setColour(COLOR_BEVEL());
-    g.fillEllipse(circle.expanded(2));
-    g.setColour(COLOR_KNOB());
-    g.fillEllipse(circle);
-    juce::ColourGradient grad1(
-        Colours::white.withAlpha(.17f),
-        circle.getX(), circle.getY(),
-        Colours::white.withAlpha(.0f),
-        circle.getX(), circle.getBottom(),
-        false
-    );
-    grad1.addColour(0.5, Colours::white.withAlpha(.17f));
-    g.setGradientFill(grad1);
-    g.fillEllipse(circle);
-    g.setColour(COLOR_KNOB());
-    auto innerc = circle.reduced(2);
-    g.fillEllipse(innerc);
-    juce::ColourGradient grad2(
-        Colours::black.withAlpha(0.12f),
-        innerc.getX(), innerc.getY(),
-        Colours::white.withAlpha(0.12f),
-        innerc.getX(), innerc.getBottom(),
-        false
-    );
-    grad2.addColour(0.27, Colours::black.withAlpha(0.12f));
-    g.setGradientFill(grad2);
-    g.fillEllipse(innerc);
+    if (!isDark)
+    {
+        g.setColour(COLOR_BEVEL());
+        g.fillEllipse(circle.expanded(2));
+        g.setColour(COLOR_KNOB());
+        g.fillEllipse(circle);
+        juce::ColourGradient grad1(
+            Colours::white.withAlpha(.17f),
+            circle.getX(), circle.getY(),
+            Colours::white.withAlpha(.0f),
+            circle.getX(), circle.getBottom(),
+            false
+        );
+        grad1.addColour(0.5, Colours::white.withAlpha(.17f));
+        g.setGradientFill(grad1);
+        g.fillEllipse(circle);
+        g.setColour(COLOR_KNOB());
+        auto innerc = circle.reduced(2);
+        g.fillEllipse(innerc);
+        juce::ColourGradient grad2(
+            Colours::black.withAlpha(0.12f),
+            innerc.getX(), innerc.getY(),
+            Colours::white.withAlpha(0.12f),
+            innerc.getX(), innerc.getBottom(),
+            false
+        );
+        grad2.addColour(0.27, Colours::black.withAlpha(0.12f));
+        g.setGradientFill(grad2);
+        g.fillEllipse(innerc);
+    }
 
     // draw outer arc
     if (drawArc) {
         juce::Path arc;
         arc.addCentredArc(center.x, center.y, radius + value_offset, radius + value_offset, 0, -DEG130, DEG130, true);
-        g.setColour(COLOR_KNOB_ARC());
+        g.setColour(COLOR_KNOB_ARC().darker(isDark ? 0.5f : 0.f));
         g.strokePath(arc, PathStrokeType(value_thickness));
     }
 
