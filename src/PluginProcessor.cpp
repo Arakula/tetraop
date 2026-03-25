@@ -45,6 +45,47 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
 
     layout.add(std::make_unique<AudioParameterChoice>("layout", "FM Layout", StringArray{ "A_B_C_D", "DCBA", "DC_BA", "DC_B_A", "DA_DB_DC", "BA_CA_DA", "A_CB_DC", "DC_CA_CB", "DC_DB_BA_CA", "DB_CB_BA", "Custom"}, 9));
 
+    layout.add(std::make_unique<AudioParameterFloat>("fm_ab", "FM AB", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("fm_ac", "FM AC", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("fm_ad", "FM AD", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("fm_aout", "FM AOut", 0.f, 1.f, 1.f));
+
+    layout.add(std::make_unique<AudioParameterFloat>("fm_ba", "FM BA", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("fm_bc", "FM BC", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("fm_bd", "FM BD", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("fm_bout", "FM BOut", 0.f, 1.f, 0.f));
+
+    layout.add(std::make_unique<AudioParameterFloat>("fm_ca", "FM CA", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("fm_cb", "FM CB", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("fm_cd", "FM CD", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("fm_cout", "FM COut", 0.f, 1.f, 0.f));
+
+    layout.add(std::make_unique<AudioParameterFloat>("fm_da", "FM DA", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("fm_db", "FM DB", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("fm_dc", "FM DC", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("fm_dout", "FM DOut", 0.f, 1.f, 0.f));
+
+    layout.add(std::make_unique<AudioParameterFloat>("rm_aa", "RM AA", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("rm_ab", "RM AB", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("rm_ac", "RM AC", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("rm_ad", "RM AD", 0.f, 1.f, 0.f));
+
+    layout.add(std::make_unique<AudioParameterFloat>("rm_ba", "RM BA", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("rm_bb", "RM BB", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("rm_bc", "RM BC", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("rm_bd", "RM BD", 0.f, 1.f, 0.f));
+
+    layout.add(std::make_unique<AudioParameterFloat>("rm_ca", "RM CA", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("rm_cb", "RM CB", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("rm_cc", "RM CC", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("rm_cd", "RM CD", 0.f, 1.f, 0.f));
+
+    layout.add(std::make_unique<AudioParameterFloat>("rm_da", "RM DA", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("rm_db", "RM DB", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("rm_dc", "RM DC", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("rm_dd", "RM DD", 0.f, 1.f, 0.f));
+    
+
     for (int i = 0; i < MAX_OSCILLATORS; ++i)
     {
         auto prefix = String(i == 0 ? "a_" : i == 1 ? "b_" : i == 2 ? "c_" : "d_");

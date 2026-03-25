@@ -34,7 +34,7 @@ public:
         std::array<float*, 8> data; // 4 tables (1 per voice) + 4 morph target tables
     };
 
-    using Matrix4x4 = std::array<std::array<float, 4>, 4>;
+    using Matrix4x4 = std::array<std::array<SIMDF, 4>, 4>;
 
     enum Layout {
         A_B_C_D,
@@ -50,10 +50,12 @@ public:
         Custom,
         kLayouts,
     };
+    bool layoutDirty = true;
 
     Layout layout = Layout::A_B_C_D;
     std::array<Matrix4x4, kLayouts> layouts{};
     Matrix4x4 matrix{};
+    bool hasRM = false;
 
     SIMDF ab = 0.f; SIMDF ac = 0.f; SIMDF ad = 0.f;
     SIMDF ba = 0.f; SIMDF bc = 0.f; SIMDF bd = 0.f;
@@ -90,8 +92,9 @@ public:
 
     void parameterChanged(const juce::String& paramId, float value) override;
 
+    void refreshLayout(SIMDVox& vox);
     void prepareDistortions(SIMDVox& vox);
-    void setLayout(Layout l);
+    void setLayout(Layout l, SIMDVox& vox);
     void prepare(float _srate);
     void processBlock(SIMDVox& data, int numSamples, int activeVoiceLane, SIMDF vmask);
     TablesData getTables(SIMDVox& vox, int oscidx, bool isMorphing, SIMDF isOut);
@@ -225,7 +228,7 @@ public:
     }
 
 private:
-    template<bool AOn, bool BOn, bool COn, bool DOn>
+    template<bool ring, bool AOn, bool BOn, bool COn, bool DOn>
     void _process(SIMDVox& data, int numSamples, const int activeVoiceLane, SIMDF vmask);
     float morphAlpha = 0.f; // exponential param smoother
 

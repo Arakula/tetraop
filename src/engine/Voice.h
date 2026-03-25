@@ -18,6 +18,41 @@ public:
         SIMDF env;
         SIMDF vel_mult;
         SIMDF env_step;
+
+        SIMDF fm_ab;
+        SIMDF fm_ac;
+        SIMDF fm_ad;
+        SIMDF fm_ba;
+        SIMDF fm_bc;
+        SIMDF fm_bd;
+        SIMDF fm_ca;
+        SIMDF fm_cb;
+        SIMDF fm_cd;
+        SIMDF fm_da;
+        SIMDF fm_db;
+        SIMDF fm_dc;
+
+        SIMDF fm_aout;
+        SIMDF fm_bout;
+        SIMDF fm_cout;
+        SIMDF fm_dout;
+
+        SIMDF rm_aa;
+        SIMDF rm_ab;
+        SIMDF rm_ac;
+        SIMDF rm_ad;
+        SIMDF rm_ba;
+        SIMDF rm_bb;
+        SIMDF rm_bc;
+        SIMDF rm_bd;
+        SIMDF rm_ca;
+        SIMDF rm_cb;
+        SIMDF rm_cc;
+        SIMDF rm_cd;
+        SIMDF rm_da;
+        SIMDF rm_db;
+        SIMDF rm_dc;
+        SIMDF rm_dd;
     };
 
 	int id;

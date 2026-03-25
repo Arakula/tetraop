@@ -363,7 +363,7 @@ void LayoutPicker::mouseDown(const MouseEvent&)
     content->onClick = [&callout, this](int res)
         {
             auto param = editor.audioProcessor.params.getParameter("layout");
-            param->setValueNotifyingHost(param->convertTo0to1(res));
+            param->setValueNotifyingHost(param->convertTo0to1((float)res));
             callout.exitModalState(0);
         };
 }
