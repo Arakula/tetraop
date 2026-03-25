@@ -54,8 +54,11 @@ void Voice::noteStarted()
     auto& voice = audioProcessor.synth->vox[batch].voice;
     voice.key[lane] = note.initialNote;
 
-    if (audioProcessor.synth->fm->layout == FmMatrix::Layout::Custom)
+    if (audioProcessor.synth->fm->layout == FmMatrix::Layout::Custom 
+        && audioProcessor.modulation->isFmMatrixModulated())
+    {
         updateMatrix(voice);
+    }
 }
 
 void Voice::noteRetriggered()
@@ -151,8 +154,11 @@ void Voice::startBlock(int startSample, int numSamples)
     Utils::setMasked(voice.vel_mult, vel * audioProcessor.velsense + 1.0f - audioProcessor.velsense, mask);
 
     updateFilters(false, blkoffset);
-    if (audioProcessor.synth->fm->layout == FmMatrix::Layout::Custom)
+    if (audioProcessor.synth->fm->layout == FmMatrix::Layout::Custom 
+        && audioProcessor.modulation->isFmMatrixModulated())
+    {
         updateMatrix(voice, blkoffset);
+    }
 }
 
 void Voice::endBlock(int startSample, int numSamples)

@@ -54,7 +54,8 @@ public:
 
     Layout layout = Layout::A_B_C_D;
     std::array<Matrix4x4, kLayouts> layouts{};
-    Matrix4x4 matrix{};
+    Matrix4x4 matrix{}; // fm matrix
+    Matrix4x4 rmmtx; // rm matrix
     bool hasRM = false;
 
     SIMDF ab = 0.f; SIMDF ac = 0.f; SIMDF ad = 0.f;

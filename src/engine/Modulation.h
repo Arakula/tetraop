@@ -103,6 +103,7 @@ public:
 	float calculateOffset(std::vector<Connection*> conns, int voiceId = -1, int blockOffset = 0, float srate = 0.f);
 	bool isAnyVoiceActive();
 	void onVoiceTriggered(int voiceId, float songTimeInSeconds, bool songIsPlaying);
+	bool isFmMatrixModulated();
 
 	ValueTree serialize();
 	void unserialize(const ValueTree state);

@@ -5,6 +5,22 @@ FmMatrix::FmMatrix(TetraOPAudioProcessor& p) : audioProcessor(p)
 {
     audioProcessor.params.addParameterListener("layout", this);
 
+    // listen to fm matrix changes
+    String prefix[4] = {"a", "b", "c", "d"};
+    for (int i = 0; i < 4; ++i)
+    {
+        for (int j = 0; j < 4; ++j)
+        {
+            String fmparam = i == j ? prefix[i] + "_feedback" : "fm_" + prefix[j] + prefix[i];
+            String rmparam = "rm_" + prefix[j] + prefix[i];
+            audioProcessor.params.addParameterListener(fmparam, this);
+            audioProcessor.params.addParameterListener(rmparam, this);
+        }
+
+        String outparam = "fm_" + prefix[i] + "out";
+        audioProcessor.params.addParameterListener(outparam, this);
+    }
+
     layouts[int(DCBA)][3][2] = 1.f; // DC
     layouts[int(DCBA)][2][1] = 1.f; // CB
     layouts[int(DCBA)][1][0] = 1.f; // BA
@@ -55,26 +71,57 @@ void FmMatrix::refreshLayout(SIMDVox& vox)
     if (lay == Custom)
     {
         auto& mtx = layouts[Custom];
-        mtx[0][1] = vox.voice.fm_ab;
-        mtx[0][2] = vox.voice.fm_ac;
-        mtx[0][3] = vox.voice.fm_ad;
 
-        mtx[1][0] = vox.voice.fm_ba;
-        mtx[1][2] = vox.voice.fm_bc;
-        mtx[1][3] = vox.voice.fm_bd;
+        // matrix is modulated, copy matrix values from voices every block
+        if (audioProcessor.modulation->isFmMatrixModulated())
+        {
+            mtx[0][1] = vox.voice.fm_ab;
+            mtx[0][2] = vox.voice.fm_ac;
+            mtx[0][3] = vox.voice.fm_ad;
 
-        mtx[2][0] = vox.voice.fm_ca;
-        mtx[2][1] = vox.voice.fm_cb;
-        mtx[2][3] = vox.voice.fm_cd;
+            mtx[1][0] = vox.voice.fm_ba;
+            mtx[1][2] = vox.voice.fm_bc;
+            mtx[1][3] = vox.voice.fm_bd;
 
-        mtx[3][0] = vox.voice.fm_da;
-        mtx[3][1] = vox.voice.fm_db;
-        mtx[3][2] = vox.voice.fm_dc;
+            mtx[2][0] = vox.voice.fm_ca;
+            mtx[2][1] = vox.voice.fm_cb;
+            mtx[2][3] = vox.voice.fm_cd;
 
-        hasRM = vox.voice.rm_aa.hmax() + vox.voice.rm_ab.hmax() + vox.voice.rm_ac.hmax() + vox.voice.rm_ad.hmax()
-            + vox.voice.rm_ba.hmax() + vox.voice.rm_bb.hmax() + vox.voice.rm_bc.hmax() + vox.voice.rm_bd.hmax()
-            + vox.voice.rm_ca.hmax() + vox.voice.rm_cb.hmax() + vox.voice.rm_cc.hmax() + vox.voice.rm_cd.hmax()
-            + vox.voice.rm_da.hmax() + vox.voice.rm_db.hmax() + vox.voice.rm_dc.hmax() + vox.voice.rm_dd.hmax() > 0.f;
+            mtx[3][0] = vox.voice.fm_da;
+            mtx[3][1] = vox.voice.fm_db;
+            mtx[3][2] = vox.voice.fm_dc;
+
+            rmmtx[0][0] = vox.voice.rm_aa; rmmtx[1][0] = vox.voice.rm_ba;
+            rmmtx[0][1] = vox.voice.rm_ab; rmmtx[1][1] = vox.voice.rm_bb;
+            rmmtx[0][2] = vox.voice.rm_ac; rmmtx[1][2] = vox.voice.rm_bc;
+            rmmtx[0][3] = vox.voice.rm_ad; rmmtx[1][3] = vox.voice.rm_bd;
+
+            rmmtx[2][0] = vox.voice.rm_ca; rmmtx[3][0] = vox.voice.rm_da;
+            rmmtx[2][1] = vox.voice.rm_cb; rmmtx[3][1] = vox.voice.rm_db;
+            rmmtx[2][2] = vox.voice.rm_cc; rmmtx[3][2] = vox.voice.rm_dc;
+            rmmtx[2][3] = vox.voice.rm_cd; rmmtx[3][3] = vox.voice.rm_dd;
+        }
+        // if matrix is not modulated fetch values only when the matrix changes
+        else
+        {
+            String prefix[4] = { "a", "b", "c", "d" };
+            for (int i = 0; i < 4; ++i)
+            {
+                for (int j = 0; j < 4; ++j)
+                {
+                    String fmparam = i == j ? prefix[i] + "_feedback" : "fm_" + prefix[j] + prefix[i];
+                    String rmparam = "rm_" + prefix[j] + prefix[i];
+                    if (i != j)
+                        mtx[j][i] = audioProcessor.params.getRawParameterValue(fmparam)->load();
+                    rmmtx[j][i] = audioProcessor.params.getRawParameterValue(rmparam)->load();
+                }
+            }
+        }
+
+        hasRM = rmmtx[0][0].hmax() + rmmtx[1][0].hmax() + rmmtx[2][0].hmax() + rmmtx[3][0].hmax()
+              + rmmtx[0][1].hmax() + rmmtx[1][1].hmax() + rmmtx[2][1].hmax() + rmmtx[3][1].hmax()
+              + rmmtx[0][2].hmax() + rmmtx[1][2].hmax() + rmmtx[2][2].hmax() + rmmtx[3][2].hmax()
+              + rmmtx[0][3].hmax() + rmmtx[1][3].hmax() + rmmtx[2][3].hmax() + rmmtx[3][3].hmax() > 0.f;
     }
 
     setLayout(lay, vox);
@@ -137,12 +184,19 @@ void FmMatrix::setLayout(Layout l, SIMDVox& vox)
     ca = matrix[2][0]; cb = matrix[2][1]; cd = matrix[2][3];
     da = matrix[3][0]; db = matrix[3][1]; dc = matrix[3][2];
 
-    if (l == Custom)
+    if (l == Custom && audioProcessor.modulation->isFmMatrixModulated())
     {
         AisOut = vox.voice.fm_aout;
         BisOut = vox.voice.fm_bout;
         CisOut = vox.voice.fm_cout;
         DisOut = vox.voice.fm_dout;
+    }
+    else if (l == Custom)
+    {
+        AisOut = audioProcessor.params.getRawParameterValue("fm_aout")->load();
+        BisOut = audioProcessor.params.getRawParameterValue("fm_bout")->load();
+        CisOut = audioProcessor.params.getRawParameterValue("fm_cout")->load();
+        DisOut = audioProcessor.params.getRawParameterValue("fm_dout")->load();
     } 
     else
     {
@@ -257,7 +311,7 @@ static inline std::pair<SIMDF, SIMDF> processUnison(
 // SIMD'ed voices rendering
 void FmMatrix::processBlock(SIMDVox& vox, int numSamples, int activeVoice, SIMDF vmask)
 {
-    if (layoutDirty || layout == Custom)
+    if (layoutDirty || (layout == Custom && audioProcessor.modulation->isFmMatrixModulated()))
     {
         refreshLayout(vox);
         layoutDirty = false;
@@ -436,10 +490,10 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
 
             if constexpr (ring) // ring modulation
             {
-                A.out = A.out * (one - vox.voice.rm_aa) + A.out * la * vox.voice.rm_aa;
-                if constexpr (BOn) A.out = A.out * (one - vox.voice.rm_ba) + A.out * lb * vox.voice.rm_ba;
-                if constexpr (COn) A.out = A.out * (one - vox.voice.rm_ca) + A.out * lc * vox.voice.rm_ca;
-                if constexpr (DOn) A.out = A.out * (one - vox.voice.rm_da) + A.out * ld * vox.voice.rm_da;
+                A.out = A.out * (one - rmmtx[0][0]) + A.out * la * rmmtx[0][0];
+                if constexpr (BOn) A.out = A.out * (one - rmmtx[1][0]) + A.out * lb * rmmtx[1][0];
+                if constexpr (COn) A.out = A.out * (one - rmmtx[2][0]) + A.out * lc * rmmtx[2][0];
+                if constexpr (DOn) A.out = A.out * (one - rmmtx[3][0]) + A.out * ld * rmmtx[3][0];
             }
 
             Awindow(A.out, fm_phase); // apply window function (formant distortion only)
@@ -452,10 +506,10 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
 
             if constexpr (ring)
             {
-                B.out = B.out * (one - vox.voice.rm_bb) + B.out * lb * vox.voice.rm_bb;
-                if constexpr (AOn) B.out = B.out * (one - vox.voice.rm_ab) + B.out * la * vox.voice.rm_ab;
-                if constexpr (COn) B.out = B.out * (one - vox.voice.rm_cb) + B.out * lc * vox.voice.rm_cb;
-                if constexpr (DOn) B.out = B.out * (one - vox.voice.rm_db) + B.out * ld * vox.voice.rm_db;
+                B.out = B.out * (one - rmmtx[1][1]) + B.out * lb * rmmtx[1][1];
+                if constexpr (AOn) B.out = B.out * (one - rmmtx[1][0]) + B.out * la * rmmtx[1][0];
+                if constexpr (COn) B.out = B.out * (one - rmmtx[1][2]) + B.out * lc * rmmtx[1][2];
+                if constexpr (DOn) B.out = B.out * (one - rmmtx[1][3]) + B.out * ld * rmmtx[1][3];
             }
 
             Bwindow(B.out, fm_phase);
@@ -468,10 +522,10 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
 
             if constexpr (ring)
             {
-                C.out = C.out * (one - vox.voice.rm_cc) + C.out * lc * vox.voice.rm_cc;
-                if constexpr (AOn) C.out = C.out * (one - vox.voice.rm_ac) + C.out * la * vox.voice.rm_ac;
-                if constexpr (BOn) C.out = C.out * (one - vox.voice.rm_bc) + C.out * lb * vox.voice.rm_bc;
-                if constexpr (DOn) C.out = C.out * (one - vox.voice.rm_dc) + C.out * ld * vox.voice.rm_dc;
+                C.out = C.out * (one - rmmtx[2][2]) + C.out * lc * rmmtx[2][2];
+                if constexpr (AOn) C.out = C.out * (one - rmmtx[2][0]) + C.out * la * rmmtx[2][0];
+                if constexpr (BOn) C.out = C.out * (one - rmmtx[2][1]) + C.out * lb * rmmtx[2][1];
+                if constexpr (DOn) C.out = C.out * (one - rmmtx[2][3]) + C.out * ld * rmmtx[2][3];
             }
 
             Cwindow(C.out, fm_phase);
@@ -484,10 +538,10 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
 
             if constexpr (ring)
             {
-                D.out = D.out * (one - vox.voice.rm_dd) + D.out * ld * vox.voice.rm_dd;
-                if constexpr (AOn) D.out = D.out * (one - vox.voice.rm_ad) + D.out * la * vox.voice.rm_ad;
-                if constexpr (BOn) D.out = D.out * (one - vox.voice.rm_bd) + D.out * lb * vox.voice.rm_bd;
-                if constexpr (COn) D.out = D.out * (one - vox.voice.rm_cd) + D.out * lc * vox.voice.rm_cd;
+                D.out = D.out * (one - rmmtx[3][3]) + D.out * ld * rmmtx[3][3];
+                if constexpr (AOn) D.out = D.out * (one - rmmtx[3][0]) + D.out * la * rmmtx[3][0];
+                if constexpr (BOn) D.out = D.out * (one - rmmtx[3][1]) + D.out * lb * rmmtx[3][1];
+                if constexpr (COn) D.out = D.out * (one - rmmtx[3][2]) + D.out * lc * rmmtx[3][2];
             }
 
             Dwindow(D.out, D.phase);

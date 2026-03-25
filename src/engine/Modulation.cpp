@@ -918,6 +918,17 @@ std::vector<Modulation::Connection> Modulation::getConnections()
     return conns;
 }
 
+bool Modulation::isFmMatrixModulated()
+{
+    for (auto& conn : connections)
+    {
+        auto& dst = conn->dst;
+        if (dst.startsWith("fm_") || dst.startsWith("rm_") || dst.endsWith("feedback"))
+            return true;
+    }
+    return false;
+}
+
 /*
 * Generates a random 0..1 from a note timestamp
 * The random seed is XOR'ed with the start time stamp
