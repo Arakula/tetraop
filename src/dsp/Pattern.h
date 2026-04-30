@@ -75,6 +75,7 @@ class Pattern
     void removePoint(float x, float y);
     void removePoint(int i);
     void removePointsInRange(float x1, float x2);
+    void separatePointsWithSameX(); // adds a tiny offset to points with duplicate x coordinate
     void invert();
     void reverse();
     void floatPattern();
@@ -111,7 +112,6 @@ class Pattern
 private:
     static inline uint64_t versionIDCounter = 1; // static global ID counter
     static inline uint64_t pointsIDCounter = 1; // static global ID counter
-    bool dualTension = false;
     std::mutex mtx;
     std::mutex pointsmtx;
 };

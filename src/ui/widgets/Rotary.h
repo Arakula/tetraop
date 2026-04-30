@@ -28,6 +28,8 @@ public:
         millis,
         seconds1f,
         seconds2f,
+        secondsMillis,
+        secondsSubMillis,
         ABMix,
         FilterLPHP,
         PitchSemis,

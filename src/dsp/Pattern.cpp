@@ -58,7 +58,7 @@ int Pattern::insertPoint(float x, float y, float tension, int type, int role)
 
     auto pidx = points.insert(insertPos, p);
     return (int)std::distance(points.begin(), pidx);
-};
+}
 
 void Pattern::removePoint(float x, float y)
 {
@@ -85,13 +85,42 @@ void Pattern::removePointsInRange(float x1, float x2)
     }
 }
 
+// Pattern sort points is used for some functionality
+// If points have the same coordinate X they may be reordered
+// A solution is to add a tiny offset to points with the same X
+void Pattern::separatePointsWithSameX()
+{
+    constexpr float EPS = 1e-6f;
+
+    if (points.empty())
+        return;
+
+    // Forward pass: ensure strictly increasing x
+    for (size_t i = 1; i < points.size(); ++i) {
+        if (points[i].x <= points[i - 1].x) {
+            points[i].x = points[i - 1].x + EPS;
+        }
+    }
+
+    // Backward pass: fix overflow past 1.0
+    if (points.back().x > 1.0f) {
+        points.back().x = 1.0f;
+
+        for (int i = (int)points.size() - 2; i >= 0; --i) {
+            if (points[i].x >= points[i + 1].x) {
+                points[i].x = points[i + 1].x - EPS;
+            }
+        }
+    }
+}
+
 void Pattern::invert()
 {
     for (auto i = points.begin(); i != points.end(); ++i) {
         i->y = 1 - i->y;
     }
     incrementVersion();
-};
+}
 
 void Pattern::reverse()
 {
@@ -112,7 +141,7 @@ void Pattern::reverse()
         }
     }
     incrementVersion();
-};
+}
 
 void Pattern::rotate(float x) {
     if (x > 1.0f) x = 1.0f;
@@ -200,7 +229,7 @@ void Pattern::loadTriangle() {
     clear();
     insertPoint(0, 0, 0, 1);
     insertPoint(0.5f, 1.f, 0, 1);
-};
+}
 
 void Pattern::copyFrom(Pattern& p)
 {
@@ -230,7 +259,7 @@ float Pattern::get_y_curve(Segment seg, float x)
     if (!rise) ten *= -1;
     if (ten > 1) ten = 1;
     if (ten < -1) ten = -1;
-    auto pwr = pow(1.1f, std::fabs(ten * POWER_CURVE_POWER));
+    auto pwr = pow(1.1f, std::fabs(ten * globals::POWER_CURVE_POWER));
 
     if (seg.x1 == seg.x2)
         return seg.y2;
@@ -251,7 +280,7 @@ float Pattern::get_y_sincurve(Segment seg, float x)
     if (!rise) ten *= -1;
     if (ten > 1) ten = 1;
     if (ten < -1) ten = -1;
-    auto pwr = pow(1.1f, std::fabs(ten * POWER_CURVE_POWER));
+    auto pwr = pow(1.1f, std::fabs(ten * globals::POWER_CURVE_POWER));
 
     if (seg.x1 == seg.x2)
         return seg.y2;
@@ -268,11 +297,14 @@ float Pattern::get_y_sincurve(Segment seg, float x)
 
 int Pattern::getWaveCount(Segment seg)
 {
-    if (seg.type == PointType::Pulse) return (int)(std::max(std::floor(std::pow(seg.tension,(float)2) * 100), 1.0f));
-    if (seg.type == PointType::Wave) return (int)(std::floor(std::fabs(std::pow(seg.tension, (float)2) * 100) + 1) - 1);
-    if (seg.type == PointType::Triangle) return (int)(std::floor(std::fabs(std::pow(seg.tension, (float)2) * 100) + 1) - 1.0f);
-    if (seg.type == PointType::Stairs) return (int)(std::max(std::floor(std::pow(seg.tension, (float)2) * 150), 2.f));
-    if (seg.type == PointType::SmoothSt) return (int)(std::max(std::floor(std::pow(seg.tension, (float)2) * 150), 1.0f));
+    switch (seg.type)
+    {
+        case Pulse: return (int)(std::max(std::floor(std::pow(seg.tension,(float)2) * 100), 1.0f));
+        case Wave: return (int)(std::floor(std::fabs(std::pow(seg.tension, (float)2) * 100) + 1) - 1);
+        case Triangle: return (int)(std::floor(std::fabs(std::pow(seg.tension, (float)2) * 100) + 1) - 1.0f);
+        case Stairs: return (int)(std::max(std::floor(std::pow(seg.tension, (float)2) * 150), 2.f));
+        case SmoothSt: return (int)(std::max(std::floor(std::pow(seg.tension, (float)2) * 150), 1.0f));
+    }
     return 0;
 }
 
@@ -283,7 +315,7 @@ float Pattern::get_y_scurve(Segment seg, float x)
   auto ten = seg.tension + (rise ? -tmult : tmult);
   if (ten > 1) ten = 1;
   if (ten < -1) ten = -1;
-  auto pwr = pow(1.1f, std::fabs(ten * POWER_CURVE_POWER));
+  auto pwr = pow(1.1f, std::fabs(ten * globals::POWER_CURVE_POWER));
 
   float xx = (seg.x2 + seg.x1) / 2;
   float yy = (seg.y2 + seg.y1) / 2;
@@ -407,15 +439,18 @@ float Pattern::get_y_at(float x)
         } else if (x > seg.x2) {
             low = mid + 1;
         } else {
-            if (seg.type == PointType::Hold) return seg.y1; // hold
-            if (seg.type == PointType::Curve) return get_y_curve(seg, x);
-            if (seg.type == PointType::SinCurve) return get_y_sincurve(seg, x);
-            if (seg.type == PointType::SCurve) return get_y_scurve(seg, x);
-            if (seg.type == PointType::Pulse) return get_y_pulse(seg, x);
-            if (seg.type == PointType::Wave) return get_y_wave(seg, x);
-            if (seg.type == PointType::Triangle) return get_y_triangle(seg, x);
-            if (seg.type == PointType::Stairs) return get_y_stairs(seg, x);
-            if (seg.type == PointType::SmoothSt) return get_y_smooth_stairs(seg, x);
+            switch (seg.type)
+            {
+                case Hold: return seg.y1; // hold
+                case Curve: return get_y_curve(seg, x);
+                case SinCurve: return get_y_sincurve(seg, x);
+                case SCurve: return get_y_scurve(seg, x);
+                case Pulse: return get_y_pulse(seg, x);
+                case Wave: return get_y_wave(seg, x);
+                case Triangle: return get_y_triangle(seg, x);
+                case Stairs: return get_y_stairs(seg, x);
+                case SmoothSt: return get_y_smooth_stairs(seg, x);
+            }
             return -1;
         }
     }

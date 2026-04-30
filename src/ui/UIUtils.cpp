@@ -1,5 +1,61 @@
 #include "UIUtils.h"
 
+int UIUtils::wheelStep(const juce::MouseWheelDetails& wheel, float& accum)
+{
+    auto deltaY = wheel.isReversed ? -wheel.deltaY : wheel.deltaY;
+    if (deltaY == 0.f) return 0;
+
+    if (!wheel.isSmooth) {
+        // stepped device (mouse wheel): one notch = one step
+        accum = 0.f;
+        return deltaY > 0.f ? 1 : -1;
+    }
+
+    // smooth device (trackpad): accumulate and emit a step per WHEEL_STEP crossed
+    accum += deltaY;
+    int steps = 0;
+    while (accum >= WHEEL_STEP)  { accum -= WHEEL_STEP; ++steps; }
+    while (accum <= -WHEEL_STEP) { accum += WHEEL_STEP; --steps; }
+    return steps;
+}
+
+float UIUtils::wheelChange(const juce::MouseWheelDetails& wheel,
+                            juce::RangedAudioParameter* param,
+                            float& accum,
+                            float speed)
+{
+    auto deltaY = wheel.isReversed ? -wheel.deltaY : wheel.deltaY;
+    if (deltaY == 0.f) return 0.f;
+
+    // determine how granular this param is in normalized 0..1 space
+    float normInterval = 0.f;
+    if (param != nullptr) {
+        auto range = param->getNormalisableRange();
+        if (range.interval > 0.f && range.end > range.start)
+            normInterval = range.interval / (range.end - range.start);
+    }
+
+    // continuous (or essentially continuous) param: proportional scaling
+    // 0.01 corresponds to 100 distinct values - finer than that feels continuous
+    if (normInterval < 0.01f) {
+        accum = 0.f;
+        return deltaY * speed;
+    }
+
+    // stepped param + stepped wheel: one notch = one interval
+    if (!wheel.isSmooth) {
+        accum = 0.f;
+        return deltaY > 0.f ? normInterval : -normInterval;
+    }
+
+    // stepped param + smooth device: accumulate, emit one interval per WHEEL_STEP
+    accum += deltaY;
+    int steps = 0;
+    while (accum >= WHEEL_STEP)  { accum -= WHEEL_STEP; ++steps; }
+    while (accum <= -WHEEL_STEP) { accum += WHEEL_STEP; --steps; }
+    return (float)steps * normInterval;
+}
+
 void UIUtils::drawBevel(Graphics& g, Rectangle<float> bounds, float corner, Colour bg)
 {
     bounds = bounds.translated(0.5f, 0.5f);

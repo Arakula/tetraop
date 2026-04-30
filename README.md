@@ -32,7 +32,7 @@ TetraOP is not a do-it-all synthesizer or the ultimate synth or attempts to be s
 git clone --recurse-submodules https://github.com/tiagolr/tetraop.git
 
 # windows
-cmake -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=Release -S . -B ./build
+cmake -G "Visual Studio 18 2026" -DCMAKE_BUILD_TYPE=Release -S . -B ./build
 cmake --build build
 
 # linux

@@ -554,6 +554,24 @@ void Rotary::drawLabel(juce::Graphics& g, float slider_val)
             auto idx = ntables * slider_val;
             text = String(idx, 2);
         }
+        else if (format == Format::secondsMillis) {
+            std::stringstream ss;
+            if (slider_val < 1.f)
+                ss << std::fixed << std::setprecision(0) << slider_val * 1000.f << " ms";
+            else
+                ss << std::fixed << std::setprecision(2) << slider_val << " s";
+            text = ss.str();
+        }
+        else if (format == Format::secondsSubMillis) {
+            std::stringstream ss;
+            if (slider_val < 0.01)
+                ss << std::fixed << std::setprecision(1) << slider_val * 1000.f << " ms";
+            else if (slider_val < 1)
+                ss << std::fixed << std::setprecision(0) << slider_val * 1000.f << " ms";
+            else
+                ss << std::fixed << std::setprecision(2) << slider_val << " s";
+            text = ss.str();
+        }
     }
 
     g.setColour(Colour(COLOR_KNOB_LABEL()));

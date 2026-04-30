@@ -45,6 +45,10 @@ namespace globals {
     constexpr float KNOB_VALUE_THICKNESS = 3.f;
     constexpr float KNOB_SHADOW_ALPHA = .25f;
 	constexpr float KNOB_LABEL_YOFFSET = -3.f;
+	constexpr int MSEL_PADDING = 4;
+	constexpr float LFO_POINT_RADIUS = 2.5f;
+	constexpr float LFO_MPOINT_RADIUS = 2.f;
+	constexpr float LFO_POINT_HOVER = 6.f;
 
 	// theme colors
 	inline bool themeLoaded = false;
@@ -66,6 +70,11 @@ namespace globals {
 	inline Colour COLOR_B() { return colors["COLOR_B"]; };
 	inline Colour COLOR_C() { return colors["COLOR_C"]; };
 	inline Colour COLOR_D() { return colors["COLOR_D"]; };
+	inline Colour COLOR_ENVELOPE() { return colors.at("COLOR_ENVELOPE"); }
+	inline Colour COLOR_LFO() { return colors.at("COLOR_LFO"); }
+	inline Colour COLOR_RND() { return colors.at("COLOR_RND"); }
+	inline Colour COLOR_OTHER_MOD() { return colors.at("COLOR_OTHER_MOD"); }
+	inline Colour COLOR_MACRO() { return colors.at("COLOR_MACRO"); }
 
 	inline void loadDefaultTheme() {
 		themeLoaded = true;
@@ -86,5 +95,11 @@ namespace globals {
 		colors["COLOR_B"] = Colour(0xff008CFF);
 		colors["COLOR_C"] = Colour(0xffFFC300);
 		colors["COLOR_D"] = Colour(0xffF34713);
+
+		colors["COLOR_ENVELOPE"] = juce::Colour(0xffB43A1F);
+		colors["COLOR_LFO"] = juce::Colour(0xff0DBA8C);
+		colors["COLOR_RND"] = juce::Colour(0xffff34a6);
+		colors["COLOR_OTHER_MOD"] = juce::Colour(0xffffd234);
+		colors["COLOR_MACRO"] = juce::Colour(0xffc7ff34);
 	}
 };

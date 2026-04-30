@@ -1,0 +1,402 @@
+#include "Modulator.h"
+#include "../../PluginEditor.h"
+
+Modulator::Modulator(TetraOPAudioProcessorEditor& e, juce::String modId, bool isDark)
+    : modId(modId)
+    , editor(e)
+    , isDark(isDark)
+{
+    startTimerHz(30);
+    isenv = modId.startsWith("env");
+    islfo = modId.startsWith("lfo");
+    ismacro = modId.startsWith("macro");
+    isrnd = modId.startsWith("rnd");
+    modidx = modId.retainCharacters("0123456789").getIntValue() - 1;
+
+    if (isenv) {
+        editor.audioProcessor.params.addParameterListener(modId + "_del", this);
+        editor.audioProcessor.params.addParameterListener(modId + "_att", this);
+        editor.audioProcessor.params.addParameterListener(modId + "_hld", this);
+        editor.audioProcessor.params.addParameterListener(modId + "_dec", this);
+        editor.audioProcessor.params.addParameterListener(modId + "_sus", this);
+        editor.audioProcessor.params.addParameterListener(modId + "_rel", this);
+        editor.audioProcessor.params.addParameterListener(modId + "_tenatt", this);
+        editor.audioProcessor.params.addParameterListener(modId + "_tendec", this);
+        editor.audioProcessor.params.addParameterListener(modId + "_tenrel", this);
+    }
+}
+
+Modulator::~Modulator()
+{
+    if (isenv) {
+        editor.audioProcessor.params.removeParameterListener(modId + "_del", this);
+        editor.audioProcessor.params.removeParameterListener(modId + "_att", this);
+        editor.audioProcessor.params.removeParameterListener(modId + "_hld", this);
+        editor.audioProcessor.params.removeParameterListener(modId + "_dec", this);
+        editor.audioProcessor.params.removeParameterListener(modId + "_sus", this);
+        editor.audioProcessor.params.removeParameterListener(modId + "_rel", this);
+        editor.audioProcessor.params.removeParameterListener(modId + "_tenatt", this);
+        editor.audioProcessor.params.removeParameterListener(modId + "_tendec", this);
+        editor.audioProcessor.params.removeParameterListener(modId + "_tenrel", this);
+    }
+}
+
+/*
+* Modulators use polling to update state and repaint
+* not the best solution but keeps the code self contained
+*/
+void Modulator::timerCallback()
+{
+    if (!isVisible()) return;
+    auto selectedModId = juce::String(editor.audioProcessor.modulation->selectedMod);
+    Modulation::Modulator mod = editor.audioProcessor.modulation->modulators[modId];
+
+    bool env1Active = modId == "env1" && editor.audioProcessor.l1_on;
+    bool env2Active = modId == "env2" && editor.audioProcessor.l2_on;
+
+    if (mod.active && (mod.connections || env1Active || env2Active)) {
+        valbuf_clear = false;
+        valbuf[valbuf_idx] = mod.value;
+        valbuf_idx = (valbuf_idx + 1) % valbuf.size();
+        isActive = true;
+        activeCountdown = 30; // 30 hz
+        repaint();
+    }
+    // keep display active for one second
+    else if (isActive) {
+        activeCountdown--;
+        if (activeCountdown == 0 || islfo) {
+            isActive = false;
+        }
+        valbuf[valbuf_idx] = 0.0f;
+        valbuf_idx = (valbuf_idx + 1) % (int)valbuf.size();
+        repaint();
+    }
+    else if (valbuf_clear == false) {
+        std::fill(valbuf.begin(), valbuf.end(), 0.f);
+        valbuf_clear = true;
+        repaint();
+    }
+
+    if (islfo) {
+        auto& lfo = editor.audioProcessor.modulation->lfos[modidx];
+        if (version != lfo.pattern.versionID) {
+            version = lfo.pattern.versionID;
+            repaint();
+        }
+    }
+
+    if (selected && selectedModId != modId) {
+        selected = false;
+        repaint();
+    }
+    else if (!selected && selectedModId == modId) {
+        selected = true;
+        repaint();
+    }
+
+    if (connections != mod.connections) {
+        connections = mod.connections;
+        repaint();
+    }
+}
+
+void Modulator::parameterChanged(const juce::String& parameterID, float newValue)
+{
+    (void)parameterID;
+    (void)newValue;
+    juce::MessageManager::callAsync([this]() { repaint(); });
+}
+
+void Modulator::mouseDown(const juce::MouseEvent& e)
+{
+    if (e.mods.isRightButtonDown()) {
+        editor.showModContextMenu(this);
+    }
+}
+
+void Modulator::mouseUp(const juce::MouseEvent& e)
+{
+    if (e.mods.isRightButtonDown()) return;
+    setMouseCursor(juce::MouseCursor::NormalCursor);
+    if (editor.audioProcessor.modulation->selectedMod != modId) {
+        editor.audioProcessor.modulation->setSelectedMod(modId);
+    }
+}
+
+void Modulator::mouseDrag(const juce::MouseEvent& e)
+{
+    if (!editor.isDragDropModulation && !getLocalBounds().contains(e.getPosition())) {
+        editor.startDragDrop(modId, this);
+        setMouseCursor(juce::MouseCursor::CrosshairCursor);
+    }
+}
+
+juce::Point<float> Modulator::getDragSource()
+{
+    // drawHandle is a 14x14 shape; its centre sits at +(7, 7) from the
+    // bounds passed into UIUtils::drawHandle in paint().
+    constexpr float c = 7.f;
+    if (ismodwheel)
+        return { 8.f + c, 4.f + c };
+    return { 3.f + c, 3.f + c };
+}
+
+void Modulator::paint(juce::Graphics& g)
+{
+    if (!isVisible()) return;
+    auto bounds = getLocalBounds().toFloat().reduced(0.5f);
+
+    // draw bg
+    if (!isDark) {
+        g.setColour(theme.COLOR_PANEL());
+        g.fillRoundedRectangle(bounds, 2.f);
+        juce::Path p;
+        p.addRoundedRectangle(bounds.getX(), bounds.getY(), lpad, bounds.getHeight(), 2.f, 2.f, true, false, true, false);
+        g.setColour(theme.COLOR_SHADE_MID());
+        g.fillPath(p);
+    }
+
+    if (selected && theme.IS_LIGHT_THEME && !isDark) {
+        g.setColour(isDark || ismodwheel ? theme.COLOR_ACTIVE().withAlpha(0.05f) : theme.COLOR_ACTIVE().withAlpha(0.5f));
+        g.fillRoundedRectangle(bounds, 2.f);
+    }
+
+    // draw outline
+    if (!ismodwheel) {
+        g.setColour(juce::Colour(isDark ? theme.COLOR_PANEL_CONTRAST() : theme.COLOR_SHADE_HIGH()).withAlpha(0.5f));
+        g.drawVerticalLine((int)(bounds.getX() + lpad), bounds.getY(), bounds.getBottom());
+        g.setColour(juce::Colour(selected
+            ? theme.COLOR_ACTIVE().withMultipliedBrightness(theme.IS_LIGHT_THEME && !isDark ? 0.5f : 1.f)
+            : isDark ? theme.COLOR_PANEL_CONTRAST() : theme.COLOR_SHADE_HIGH()));
+        g.drawRoundedRectangle(bounds, 2.f, 1.f);
+    }
+
+    if (ismodwheel) {
+        if (selected) {
+            g.setColour(theme.COLOR_ACTIVE());
+            g.drawRoundedRectangle(bounds.reduced(1.f), 4.f, 1.f);
+        }
+
+        UIUtils::drawHandle(g, bounds
+            .withHeight(bounds.getHeight() / 3.f)
+            .translated(8.f, 4.f), juce::Colour(theme.COLOR_TEXT_DIM_CONTRAST()));
+
+        g.setFont(juce::FontOptions(14.f));
+        g.setColour(juce::Colour(theme.COLOR_TEXT_DIM_CONTRAST()));
+        g.drawFittedText(juce::String(connections), bounds
+            .withHeight(bounds.getHeight() / 2.f)
+            .withTrimmedLeft(17.f)
+            .withRight(bounds.getRight())
+            .toNearestInt(),
+            juce::Justification::centred, 1);
+    }
+    else {
+        UIUtils::drawHandle(g, bounds
+            .withTrimmedRight(bounds.getWidth() - lpad)
+            .withHeight(bounds.getHeight() / 2.f)
+            .translated(3.f, 3.f), juce::Colour(isDark ? theme.COLOR_TEXT_BRIGHT_CONTRAST() : theme.COLOR_TEXT_BRIGHT()));
+
+        g.setFont(juce::FontOptions(10.f));
+        g.setColour(juce::Colour(isDark ? theme.COLOR_TEXT_DIM_CONTRAST() : theme.COLOR_TEXT_DIM()));
+        g.drawFittedText(juce::String(connections), bounds
+            .withTrimmedRight(bounds.getWidth() - lpad)
+            .withTrimmedTop(bounds.getHeight() / 2.f).toNearestInt(),
+            juce::Justification::centred, 1);
+
+        g.setFont(juce::FontOptions(12.f));
+        g.setColour(juce::Colour(isDark ? theme.COLOR_TEXT_DIM_CONTRAST() : theme.COLOR_TEXT_BRIGHT()).withAlpha(theme.IS_LIGHT_THEME ? .6f : 0.3f));
+        g.drawFittedText(modId.toUpperCase(), bounds
+            .withTrimmedLeft(lpad)
+            .withTrimmedBottom(bounds.getHeight() / 2.f).toNearestInt()
+            , juce::Justification::centred, 1);
+
+    }
+    auto drawBounds = bounds
+        .withTrimmedTop(bounds.getHeight() / 2)
+        .withTrimmedLeft(lpad)
+        .reduced(1.f);
+
+    if (ismodwheel) {
+        drawBounds = bounds
+            .withTrimmedTop(bounds.getHeight() / 2)
+            .reduced(1.f);
+    }
+
+    auto& mod = editor.audioProcessor.modulation->modulators[modId];
+    bool env1Active = modId == "env1" && editor.audioProcessor.l1_on;
+    bool env2Active = modId == "env2" && editor.audioProcessor.l2_on;
+
+    if (isActive || (mod.active && (mod.connections || env1Active || env2Active))) {
+        drawValueBuffer(g, drawBounds);
+    }
+    else if (isenv) {
+        drawEnvelope(g, drawBounds);
+    }
+    else if (islfo) {
+        drawLFO(g, drawBounds);
+    }
+    else if (isrnd) {
+        UIUtils::drawRandGen(g, drawBounds.translated(5.f, 1.f), theme.COLOR_TEXT_DIM().withAlpha(theme.IS_LIGHT_THEME ? 0.6f : 0.3f));
+    }
+    else {
+        if (modId == "mod") {
+            UIUtils::drawModwheel(g, drawBounds.translated(12.5f, 4.5f), theme.COLOR_TEXT_DIM_CONTRAST().withAlpha(0.3f));
+        }
+        else if (modId == "vel") {
+            UIUtils::drawVel(g, drawBounds.translated(13.f, 0.f), theme.COLOR_TEXT_BRIGHT().withAlpha(theme.IS_LIGHT_THEME ? 0.6f : 0.3f));
+        }
+        else if (modId == "key") {
+            UIUtils::drawKeys(g, drawBounds.translated(13.5f, 0.5f), theme.COLOR_TEXT_BRIGHT().withAlpha(theme.IS_LIGHT_THEME ? 0.6f : 0.3f));
+        }
+        else if (modId == "at") {
+            UIUtils::drawHand(g, drawBounds.translated(13.f, 0.f), theme.COLOR_TEXT_BRIGHT().withAlpha(theme.IS_LIGHT_THEME ? 0.6f : 0.3f));
+        }
+        else if (modId == "rand") {
+            UIUtils::drawRand(g, drawBounds.translated(7.5f, 1.5f), theme.COLOR_TEXT_BRIGHT().withAlpha(theme.IS_LIGHT_THEME ? 0.6f : 0.3f));
+        }
+        else if (modId == "x") {
+            UIUtils::drawXMod(g, drawBounds.translated(10.f, 3.f), theme.COLOR_TEXT_BRIGHT().withAlpha(theme.IS_LIGHT_THEME ? 0.6f : 0.3f));
+        }
+        else if (modId == "y") {
+            UIUtils::drawYMod(g, drawBounds.translated(15.f, 0.f), theme.COLOR_TEXT_BRIGHT().withAlpha(theme.IS_LIGHT_THEME ? 0.6f : 0.3f));
+        }
+        else if (modId == "z") {
+            UIUtils::drawZMod(g, drawBounds.translated(7.f, 3.f), theme.COLOR_TEXT_BRIGHT().withAlpha(theme.IS_LIGHT_THEME ? 0.6f : 0.3f));
+        }
+        else if (modId == "lift") {
+            UIUtils::drawLift(g, drawBounds.translated(14.f, 0.f), theme.COLOR_TEXT_BRIGHT().withAlpha(theme.IS_LIGHT_THEME ? 0.6f : 0.3f));
+        }
+    }
+}
+
+void Modulator::drawValueBuffer(juce::Graphics& g, juce::Rectangle<float>& bounds)
+{
+    juce::Path p;
+    auto pixelCount = (int)bounds.getWidth();
+    auto bufSize = (int)valbuf.size();
+    bool pathOpen = false;
+    for (int x = 0; x < pixelCount; ++x)
+    {
+        float t = (float)x / (pixelCount - 1);
+        float pos = t * (bufSize - 1);
+        int i0 = (int)pos;
+        int i1 = (i0 + 1 < bufSize) ? i0 + 1 : i0;
+        float frac = pos - i0;
+
+        int index0 = (valbuf_idx + i0) % bufSize;
+        int index1 = (valbuf_idx + i1) % bufSize;
+
+        float v0 = valbuf[index0];
+        float v1 = valbuf[index1];
+
+        // If either side is zero, break the path - don't interpolate through zeros
+        if ((isenv && v0 == 0.f && v1 == 0.f) ||
+            (!isenv && (v0 == 0.0f || v1 == 0.0f)))
+        {
+            pathOpen = false;
+            continue;
+        }
+
+        float value = v0 * (1.0f - frac) + v1 * frac;
+
+        float px = bounds.getX() + x;
+        float py = bounds.getY() + (1.0f - value) * bounds.getHeight();
+
+        if (!pathOpen) {
+            p.startNewSubPath(px, py);
+            pathOpen = true;
+        }
+        else {
+            p.lineTo(px, py);
+        }
+    }
+    juce::Colour c = juce::Colour(isenv
+        ? theme.COLOR_ENVELOPE()
+        : islfo ? theme.COLOR_LFO()
+        : ismacro ? theme.COLOR_MACRO()
+        : isrnd ? theme.COLOR_RND()
+        : theme.COLOR_OTHER_MOD()
+    );
+    g.setColour(c);
+    g.strokePath(p, juce::PathStrokeType(1.f));
+}
+
+void Modulator::drawEnvelope(juce::Graphics& g, juce::Rectangle<float>& bounds)
+{
+    auto mode = (Envelope::Mode)editor.audioProcessor.params.getRawParameterValue(modId + "_mode")->load();
+    auto del = editor.audioProcessor.params.getRawParameterValue(modId + "_del")->load();
+    auto att = std::max(0.0001f, editor.audioProcessor.params.getRawParameterValue(modId + "_att")->load());
+    auto hld = editor.audioProcessor.params.getRawParameterValue(modId + "_hld")->load();
+    auto dec = std::max(0.0001f, editor.audioProcessor.params.getRawParameterValue(modId + "_dec")->load());
+    auto sus = editor.audioProcessor.params.getRawParameterValue(modId + "_sus")->load();
+    auto rel = editor.audioProcessor.params.getRawParameterValue(modId + "_rel")->load();
+    auto tatt = editor.audioProcessor.params.getRawParameterValue(modId + "_tenatt")->load();
+    auto tdec = editor.audioProcessor.params.getRawParameterValue(modId + "_tendec")->load();
+    auto trel = editor.audioProcessor.params.getRawParameterValue(modId + "_tenrel")->load();
+
+    if (mode == Envelope::ADSR) {
+        del = 0.f;
+        hld = 0.f;
+    }
+    else if (mode == Envelope::AHD) {
+        del = 0.f;
+        sus = 0.f;
+        rel = 0.0001f;
+    }
+    else if (mode == Envelope::DADSR) {
+        hld = 0.f;
+    }
+
+    auto total = del + att + hld + dec + rel;
+
+    Pattern p{-1};
+
+    p.insertPoint(0.f, 0.f, tatt, 1);
+    p.insertPoint(del / total, 0.f, tatt, 1);
+    p.insertPoint((del + att) / total, 1.f, tdec, 1);
+    p.insertPoint((del + att + hld) / total, 1.f, tdec, 1);
+    p.insertPoint((del + att + hld + dec) / total, sus, trel, 1);
+    p.insertPoint(1.f, 0.f, 0.f, 1);
+    p.buildSegments();
+
+
+    juce::Path path;
+    auto pixels = bounds.getWidth();
+    for (int x = 0; x < pixels; ++x) {
+        float t = (float)x / (pixels - 1);
+        auto px = bounds.getX() + x;
+        auto py = bounds.getY() + bounds.getHeight() * (1- p.get_y_at(t));
+        if (x == 0)
+            path.startNewSubPath(px, py);
+        else
+            path.lineTo(px, py);
+    }
+
+    g.setColour(juce::Colour(theme.COLOR_ENVELOPE()));
+    g.strokePath(path, juce::PathStrokeType(1.f));
+}
+
+void Modulator::drawLFO(juce::Graphics& g, juce::Rectangle<float>& bounds)
+{
+    auto& lfo = editor.audioProcessor.modulation->lfos[modidx];
+
+    juce::Path path;
+    auto pixels = bounds.getWidth();
+    for (int x = 0; x < pixels; ++x) {
+        float t = (float)x / (pixels - 1);
+        auto px = bounds.getX() + x;
+        auto py = bounds.getY() + bounds.getHeight() * (1 - lfo.pattern.get_y_at(t));
+        if (x == 0)
+            path.startNewSubPath(px, py);
+        else
+            path.lineTo(px, py);
+    }
+
+    g.setColour(juce::Colour(theme.COLOR_LFO()));
+    g.strokePath(path, juce::PathStrokeType(1.f));
+}
+
+void Modulator::resized()
+{
+}
