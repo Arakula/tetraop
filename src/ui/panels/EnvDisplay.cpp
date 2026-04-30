@@ -356,7 +356,7 @@ void EnvDisplay::paint(juce::Graphics& g)
         }
 
         if (!points.empty() && xEnd != pixels - 1) {
-            juce::Colour c = theme.COLOR_ENVELOPE().brighter(1.0f);
+            juce::Colour c = COLOR_ENVELOPE().brighter(1.0f);
             for (int i = 0; i < int (points.size()) - 1; ++i)
             {
                 g.setColour(c.withAlpha((i + 1) / (float)points.size()));
@@ -379,26 +379,10 @@ void EnvDisplay::paint(juce::Graphics& g)
         envStages[i] = { (int)bounds.getX() + xStart, (int)bounds.getY(), xEnd - xStart, (int)bounds.getHeight()};
     }
 
-
-    // draw rect around envelope knobs
-    juce::Path knobs_rect;
-    auto knobs = mode == 0 ? attack->getBounds().withRight(release->getBounds().getRight())
-        : mode == 1 ? attack->getBounds().withRight(decay->getBounds().getRight())
-        : delay->getBounds().withRight(release->getBounds().getRight());
-
-    knobs_rect.addRoundedRectangle((float)knobs.getX(),
-        (float)knobs.getY(),
-        (float)knobs.getWidth(),
-        (float)knobs.getHeight(),
-        12.f, 12.f, false, false, true, true
-    );
-    g.setColour(theme.COLOR_SHADE_MID());
-    g.fillPath(knobs_rect);
-
     // draw mode btn
     auto text = mode == 0 ? "ADSR" : mode == 1 ? "AHD" : mode == 2 ? "DADSR" : "DAHDSR";
     g.setFont(juce::FontOptions(12.f));
-    g.setColour(theme.COLOR_VIEWPORT_TEXT_DIM());
+    g.setColour(Colours::white.withAlpha(0.1f));
     g.drawText(text, modeBtn.getBounds(), juce::Justification::centredRight);
     //UIUtils::drawTriangle(g, modeBtn.getBounds().withWidth(15).withX(modeBtn.getRight() - 15)
     //    .toFloat().reduced(4.f), 2, COLOR_VIEWPORT_TEXT_DIM());

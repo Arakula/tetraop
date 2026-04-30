@@ -51,10 +51,9 @@ void Modulator::timerCallback()
     auto selectedModId = juce::String(editor.audioProcessor.modulation->selectedMod);
     Modulation::Modulator mod = editor.audioProcessor.modulation->modulators[modId];
 
-    bool env1Active = modId == "env1" && editor.audioProcessor.l1_on;
-    bool env2Active = modId == "env2" && editor.audioProcessor.l2_on;
+    bool env1Active = modId == "env1";
 
-    if (mod.active && (mod.connections || env1Active || env2Active)) {
+    if (mod.active && (mod.connections || env1Active)) {
         valbuf_clear = false;
         valbuf[valbuf_idx] = mod.value;
         valbuf_idx = (valbuf_idx + 1) % valbuf.size();
@@ -111,7 +110,7 @@ void Modulator::parameterChanged(const juce::String& parameterID, float newValue
 void Modulator::mouseDown(const juce::MouseEvent& e)
 {
     if (e.mods.isRightButtonDown()) {
-        editor.showModContextMenu(this);
+        //editor.showModContextMenu(this);
     }
 }
 
@@ -149,69 +148,43 @@ void Modulator::paint(juce::Graphics& g)
 
     // draw bg
     if (!isDark) {
-        g.setColour(theme.COLOR_PANEL());
+        g.setColour(COLOR_PANEL());
         g.fillRoundedRectangle(bounds, 2.f);
         juce::Path p;
         p.addRoundedRectangle(bounds.getX(), bounds.getY(), lpad, bounds.getHeight(), 2.f, 2.f, true, false, true, false);
-        g.setColour(theme.COLOR_SHADE_MID());
+        g.setColour(juce::Colours::transparentBlack.withAlpha(0.5f));
         g.fillPath(p);
     }
 
-    if (selected && theme.IS_LIGHT_THEME && !isDark) {
-        g.setColour(isDark || ismodwheel ? theme.COLOR_ACTIVE().withAlpha(0.05f) : theme.COLOR_ACTIVE().withAlpha(0.5f));
-        g.fillRoundedRectangle(bounds, 2.f);
-    }
-
     // draw outline
-    if (!ismodwheel) {
-        g.setColour(juce::Colour(isDark ? theme.COLOR_PANEL_CONTRAST() : theme.COLOR_SHADE_HIGH()).withAlpha(0.5f));
-        g.drawVerticalLine((int)(bounds.getX() + lpad), bounds.getY(), bounds.getBottom());
-        g.setColour(juce::Colour(selected
-            ? theme.COLOR_ACTIVE().withMultipliedBrightness(theme.IS_LIGHT_THEME && !isDark ? 0.5f : 1.f)
-            : isDark ? theme.COLOR_PANEL_CONTRAST() : theme.COLOR_SHADE_HIGH()));
-        g.drawRoundedRectangle(bounds, 2.f, 1.f);
-    }
+    g.setColour(juce::Colours::transparentWhite.withAlpha(0.25f));
+    g.drawVerticalLine((int)(bounds.getX() + lpad), bounds.getY(), bounds.getBottom());
+    g.setColour(juce::Colour(selected
+        ? COLOR_ACTIVE().withMultipliedBrightness(!isDark ? 0.5f : 1.f)
+        : juce::Colours::transparentWhite.withAlpha(0.25f)));
+    g.drawRoundedRectangle(bounds, 2.f, 1.f);
 
-    if (ismodwheel) {
-        if (selected) {
-            g.setColour(theme.COLOR_ACTIVE());
-            g.drawRoundedRectangle(bounds.reduced(1.f), 4.f, 1.f);
-        }
+    // draw handle
+    UIUtils::drawHandle(g, bounds
+        .withTrimmedRight(bounds.getWidth() - lpad)
+        .withHeight(bounds.getHeight() / 2.f)
+        .translated(3.f, 3.f), juce::Colours::white);
 
-        UIUtils::drawHandle(g, bounds
-            .withHeight(bounds.getHeight() / 3.f)
-            .translated(8.f, 4.f), juce::Colour(theme.COLOR_TEXT_DIM_CONTRAST()));
+    g.setFont(juce::FontOptions(10.f));
+    g.setColour(juce::Colours::transparentWhite.withAlpha(0.5f));
+    g.drawFittedText(juce::String(connections), bounds
+        .withTrimmedRight(bounds.getWidth() - lpad)
+        .withTrimmedTop(bounds.getHeight() / 2.f).toNearestInt(),
+        juce::Justification::centred, 1);
 
-        g.setFont(juce::FontOptions(14.f));
-        g.setColour(juce::Colour(theme.COLOR_TEXT_DIM_CONTRAST()));
-        g.drawFittedText(juce::String(connections), bounds
-            .withHeight(bounds.getHeight() / 2.f)
-            .withTrimmedLeft(17.f)
-            .withRight(bounds.getRight())
-            .toNearestInt(),
-            juce::Justification::centred, 1);
-    }
-    else {
-        UIUtils::drawHandle(g, bounds
-            .withTrimmedRight(bounds.getWidth() - lpad)
-            .withHeight(bounds.getHeight() / 2.f)
-            .translated(3.f, 3.f), juce::Colour(isDark ? theme.COLOR_TEXT_BRIGHT_CONTRAST() : theme.COLOR_TEXT_BRIGHT()));
+    g.setFont(juce::FontOptions(12.f));
+    g.setColour(juce::Colours::transparentWhite.withAlpha(0.5f));
+    g.drawFittedText(modId.toUpperCase(), bounds
+        .withTrimmedLeft(lpad)
+        .withTrimmedBottom(bounds.getHeight() / 2.f).toNearestInt()
+        , juce::Justification::centred, 1);
+    //
 
-        g.setFont(juce::FontOptions(10.f));
-        g.setColour(juce::Colour(isDark ? theme.COLOR_TEXT_DIM_CONTRAST() : theme.COLOR_TEXT_DIM()));
-        g.drawFittedText(juce::String(connections), bounds
-            .withTrimmedRight(bounds.getWidth() - lpad)
-            .withTrimmedTop(bounds.getHeight() / 2.f).toNearestInt(),
-            juce::Justification::centred, 1);
-
-        g.setFont(juce::FontOptions(12.f));
-        g.setColour(juce::Colour(isDark ? theme.COLOR_TEXT_DIM_CONTRAST() : theme.COLOR_TEXT_BRIGHT()).withAlpha(theme.IS_LIGHT_THEME ? .6f : 0.3f));
-        g.drawFittedText(modId.toUpperCase(), bounds
-            .withTrimmedLeft(lpad)
-            .withTrimmedBottom(bounds.getHeight() / 2.f).toNearestInt()
-            , juce::Justification::centred, 1);
-
-    }
     auto drawBounds = bounds
         .withTrimmedTop(bounds.getHeight() / 2)
         .withTrimmedLeft(lpad)
@@ -224,10 +197,9 @@ void Modulator::paint(juce::Graphics& g)
     }
 
     auto& mod = editor.audioProcessor.modulation->modulators[modId];
-    bool env1Active = modId == "env1" && editor.audioProcessor.l1_on;
-    bool env2Active = modId == "env2" && editor.audioProcessor.l2_on;
+    bool env1Active = modId == "env1";
 
-    if (isActive || (mod.active && (mod.connections || env1Active || env2Active))) {
+    if (isActive || (mod.active && (mod.connections || env1Active))) {
         drawValueBuffer(g, drawBounds);
     }
     else if (isenv) {
@@ -237,35 +209,35 @@ void Modulator::paint(juce::Graphics& g)
         drawLFO(g, drawBounds);
     }
     else if (isrnd) {
-        UIUtils::drawRandGen(g, drawBounds.translated(5.f, 1.f), theme.COLOR_TEXT_DIM().withAlpha(theme.IS_LIGHT_THEME ? 0.6f : 0.3f));
+        UIUtils::drawRandGen(g, drawBounds.translated(5.f, 1.f), juce::Colour(0xff333333));
     }
     else {
         if (modId == "mod") {
-            UIUtils::drawModwheel(g, drawBounds.translated(12.5f, 4.5f), theme.COLOR_TEXT_DIM_CONTRAST().withAlpha(0.3f));
+            UIUtils::drawModwheel(g, drawBounds.translated(12.5f, 4.5f), juce::Colour(0xff333333));
         }
         else if (modId == "vel") {
-            UIUtils::drawVel(g, drawBounds.translated(13.f, 0.f), theme.COLOR_TEXT_BRIGHT().withAlpha(theme.IS_LIGHT_THEME ? 0.6f : 0.3f));
+            UIUtils::drawVel(g, drawBounds.translated(13.f, 0.f), juce::Colour(0xff333333));
         }
         else if (modId == "key") {
-            UIUtils::drawKeys(g, drawBounds.translated(13.5f, 0.5f), theme.COLOR_TEXT_BRIGHT().withAlpha(theme.IS_LIGHT_THEME ? 0.6f : 0.3f));
+            UIUtils::drawKeys(g, drawBounds.translated(13.5f, 0.5f), juce::Colour(0xff333333));
         }
         else if (modId == "at") {
-            UIUtils::drawHand(g, drawBounds.translated(13.f, 0.f), theme.COLOR_TEXT_BRIGHT().withAlpha(theme.IS_LIGHT_THEME ? 0.6f : 0.3f));
+            UIUtils::drawHand(g, drawBounds.translated(13.f, 0.f), juce::Colour(0xff333333));
         }
         else if (modId == "rand") {
-            UIUtils::drawRand(g, drawBounds.translated(7.5f, 1.5f), theme.COLOR_TEXT_BRIGHT().withAlpha(theme.IS_LIGHT_THEME ? 0.6f : 0.3f));
+            UIUtils::drawRand(g, drawBounds.translated(7.5f, 1.5f), juce::Colour(0xff333333));
         }
         else if (modId == "x") {
-            UIUtils::drawXMod(g, drawBounds.translated(10.f, 3.f), theme.COLOR_TEXT_BRIGHT().withAlpha(theme.IS_LIGHT_THEME ? 0.6f : 0.3f));
+            UIUtils::drawXMod(g, drawBounds.translated(10.f, 3.f), juce::Colour(0xff333333));
         }
         else if (modId == "y") {
-            UIUtils::drawYMod(g, drawBounds.translated(15.f, 0.f), theme.COLOR_TEXT_BRIGHT().withAlpha(theme.IS_LIGHT_THEME ? 0.6f : 0.3f));
+            UIUtils::drawYMod(g, drawBounds.translated(15.f, 0.f), juce::Colour(0xff333333));
         }
         else if (modId == "z") {
-            UIUtils::drawZMod(g, drawBounds.translated(7.f, 3.f), theme.COLOR_TEXT_BRIGHT().withAlpha(theme.IS_LIGHT_THEME ? 0.6f : 0.3f));
+            UIUtils::drawZMod(g, drawBounds.translated(7.f, 3.f), juce::Colour(0xff333333));
         }
         else if (modId == "lift") {
-            UIUtils::drawLift(g, drawBounds.translated(14.f, 0.f), theme.COLOR_TEXT_BRIGHT().withAlpha(theme.IS_LIGHT_THEME ? 0.6f : 0.3f));
+            UIUtils::drawLift(g, drawBounds.translated(14.f, 0.f), juce::Colour(0xff333333));
         }
     }
 }
@@ -312,11 +284,11 @@ void Modulator::drawValueBuffer(juce::Graphics& g, juce::Rectangle<float>& bound
         }
     }
     juce::Colour c = juce::Colour(isenv
-        ? theme.COLOR_ENVELOPE()
-        : islfo ? theme.COLOR_LFO()
-        : ismacro ? theme.COLOR_MACRO()
-        : isrnd ? theme.COLOR_RND()
-        : theme.COLOR_OTHER_MOD()
+        ? COLOR_ENVELOPE()
+        : islfo ? COLOR_LFO()
+        : ismacro ? COLOR_MACRO()
+        : isrnd ? COLOR_RND()
+        : COLOR_OTHER_MOD()
     );
     g.setColour(c);
     g.strokePath(p, juce::PathStrokeType(1.f));
@@ -373,7 +345,7 @@ void Modulator::drawEnvelope(juce::Graphics& g, juce::Rectangle<float>& bounds)
             path.lineTo(px, py);
     }
 
-    g.setColour(juce::Colour(theme.COLOR_ENVELOPE()));
+    g.setColour(juce::Colour(COLOR_ENVELOPE()));
     g.strokePath(path, juce::PathStrokeType(1.f));
 }
 
@@ -393,7 +365,7 @@ void Modulator::drawLFO(juce::Graphics& g, juce::Rectangle<float>& bounds)
             path.lineTo(px, py);
     }
 
-    g.setColour(juce::Colour(theme.COLOR_LFO()));
+    g.setColour(juce::Colour(COLOR_LFO()));
     g.strokePath(path, juce::PathStrokeType(1.f));
 }
 

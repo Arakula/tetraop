@@ -55,7 +55,6 @@ public:
 private:
     juce::Rectangle<float> viewBounds{};
     TetraOPAudioProcessorEditor& editor;
-    Theme& theme;
     juce::String lfoid = "";
     int lfoidx = 0;
     bool isSync = false;

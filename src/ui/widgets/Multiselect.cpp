@@ -31,7 +31,7 @@ void Multiselect::drawBackground(juce::Graphics& g)
 {
     if (selectionPoints.size()) {
         g.setColour(color.withAlpha(0.25f));
-        Quad q = getQuadExpanded((double)theme.MSEL_PADDING);
+        Quad q = getQuadExpanded((double)MSEL_PADDING);
         juce::Path quadPath;
         quadPath.startNewSubPath((float)q[0].x, (float)q[0].y);
         quadPath.lineTo((float)q[1].x, (float)q[1].y);
@@ -54,7 +54,7 @@ void Multiselect::draw(juce::Graphics& g)
 
     if (!selectionPoints.empty()) {
         g.setColour(color);
-        Quad q = getQuadExpanded((double)theme.MSEL_PADDING);
+        Quad q = getQuadExpanded((double)MSEL_PADDING);
         juce::Path quadPath;
         quadPath.startNewSubPath((float)q[0].x, (float)q[0].y);
         quadPath.lineTo((float)q[1].x, (float)q[1].y);
@@ -72,7 +72,7 @@ void Multiselect::drawHandles(juce::Graphics& g)
     if (selectionPoints.size() < 2)
         return;
 
-    auto q = getQuadExpanded((double)theme.MSEL_PADDING);
+    auto q = getQuadExpanded((double)MSEL_PADDING);
     juce::Point tl = q[0].toPoint(); // top left
     juce::Point tr = q[1].toPoint();
     juce::Point bl = q[2].toPoint();
@@ -211,7 +211,7 @@ void Multiselect::mouseMove(const juce::MouseEvent& e)
 
     if (!selectionPoints.empty()) {
         int size = (int)selectionPoints.size();
-        Quad q = getQuadExpanded((double)theme.MSEL_PADDING);
+        Quad q = getQuadExpanded((double)MSEL_PADDING);
         juce::Point tl = q[0].toPoint(); // top left
         juce::Point tr = q[1].toPoint();
         juce::Point bl = q[2].toPoint();

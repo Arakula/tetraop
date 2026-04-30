@@ -13,6 +13,7 @@
 #include "../../Globals.h"
 #include "../../dsp/Pattern.h"
 
+using namespace globals;
 class TetraOPAudioProcessor;
 
 class Multiselect
@@ -109,7 +110,6 @@ private:
 	juce::Rectangle<double> selectionAreaStart = juce::Rectangle<double>(); // used to drag or scale selection area
     Quad selectionQuadStart = {Vec2(0.0,0.0), Vec2(1.0, 0.0), Vec2(0.0, 1.0), Vec2(1.0,1.0)};
     TetraOPAudioProcessor& audioProcessor;
-    Theme& theme;
 
     bool isSnapping(const juce::MouseEvent& e);
     Vec2 pointToVec(juce::Point<double> p);

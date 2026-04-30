@@ -36,6 +36,29 @@ public:
 	static void drawVSeparator(Graphics& g, Rectangle<float> bounds);
 	static void drawCheckmark(Graphics& g, Rectangle<float> bounds, Colour bg, Colour check, bool checked);
 	static void drawFeedback(Graphics& g, Rectangle<float> bounds, Colour c);
+	static void drawHandle(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour c);
+
+	static void drawRand(juce::Graphics& g, juce::Rectangle<float>bounds, juce::Colour c);
+	static void drawRandGen(juce::Graphics& g, juce::Rectangle<float>bounds, juce::Colour c);
+	static void drawHand(juce::Graphics& g, juce::Rectangle<float>bounds, juce::Colour c, juce::Point<int> tx = { 0,0 });
+	static void drawKeys(juce::Graphics& g, juce::Rectangle<float>bounds, juce::Colour c);
+	static void drawVel(juce::Graphics& g, juce::Rectangle<float>bounds, juce::Colour c);
+	static void drawModwheel(juce::Graphics& g, juce::Rectangle<float>bounds, juce::Colour c);
+	static void drawXMod(juce::Graphics& g, juce::Rectangle<float>bounds, juce::Colour c);
+	static void drawYMod(juce::Graphics& g, juce::Rectangle<float>bounds, juce::Colour c);
+	static void drawZMod(juce::Graphics& g, juce::Rectangle<float>bounds, juce::Colour c);
+	static void drawLift(juce::Graphics& g, juce::Rectangle<float>bounds, juce::Colour c);
+	static void drawGear(juce::Graphics& g, juce::Rectangle<int> bounds, float radius, int segs, juce::Colour color, juce::Colour background);
+	static void drawClose(juce::Graphics& g, juce::Rectangle<float>bounds, juce::Colour c, float lineWidth);
+	static void drawEdit(juce::Graphics& g, juce::Rectangle<float>bounds, juce::Colour c, float scale);
+	static void drawSineWave(juce::Graphics& g, juce::Rectangle<float> bounds, int n, juce::Colour c);
+
+	static void drawPowerButton(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour c, float scale);
+	static void drawWheel(juce::Graphics& g, juce::Rectangle<float> bounds, float wheelnorm);
+	static void drawUndo(juce::Graphics& g, juce::Rectangle<float> area, bool invertx, juce::Colour color);
+	static void drawClock(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour color);
+	static void drawNote(juce::Graphics& g, juce::Rectangle<float> bounds, int mode, juce::Colour color);
+	static void drawChain(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour color);
 
     static bool startUnboundedMouse(juce::Component& c, const juce::MouseEvent& e)
     {

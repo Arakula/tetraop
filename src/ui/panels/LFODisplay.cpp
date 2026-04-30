@@ -1,5 +1,5 @@
 #include "../../PluginEditor.h"
-#include "../../global/Globals.h"
+#include "../../Globals.h"
 #include "LFODisplay.h"
 
 LFODisplay::LFODisplay(TetraOPAudioProcessorEditor& e)
@@ -25,7 +25,7 @@ LFODisplay::LFODisplay(TetraOPAudioProcessorEditor& e)
 
     rotLeftBtn.onClick = [this]
         {
-            editor.audioProcessor.undomgr->createUndo();
+            //editor.audioProcessor.undomgr->createUndo();
             auto& lfo = editor.audioProcessor.modulation->lfos[lfoidx];
             lfo.pattern.rotate(-1.f / display->gridX);
             lfo.pattern.buildSegments();
@@ -34,7 +34,7 @@ LFODisplay::LFODisplay(TetraOPAudioProcessorEditor& e)
 
     rotRightBtn.onClick = [this]
         {
-            editor.audioProcessor.undomgr->createUndo();
+            //editor.audioProcessor.undomgr->createUndo();
             auto& lfo = editor.audioProcessor.modulation->lfos[lfoidx];
             lfo.pattern.rotate(1.f / display->gridX);
             lfo.pattern.buildSegments();
@@ -43,7 +43,7 @@ LFODisplay::LFODisplay(TetraOPAudioProcessorEditor& e)
 
     roundBtn.onClick = [this]
         {
-            editor.audioProcessor.undomgr->createUndo();
+            //editor.audioProcessor.undomgr->createUndo();
             auto& lfo = editor.audioProcessor.modulation->lfos[lfoidx];
             bool isRoundCurve = lfo.pattern.points.size() && lfo.pattern.points[0].type > 1;
             for (auto& point : lfo.pattern.points) {
@@ -110,7 +110,7 @@ LFODisplay::LFODisplay(TetraOPAudioProcessorEditor& e)
         };
 
     display = std::make_unique<CurveEditor>(editor, &editor.audioProcessor.modulation->lfos[0].pattern, 
-        5.f, theme.COLOR_LFO(), theme.COLOR_ACTIVE(), true, true);
+        5.f, COLOR_LFO(), COLOR_ACTIVE(), true, true);
     addAndMakeVisible(display.get());
     display->gridX = (int)editor.audioProcessor.params.getRawParameterValue("lfo_grid")->load();
     display->snap = (bool)editor.audioProcessor.params.getRawParameterValue("lfo_grid_snap")->load();
@@ -236,13 +236,13 @@ void LFODisplay::connect(juce::String id)
     rise->setParamId(lfoid + "_rise");
     riseSync->setParamId(lfoid + "_rise_sync");
 
-    editor.registerModParam(rate.get(), TetraOPAudioProcessorEditor::kLFO);
-    editor.registerModParam(rateSync.get(), TetraOPAudioProcessorEditor::kLFO);
-    editor.registerModParam(smooth.get(), TetraOPAudioProcessorEditor::kLFO);
-    editor.registerModParam(delay.get(), TetraOPAudioProcessorEditor::kLFO);
-    editor.registerModParam(delaySync.get(), TetraOPAudioProcessorEditor::kLFO);
-    editor.registerModParam(rise.get(), TetraOPAudioProcessorEditor::kLFO);
-    editor.registerModParam(riseSync.get(), TetraOPAudioProcessorEditor::kLFO);
+    editor.registerModParam(rate.get());
+    editor.registerModParam(rateSync.get());
+    editor.registerModParam(smooth.get());
+    editor.registerModParam(delay.get());
+    editor.registerModParam(delaySync.get());
+    editor.registerModParam(rise.get());
+    editor.registerModParam(riseSync.get());
 
     toggleUIComponents();
     editor.audioProcessor.modulation->UIDirty.store(true); // refresh connections
@@ -252,47 +252,35 @@ void LFODisplay::paint(juce::Graphics& g)
 {
     if (lfoid.isEmpty() || !isVisible()) return;
 
-    // draw rect around envelope knobs
-    juce::Path knobs_rect;
-    auto knobs = rate->getBounds().withRight(smooth->getBounds().getRight());
-    knobs_rect.addRoundedRectangle((float)knobs.getX(),
-        (float)knobs.getY(),
-        (float)knobs.getWidth(),
-        (float)knobs.getHeight(),
-        12.f, 12.f, false, false, true, true
-    );
-    g.setColour(theme.COLOR_SHADE_MID());
-    g.fillPath(knobs_rect);
-
     // draw sync btn
     auto sync = (int)editor.audioProcessor.params.getRawParameterValue(lfoid + "_sync")->load();
     if (sync == 0) {
-        UIUtils::drawClock(g, syncBtn.getBounds().reduced(5).toFloat(), theme.COLOR_TEXT_DIM());
+        UIUtils::drawClock(g, syncBtn.getBounds().reduced(5).toFloat(), Colour(0xff333333));
     }
     else {
-        UIUtils::drawNote(g, syncBtn.getBounds().reduced(5).toFloat(), sync - 1, theme.COLOR_TEXT_DIM());
+        UIUtils::drawNote(g, syncBtn.getBounds().reduced(5).toFloat(), sync - 1, Colour(0xff333333));
     }
 
     // draw top view buttons
     g.setFont(juce::FontOptions(12.f));
-    g.setColour(theme.COLOR_VIEWPORT_TEXT_DIM());
+    g.setColour(COLOR_VIEWPORT_TEXT());
     g.drawText("Grid " + juce::String(display->gridX), gridBtn.getBounds(), juce::Justification::centredLeft);
     g.drawText("File ", fileBtn.getBounds(), juce::Justification::centredLeft);
-    UIUtils::drawTriangle(g, rotLeftBtn.getBounds().toFloat().reduced(4.f), 3, theme.COLOR_VIEWPORT_TEXT_DIM());
-    UIUtils::drawTriangle(g, rotRightBtn.getBounds().toFloat().reduced(4.f), 1, theme.COLOR_VIEWPORT_TEXT_DIM());
+    UIUtils::drawTriangle(g, rotLeftBtn.getBounds().toFloat().reduced(4.f), 3, Colours::white.withAlpha(0.5f));
+    UIUtils::drawTriangle(g, rotRightBtn.getBounds().toFloat().reduced(4.f), 1, Colours::white.withAlpha(0.5f));
 
     auto& lfo = editor.audioProcessor.modulation->lfos[lfoidx];
     auto isRoundWave = lfo.pattern.points.size() && lfo.pattern.points[0].type > 1;
-    UIUtils::drawSineWave(g, roundBtn.getBounds().toFloat().reduced(0.f, 3.f), 2, isRoundWave ? theme.COLOR_LFO() : theme.COLOR_VIEWPORT_TEXT_DIM());
-    UIUtils::drawTriangle(g, fileBtn.getBounds().withTrimmedLeft(23).toFloat().reduced(5.f), 2, theme.COLOR_VIEWPORT_TEXT_DIM());
+    UIUtils::drawSineWave(g, roundBtn.getBounds().toFloat().reduced(0.f, 3.f), 2, isRoundWave ? COLOR_LFO() : Colour(0xff333333));
+    UIUtils::drawTriangle(g, fileBtn.getBounds().withTrimmedLeft(23).toFloat().reduced(5.f), 2, Colour(0xff333333));
 
-    g.setColour(theme.COLOR_VIEWPORT_TEXT_DIM());
+    g.setColour(Colour(0xff333333));
     auto mode = (LFO::Mode)editor.audioProcessor.params.getRawParameterValue(lfoid + "_mode")->load();
     auto modestr = mode == LFO::Mode::Trigger ? "Trig"
         : mode == LFO::Mode::Sync ? "Sync"
         : "Env";
     g.drawText(modestr, modeBtn.getBounds(), juce::Justification::centredLeft);
-    UIUtils::drawTriangle(g, modeBtn.getBounds().withTrimmedLeft(23).toFloat().reduced(5.f), 2, theme.COLOR_VIEWPORT_TEXT_DIM());
+    UIUtils::drawTriangle(g, modeBtn.getBounds().withTrimmedLeft(23).toFloat().reduced(5.f), 2, Colour(0xff333333));
 
     auto& mod = editor.audioProcessor.modulation->modulators[lfoid];
     display->drawSeek = mod.active && mod.connections;
@@ -380,7 +368,7 @@ void LFODisplay::showModeMenu()
         .withTargetScreenArea({ menuPos.getX() - 70, menuPos.getY(), 1, 1 }),
         [this](int result) {
             if (result == 0) return;
-            editor.audioProcessor.undomgr->createUndo();
+            //editor.audioProcessor.undomgr->createUndo();
             auto param = editor.audioProcessor.params.getParameter("lfo" + juce::String(lfoidx + 1) + "_mode");
             param->setValueNotifyingHost(param->convertTo0to1(result - 1.f));
         });
@@ -403,7 +391,7 @@ void LFODisplay::showSyncMenu()
         .withTargetScreenArea({ menuPos.getX(), menuPos.getY(), 1, 1 }),
         [this](int result) {
             if (result == 0) return;
-            editor.audioProcessor.undomgr->createUndo();
+            //editor.audioProcessor.undomgr->createUndo();
             auto param = editor.audioProcessor.params.getParameter(lfoid + "_sync");
             param->setValueNotifyingHost(param->convertTo0to1((float)(result - 1)));
         });
@@ -416,7 +404,7 @@ void LFODisplay::loadLfoFile(const juce::File& file)
     if (array == nullptr)
         return;
 
-    editor.audioProcessor.undomgr->createUndo();
+    //editor.audioProcessor.undomgr->createUndo();
     auto& lfo = editor.audioProcessor.modulation->lfos[lfoidx];
     lfo.pattern.clear();
     // Insert points in reverse order. Pattern::insertPoint uses lower_bound,
@@ -484,66 +472,66 @@ void LFODisplay::buildFileSubmenu(juce::PopupMenu& menu, const juce::File& folde
     }
 }
 
-void LFODisplay::saveLfoFile(const juce::String& name)
+void LFODisplay::saveLfoFile(const juce::String& /*name*/)
 {
-    auto fname = juce::File::createLegalFileName(name);
-    if (fname.isEmpty())
-        return;
-
-    auto userLfosDir = global::userContentFolder.getChildFile("LFOs");
-    auto result = userLfosDir.createDirectory();
-    if (result.failed())
-        return;
-
-    auto file = userLfosDir.getChildFile(fname + ".json");
-
-    auto& lfo = editor.audioProcessor.modulation->lfos[lfoidx];
-    juce::Array<juce::var> array;
-    for (const auto& point : lfo.pattern.points) {
-        juce::DynamicObject::Ptr obj = new juce::DynamicObject();
-        obj->setProperty("t", (double)point.x);
-        obj->setProperty("v", (double)point.y);
-        obj->setProperty("c", (double)point.tension);
-        array.add(juce::var(obj.get()));
-    }
-
-    file.replaceWithText(juce::JSON::toString(juce::var(array)));
+    //auto fname = juce::File::createLegalFileName(name);
+    //if (fname.isEmpty())
+    //    return;
+    //
+    //auto userLfosDir = global::userContentFolder.getChildFile("LFOs");
+    //auto result = userLfosDir.createDirectory();
+    //if (result.failed())
+    //    return;
+    //
+    //auto file = userLfosDir.getChildFile(fname + ".json");
+    //
+    //auto& lfo = editor.audioProcessor.modulation->lfos[lfoidx];
+    //juce::Array<juce::var> array;
+    //for (const auto& point : lfo.pattern.points) {
+    //    juce::DynamicObject::Ptr obj = new juce::DynamicObject();
+    //    obj->setProperty("t", (double)point.x);
+    //    obj->setProperty("v", (double)point.y);
+    //    obj->setProperty("c", (double)point.tension);
+    //    array.add(juce::var(obj.get()));
+    //}
+    //
+    //file.replaceWithText(juce::JSON::toString(juce::var(array)));
 }
 
 void LFODisplay::showFileMenu()
 {
     juce::PopupMenu menu;
 
-    auto userLfosDir = global::userContentFolder.getChildFile("LFOs");
-    if (userLfosDir.isDirectory()) {
-        juce::PopupMenu userMenu;
-        buildFileSubmenu(userMenu, userLfosDir);
-        if (userMenu.getNumItems() > 0) {
-            menu.addSubMenu("User", userMenu);
-            menu.addSeparator();
-        }
-    }
-
-    buildFileSubmenu(menu, global::contentPath.getChildFile("LFOs"));
-
-    if (menu.getNumItems() > 0)
-        menu.addSeparator();
-
-    menu.addItem("Save As...", [this] {
-        auto defaultName = juce::String("LFO ") + juce::String(lfoidx + 1);
-        editor.showSaveLfoDialog(defaultName, [this](const juce::String& name) {
-            saveLfoFile(name);
-        });
-    });
-
-    menu.addSeparator();
+    //auto userLfosDir = global::userContentFolder.getChildFile("LFOs");
+    //if (userLfosDir.isDirectory()) {
+    //    juce::PopupMenu userMenu;
+    //    buildFileSubmenu(userMenu, userLfosDir);
+    //    if (userMenu.getNumItems() > 0) {
+    //        menu.addSubMenu("User", userMenu);
+    //        menu.addSeparator();
+    //    }
+    //}
+    //
+    //buildFileSubmenu(menu, global::contentPath.getChildFile("LFOs"));
+    //
+    //if (menu.getNumItems() > 0)
+    //    menu.addSeparator();
+    //
+    //menu.addItem("Save As...", [this] {
+    //    auto defaultName = juce::String("LFO ") + juce::String(lfoidx + 1);
+    //    editor.showSaveLfoDialog(defaultName, [this](const juce::String& name) {
+    //        saveLfoFile(name);
+    //    });
+    //});
+    //
+    //menu.addSeparator();
 
     menu.addItem("Copy", [this] {
         editor.audioProcessor.modulation->lfos[lfoidx].pattern.copy();
     });
 
     menu.addItem("Paste", [this] {
-        editor.audioProcessor.undomgr->createUndo();
+        //editor.audioProcessor.undomgr->createUndo();
         auto& lfo = editor.audioProcessor.modulation->lfos[lfoidx];
         lfo.pattern.paste();
         lfo.pattern.buildSegments();
