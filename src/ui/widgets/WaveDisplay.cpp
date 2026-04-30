@@ -60,7 +60,7 @@ void WaveDisplay::parameterChanged(const juce::String& parameterID, float newVal
 
 void WaveDisplay::timerCallback()
 {
-    if (isOn && editor.audioProcessor.modulation->lastVoiceIsActive)
+    if (isOn && editor.audioProcessor.modulation->lastVoiceActive)
     {
         if (mode != Oscilloscope)
         {

@@ -4,13 +4,11 @@
 #include "Pattern.h"
 #include "../engine/Utils.h"
 
-using namespace globals;
 
 class LFO
 {
 public:
 	struct Voice {
-		RCFilterBlock smooth{};
 		float x = 0.0f;
 		float y = 0.0f;
 		float phase_offset = 0.0f;
@@ -28,7 +26,7 @@ public:
 	};
 
 	Pattern pattern{ -1 };
-	std::array<Voice, MAX_POLYPHONY + 1> voices{}; // voice 0 is the global voice, voiceId is N+1
+	std::array<Voice, globals::MAX_POLYPHONY + 1> voices{}; // voice 0 is the global voice, voiceId is N+1
 	float srate = 44100.0f;
 	float delay = 0.f;
 	float duration = 1.0; // lfo duration in seconds
@@ -40,12 +38,11 @@ public:
 	~LFO() {}
 
 	void init(double srate, float duration, float delay, float rise, Mode mode);
-	void trigger(int voiceId, float phase_offset);
+	void trigger(int voiceId, float phase_offset, float globalStart);
 	void setSmooth(float smooth);
 	float getValue(float elapsed, float phase_offset);
-	float getSmoothedValue(float elapsed, int voiceId);
-	float getAudioRateValue(float elapsed, float dt, int voiceId, const juce::String& param);
-	float getXNorm(float elapsed, float phase_offset);
+	float getSmoothedValue(float elapsed, float dt, int voiceId, juce::String param);
+	float getXNorm(float elapsed, float phase_offset) const;
 
-	std::array<std::unordered_map<juce::String, RCFilterBlock>, MAX_POLYPHONY + 1> audioRateParamSmoothCache;
+	std::array<std::unordered_map<juce::String, RCFilterBlock>, globals::MAX_POLYPHONY + 1> audioRateParamSmoothCache;
 };

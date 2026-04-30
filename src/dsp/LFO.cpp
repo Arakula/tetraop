@@ -22,25 +22,24 @@ void LFO::setSmooth(float _smooth)
 	smooth = _smooth;
 	auto r = 1.0f / (smooth * srate + 1);
 	auto k = smooth <= 0.f ? 0.f : -srate * std::log(1.f - r);
-	for (auto& voice : voices) { 
-		voice.smooth.srate = srate;
-		voice.smooth.r = r;
-		voice.smooth.k = k;
-	}
-	for (int i = 0; i < voices.size(); ++i) {
+	for (int i = 0; i < int(voices.size()); ++i) {
 		for (auto& [key, smth] : audioRateParamSmoothCache[i]) {
 			smth.r = r;
+			smth.k = k;
 			smth.srate = srate;
 		}
 	}
 }
 
-void LFO::trigger(int voiceId, float phase_offset)
+void LFO::trigger(int voiceId, float phase_offset, float lastGlobalValue)
 {
-	float zero_val = pattern.get_y_at(phase_offset);
-	voices[voiceId].smooth.reset(zero_val);
 	voices[voiceId].phase_offset = phase_offset;
 	voices[voiceId].x = 0.f;
+
+	float zero_val = mode == Sync
+		? lastGlobalValue
+		: pattern.get_y_at(std::fmod(phase_offset, duration) / duration);
+
 	for (auto& [key, smth] : audioRateParamSmoothCache[voiceId]) {
 		smth.reset(zero_val);
 	}
@@ -48,7 +47,7 @@ void LFO::trigger(int voiceId, float phase_offset)
 
 float LFO::getValue(float elapsed, float phase_offset)
 {
-    if (elapsed <= delay)
+	if (elapsed <= delay)
 		return pattern.get_y_at(std::fmod(phase_offset, duration) / duration);
 
 	elapsed = elapsed - delay;
@@ -61,50 +60,38 @@ float LFO::getValue(float elapsed, float phase_offset)
 	if (elapsed < rise) {
 		float zero_val = pattern.get_y_at(std::fmod(phase_offset, duration) / duration);
 		float t = elapsed / rise;
-		value = t * value + (1-t) * zero_val;
+		value = t * value + (1 - t) * zero_val;
 	}
 
 	return value;
 }
 
-float LFO::getSmoothedValue(float elapsed, int voiceId)
+float LFO::getSmoothedValue(float elapsed, float dt, int voiceId, juce::String param)
 {
 	auto& voice = voices[voiceId];
-	auto dt = fabs(elapsed - voice.x);
-	if (dt < 1e-6) {
-		return voice.y; // prevents multipe params from recalculating same lfo and smooth for this voice
-	}
+	auto id = param + juce::String(voiceId);
 
-	voice.x = elapsed;
-
-	auto value = getValue(elapsed, voice.phase_offset);
-	voice.y = voice.smooth.process(value, dt);
-
-	return voice.y;
-}
-
-float LFO::getAudioRateValue(float elapsed, float dt, int voiceId, const juce::String& param)
-{
-	auto& voice = voices[voiceId];
-
-	auto id = param + String(voiceId);
 	auto& smoothCache = audioRateParamSmoothCache[voiceId];
 	if (!smoothCache.count(id)) {
-		float zero_val = pattern.get_y_at(voice.phase_offset);
+		float zero_val = pattern.get_y_at(std::fmod(voice.phase_offset, duration) / duration);
 		smoothCache[id].setup(smooth, srate);
 		smoothCache[id].reset(zero_val);
 	}
+
 	auto& paramSmooth = smoothCache[id];
 	if (paramSmooth.resistance != smooth || paramSmooth.srate != srate) {
 		paramSmooth.setup(smooth, srate);
 	}
 
+	voice.x = elapsed + dt; // keep track of elapsed time for global LFO
+
 	auto value = getValue(elapsed + dt, voice.phase_offset);
-	return paramSmooth.process(value, dt);
+	voice.y = paramSmooth.process(value, dt); // keep track of lfo value for global LFO
+	return voice.y;
 }
 
 // used for UI display
-float LFO::getXNorm(float elapsed, float phase_offset)
+float LFO::getXNorm(float elapsed, float phase_offset) const
 {
 	if (mode == LFO::Envelope && elapsed - delay > duration)
 		return 0.f;

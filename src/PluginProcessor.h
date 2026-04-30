@@ -62,8 +62,8 @@ public:
 
 
     // Playhead
-    float srate = 88200.f;
-    float osrate = 44100.f; // oversampled srate
+    float srate = 44100.f;
+    float osrate = 88200.f; // oversampled srate
     float iosrate = 1.f / 44100.f; // inverse oversampled srate
     double beatsPerSecond = 1.0;
     double secondsPerBeat = 0.01;
