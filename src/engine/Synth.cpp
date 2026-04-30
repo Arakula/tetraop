@@ -15,7 +15,7 @@ Synth::Synth(TetraOPAudioProcessor& p) : audioProcessor(p)
 
     for (int i = 0; i < 2; ++i)
     {
-        String prefix = i == 0 ? "f1_" : "f2";
+        String prefix = i == 0 ? "f1_" : "f2_";
         audioProcessor.params.addParameterListener(prefix + "on", this);
         audioProcessor.params.addParameterListener(prefix + "type", this);
         audioProcessor.params.addParameterListener(prefix + "mode", this);
@@ -38,10 +38,10 @@ void Synth::parameterChanged(const juce::String& paramId, float)
         f2.dirty = true;
 }
 
-void Synth::onFilterChange(int f)
+void Synth::onFilterChange(int f1orf2)
 {
-    String prefix = f == 0 ? "f1_" : "f2_";
-    auto& filter = f == 0 ? f1 : f2;
+    String prefix = f1orf2 == 0 ? "f1_" : "f2_";
+    auto& filter = f1orf2 == 0 ? f1 : f2;
     filter.on = (bool)audioProcessor.params.getRawParameterValue(prefix + "on")->load();
     filter.type = (Filter::Type)audioProcessor.params.getRawParameterValue(prefix + "type")->load();
     filter.mode = (Filter::Mode)audioProcessor.params.getRawParameterValue(prefix + "mode")->load();
@@ -50,12 +50,12 @@ void Synth::onFilterChange(int f)
     filter.cin = (bool)audioProcessor.params.getRawParameterValue(prefix + "inC")->load();
     filter.din = (bool)audioProcessor.params.getRawParameterValue(prefix + "inD")->load();
 
-    auto& filtersL = f == 0 ? f1L : f2L;
-    auto& filtersR = f == 0 ? f1R : f2R;
+    auto& filtersL = f1orf2 == 0 ? f1L : f2L;
+    auto& filtersR = f1orf2 == 0 ? f1R : f2R;
 
     if (filter.type != filtersL[0]->type)
     {
-        createFilters(f);
+        createFilters(f1orf2);
     }
     else if (filter.mode != filtersL[0]->filterMode)
     {
@@ -72,7 +72,7 @@ void Synth::onFilterChange(int f)
         }
     }
 
-    if (f == 1)
+    if (f1orf2 == 1)
         filter.fin = audioProcessor.params.getRawParameterValue("f2_inF1")->load();
 
     filterSeries = f1.on && f2.on && f2.fin;
