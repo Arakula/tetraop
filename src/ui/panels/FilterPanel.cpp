@@ -49,16 +49,45 @@ FilterPanel::FilterPanel(TetraOPAudioProcessorEditor& e, int _fid)
 
 	addAndMakeVisible(inaBtn); 
 	inaBtn.setAlpha(0.f);
+	inaBtn.onClick = [this]
+		{
+			auto param = editor.audioProcessor.params.getParameter(prefix + "inA");
+			param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
+		};
+
 	addAndMakeVisible(inbBtn);
 	inbBtn.setAlpha(0.f);
+	inbBtn.onClick = [this]
+		{
+			auto param = editor.audioProcessor.params.getParameter(prefix + "inB");
+			param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
+		};
+
 	addAndMakeVisible(incBtn);
 	incBtn.setAlpha(0.f);
+	incBtn.onClick = [this]
+		{
+			auto param = editor.audioProcessor.params.getParameter(prefix + "inC");
+			param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
+		};
+
 	addAndMakeVisible(indBtn);
 	indBtn.setAlpha(0.f);
+	indBtn.onClick = [this]
+		{
+			auto param = editor.audioProcessor.params.getParameter(prefix + "inD");
+			param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
+		};
+
 	if (fid > 0) 
 	{
 		addAndMakeVisible(inf1Btn);
 		inf1Btn.setAlpha(0.f);
+		inf1Btn.onClick = [this]
+			{
+				auto param = editor.audioProcessor.params.getParameter(prefix + "inF1");
+				param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
+			};
 	}
 
 	toggleUIComponents();

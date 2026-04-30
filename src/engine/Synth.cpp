@@ -23,6 +23,8 @@ Synth::Synth(TetraOPAudioProcessor& p) : audioProcessor(p)
         audioProcessor.params.addParameterListener(prefix + "inB", this);
         audioProcessor.params.addParameterListener(prefix + "inC", this);
         audioProcessor.params.addParameterListener(prefix + "inD", this);
+        if (i == 1)
+            audioProcessor.params.addParameterListener(prefix + "inF1", this);
     }
 }
 
@@ -49,6 +51,8 @@ void Synth::onFilterChange(int f1orf2)
     filter.bin = (bool)audioProcessor.params.getRawParameterValue(prefix + "inB")->load();
     filter.cin = (bool)audioProcessor.params.getRawParameterValue(prefix + "inC")->load();
     filter.din = (bool)audioProcessor.params.getRawParameterValue(prefix + "inD")->load();
+    if (f1orf2 == 1)
+        filter.fin = (bool)audioProcessor.params.getRawParameterValue(prefix + "inF1")->load();
 
     auto& filtersL = f1orf2 == 0 ? f1L : f2L;
     auto& filtersR = f1orf2 == 0 ? f1R : f2R;
