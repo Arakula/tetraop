@@ -147,9 +147,9 @@ void FmMatrix::prepareDistortions(SIMDVox& vox)
     auto ddist = (PhaseDist::Mode)audioProcessor.params.getRawParameterValue("d_phase_dist_mode")->load();
 
     Adist = Utils::allLanesZero(vox.osc[0].dist_amt) ? dists[0] : dists[adist];
-    Bdist = Utils::allLanesZero(vox.osc[1].dist_amt) ? dists[0] : dists[adist];
-    Cdist = Utils::allLanesZero(vox.osc[2].dist_amt) ? dists[0] : dists[adist];
-    Ddist = Utils::allLanesZero(vox.osc[3].dist_amt) ? dists[0] : dists[adist];
+    Bdist = Utils::allLanesZero(vox.osc[1].dist_amt) ? dists[0] : dists[bdist];
+    Cdist = Utils::allLanesZero(vox.osc[2].dist_amt) ? dists[0] : dists[cdist];
+    Ddist = Utils::allLanesZero(vox.osc[3].dist_amt) ? dists[0] : dists[ddist];
 
     // optimize bend distortion (heavy) by selecting only positive or negative paths
     if (Adist == dists[1])

@@ -353,7 +353,7 @@ void Modulation::endBlock(int nsamples)
             float offset = calculateOffset(conns);
             auto param = audioProcessor.params.getParameter(dst);
             auto norm = param->getValue();
-            auto& p = params[dst];
+            auto& p = getParam(dst);
             p.modulatedNorm.store(std::clamp(norm + offset, 0.f, 1.f));
         }
     }
@@ -430,8 +430,8 @@ void Modulation::_connect(const juce::String& src, const juce::String& dst, int 
     else {
         connections.insert(connections.begin() + connIndex, std::move(conn));
     }
-    params[dst].connections += 1;
-    params[dst].id = dst;
+    auto& p = getParam(dst);
+    p.connections += 1;
     modulators[src].connections += 1;
     UIDirty.store(true);
 }
@@ -466,7 +466,8 @@ void Modulation::_disconnect(const juce::String& src, const juce::String& dst)
         dstList.erase(std::remove(dstList.begin(), dstList.end(), ptr), dstList.end());
         if (dstList.empty()) destinations.erase(dst);
 
-        params[dst].connections -= 1;
+        auto& p = getParam(dst);
+        p.connections -= 1;
         modulators[src].connections -= 1;
         connections.erase(it);
         UIDirty.store(true);
@@ -645,7 +646,7 @@ float Modulation::getModulatedNorm(const juce::String& param)
 float Modulation::getPolyValue(const juce::String& pname, int voiceId, int blockOffset, bool smooth)
 {
     auto it = destinations.find(pname);
-    if (it != destinations.end()) 
+    if (it != destinations.end())
     {
         float offset = calculateOffset(it->second, voiceId, blockOffset);
         auto& param = getParam(pname);
