@@ -88,7 +88,8 @@ void TetraOPAudioProcessorEditor::buildUI()
 
     envelopes = std::make_unique<EnvDisplay>(*this);
     addAndMakeVisible(envelopes.get());
-    envelopes->setBounds(Rectangle<int>(100, oscD->getBottom() + PANEL_PAD, 350, 10).withBottom(getBottom() - PANEL_PAD));
+    envelopes->setBounds(Rectangle<int>(oscA->getX() + 75, oscD->getBottom() + PANEL_PAD, oscA->getWidth() - 75, 10)
+        .withBottom(getBottom() - PANEL_PAD));
 
     globals = std::make_unique<GlobalsPanel>(*this);
     addAndMakeVisible(globals.get());

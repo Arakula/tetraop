@@ -13,6 +13,12 @@ EnvDisplay::EnvDisplay(TetraOPAudioProcessorEditor& e)
     sustain = std::make_unique<Rotary>(editor, "env1_sus", "Sus", Rotary::Percent);
     release = std::make_unique<Rotary>(editor, "env1_rel", "Rel", Rotary::secondsMillis);
 
+    for (int i = 0; i < globals::MAX_ENVELOPES; ++i) {
+        auto env = std::make_unique<Modulator>(editor, juce::String("env") + juce::String(i + 1), true);
+        addAndMakeVisible(env.get());
+        envs.push_back(std::move(env));
+    }
+
     delay->yoffset -= 2;
     attack->yoffset -= 2;
     hold->yoffset -= 2;
@@ -72,7 +78,7 @@ void EnvDisplay::disconnect()
 void EnvDisplay::timerCallback()
 {
     auto selectedModId = juce::String(editor.audioProcessor.modulation->selectedMod);
-    auto& displayMod = editor.audioProcessor.displayMod;
+    //auto& displayMod = editor.audioProcessor.displayMod;
 
     if (selectedModId != envid && selectedModId.startsWith("env"))
     {
@@ -218,10 +224,15 @@ void EnvDisplay::mouseDoubleClick(const juce::MouseEvent& e) {
 
 void EnvDisplay::paint(juce::Graphics& g)
 {
+    g.setColour(COLOR_PANEL().darker(0.6f));
+    g.fillRect(getLocalBounds());
+    g.setColour(COLOR_BEVEL());
+    g.fillRect(0, 0, getWidth(), viewportBounds.getBottom());
+
     if (envid.isEmpty() || !isVisible()) return;
     isActive = editor.audioProcessor.modulation->modulators[envid].active;
     auto mode = (Envelope::Mode)editor.audioProcessor.params.getRawParameterValue(envid + "_mode")->load();
-    auto bounds = getLocalBounds().toFloat().withTrimmedBottom(globals::KNOB_HEIGHT).reduced(5.f).withTrimmedTop(1.f);
+    auto bounds = viewportBounds.toFloat();
     auto del = editor.audioProcessor.params.getRawParameterValue(envid + "_del")->load();
     auto att = std::max(0.0001f, editor.audioProcessor.params.getRawParameterValue(envid + "_att")->load());
     auto hld = editor.audioProcessor.params.getRawParameterValue(envid + "_hld")->load();
@@ -398,6 +409,19 @@ void EnvDisplay::paint(juce::Graphics& g)
 
 void EnvDisplay::resized()
 {
+    auto bounds = getLocalBounds().toFloat();
+    viewportBounds = getLocalBounds()
+        .withTrimmedTop(32 + 4)
+        .withTrimmedBottom(globals::KNOB_HEIGHT).reduced(5).toNearestInt();
+
+    float gap = 4.f;
+    auto modw = (bounds.getWidth() - gap * 3.f) / 4.f;
+    auto modh = 33.f;
+    for (int i = 0; i < globals::MAX_ENVELOPES; ++i) {
+        auto& env = envs[i];
+        env->setBounds((int)(bounds.getX() + i * gap + i * modw), (int)bounds.getY() + gap - 1.f, (int)modw, (int)modh);
+    }
+
     toggleUIComponents();
 }
 
@@ -411,7 +435,7 @@ void EnvDisplay::toggleUIComponents()
     release->setVisible(false);
 
     auto bounds = getLocalBounds();
-    modeBtn.setBounds(bounds.getRight() - 60 - 10, 10, 60, 15);
+    modeBtn.setBounds(bounds.getRight() - 60 - 10, 10 + viewportBounds.getY(), 60, 15);
 
     auto mode = envid.isNotEmpty()
         ? editor.audioProcessor.params.getRawParameterValue(envid + "_mode")->load()

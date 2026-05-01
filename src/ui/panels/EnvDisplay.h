@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include "../widgets/Rotary.h"
 #include "../../dsp/Envelope.h"
+#include "../widgets/Modulator.h"
 
 class TetraOPAudioProcessorEditor;
 
@@ -13,6 +14,7 @@ class EnvDisplay
 {
 public:
 
+    std::vector<std::unique_ptr<Modulator>> envs;
     std::unique_ptr<Rotary> delay;
     std::unique_ptr<Rotary> attack;
     std::unique_ptr<Rotary> hold;
@@ -50,6 +52,7 @@ private:
     bool mouse_down = false;
     bool mouse_down_shift = false;
     float cur_normed_value = 0.0f;
+    Rectangle<int> viewportBounds;
     juce::Point<int> last_mouse_position{};
     juce::Point<int> start_mouse_pos{};
     juce::String paramId{};

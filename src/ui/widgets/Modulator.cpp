@@ -147,21 +147,19 @@ void Modulator::paint(juce::Graphics& g)
     auto bounds = getLocalBounds().toFloat().reduced(0.5f);
 
     // draw bg
-    if (!isDark) {
-        g.setColour(COLOR_PANEL());
-        g.fillRoundedRectangle(bounds, 2.f);
-        juce::Path p;
-        p.addRoundedRectangle(bounds.getX(), bounds.getY(), lpad, bounds.getHeight(), 2.f, 2.f, true, false, true, false);
-        g.setColour(juce::Colours::transparentBlack.withAlpha(0.5f));
-        g.fillPath(p);
-    }
+    g.setColour(juce::Colours::transparentWhite.withAlpha(0.01f));
+    g.fillRoundedRectangle(bounds, 2.f);
+    juce::Path p;
+    p.addRoundedRectangle(bounds.getX(), bounds.getY(), lpad, bounds.getHeight(), 2.f, 2.f, true, false, true, false);
+    g.setColour(juce::Colours::transparentWhite.withAlpha(0.01f));
+    g.fillPath(p);
 
     // draw outline
-    g.setColour(juce::Colours::transparentWhite.withAlpha(0.25f));
+    g.setColour(juce::Colours::transparentWhite.withAlpha(0.1f));
     g.drawVerticalLine((int)(bounds.getX() + lpad), bounds.getY(), bounds.getBottom());
     g.setColour(juce::Colour(selected
-        ? COLOR_ACTIVE().withMultipliedBrightness(!isDark ? 0.5f : 1.f)
-        : juce::Colours::transparentWhite.withAlpha(0.25f)));
+        ? COLOR_ACTIVE()
+        : juce::Colours::transparentWhite.withAlpha(0.1f)));
     g.drawRoundedRectangle(bounds, 2.f, 1.f);
 
     // draw handle
@@ -345,7 +343,7 @@ void Modulator::drawEnvelope(juce::Graphics& g, juce::Rectangle<float>& bounds)
             path.lineTo(px, py);
     }
 
-    g.setColour(juce::Colour(COLOR_ENVELOPE()));
+    g.setColour(COLOR_ENVELOPE());
     g.strokePath(path, juce::PathStrokeType(1.f));
 }
 
