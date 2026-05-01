@@ -171,20 +171,10 @@ void LFODisplay::timerCallback()
     auto selectedModId = juce::String(editor.audioProcessor.modulation->selectedMod);
     auto& displayMod = editor.audioProcessor.displayMod;
 
-    if (!isVisible() && displayMod.startsWith("lfo")) {
-        connect(displayMod);
-        setVisible(true);
-        repaint();
-    }
-    else if (selectedModId != lfoid && selectedModId.startsWith("lfo"))
+    if (selectedModId != lfoid && selectedModId.startsWith("lfo"))
     {
         connect(selectedModId);
-        setVisible(true);
         repaint();
-    }
-    else if (isVisible() && (selectedModId.startsWith("env") || selectedModId.startsWith("rnd"))) {
-        setVisible(false);
-        disconnect();
     }
     else if (lfoid.isNotEmpty()) {
         auto& mod = editor.audioProcessor.modulation->modulators[lfoid];

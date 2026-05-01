@@ -86,6 +86,10 @@ void TetraOPAudioProcessorEditor::buildUI()
     addAndMakeVisible(filter2.get());
     filter2->setBounds(filter1->getBounds().translated(0, filter1->getHeight() + PANEL_PAD));
 
+    envelopes = std::make_unique<EnvDisplay>(*this);
+    addAndMakeVisible(envelopes.get());
+    envelopes->setBounds(Rectangle<int>(100, oscD->getBottom() + PANEL_PAD, 350, 10).withBottom(getBottom() - PANEL_PAD));
+
     globals = std::make_unique<GlobalsPanel>(*this);
     addAndMakeVisible(globals.get());
     globals->setVisible(!audioProcessor.fmMatrixVisible);
@@ -96,9 +100,10 @@ void TetraOPAudioProcessorEditor::buildUI()
     fmMatrix->setVisible(audioProcessor.fmMatrixVisible);
     fmMatrix->setBounds(globals->getBounds());
 
+
     tmp = std::make_unique<TMP>(audioProcessor);
     addAndMakeVisible(tmp.get());
-    tmp->setBounds(100, 400, 100, 20);
+    tmp->setBounds(100, 20, 100, 20);
 
     juce::Desktop::getInstance().addGlobalMouseListener(this);
     audioProcessor.modulation->UIDirty.store(true); // refresh connections on startup

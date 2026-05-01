@@ -59,6 +59,12 @@ void Voice::noteStarted()
     {
         updateMatrix(voice);
     }
+
+    // FIX pops by resetting envelope to zero
+    bool msk[4] = { false, false, false, false };
+    msk[lane] = true;
+    SIMDM mask = SIMDM(msk);
+    Utils::setMasked(voice.env, 0.f, mask);
 }
 
 void Voice::noteRetriggered()

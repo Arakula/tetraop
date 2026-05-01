@@ -71,7 +71,15 @@ void EnvDisplay::disconnect()
 
 void EnvDisplay::timerCallback()
 {
-    if (envid.isNotEmpty()) {
+    auto selectedModId = juce::String(editor.audioProcessor.modulation->selectedMod);
+    auto& displayMod = editor.audioProcessor.displayMod;
+
+    if (selectedModId != envid && selectedModId.startsWith("env"))
+    {
+        connect(selectedModId);
+        repaint();
+    }
+    else if (envid.isNotEmpty()) {
         auto& mod = editor.audioProcessor.modulation->modulators[envid];
         if (mod.active && (mod.connections || envid == "env1")) {
             repaint();
@@ -253,7 +261,7 @@ void EnvDisplay::paint(juce::Graphics& g)
     std::array<float, 5> weights{};
     float wSum = 0.0f;
     for (int i = 0; i < 5; ++i) {
-        weights[i] = durations[i] <= 0.002 ? durations[i] : std::pow(durations[i], 0.4f);
+        weights[i] = std::pow(durations[i] + 1e-6f, 0.4f);
         wSum += weights[i];
     }
     std::array<float, 6> t_vis_bounds = {};
