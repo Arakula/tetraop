@@ -5,6 +5,7 @@
 #include "../../dsp/Pattern.h"
 #include "../UIUtils.h"
 #include "../widgets/CurveEditor.h"
+#include "../widgets/Modulator.h"
 
 class TetraOPAudioProcessorEditor;
 
@@ -14,6 +15,8 @@ class LFODisplay
     , private juce::Timer
 {
 public:
+    std::vector<std::unique_ptr<Modulator>> lfos;
+
     juce::TextButton gridBtn;
     juce::TextButton rotLeftBtn;
     juce::TextButton rotRightBtn;

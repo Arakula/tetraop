@@ -11,6 +11,12 @@ LFODisplay::LFODisplay(TetraOPAudioProcessorEditor& e)
 
     juce::Desktop::getInstance().addGlobalMouseListener(this);
 
+    for (int i = 0; i < globals::MAX_LFOS; ++i) {
+        auto lfo = std::make_unique<Modulator>(editor, juce::String("lfo") + juce::String(i + 1), true);
+        addAndMakeVisible(lfo.get());
+        lfos.push_back(std::move(lfo));
+    }
+
     addAndMakeVisible(gridBtn);
     addAndMakeVisible(rotLeftBtn);
     addAndMakeVisible(rotRightBtn);
@@ -77,22 +83,6 @@ LFODisplay::LFODisplay(TetraOPAudioProcessorEditor& e)
     delaySync = std::make_unique<Rotary>(editor, "lfo1_delay_sync", "Delay", Rotary::DelayTempo);
     rise = std::make_unique<Rotary>(editor, "lfo1_rise", "Rise", Rotary::seconds1f);
     riseSync = std::make_unique<Rotary>(editor, "lfo1_rise_sync", "Rise", Rotary::DelayTempo);
-
-    rate->radius = 14.f;
-    rateSync->radius = 14.f;
-    smooth->radius = 14.f;
-    delay->radius = 14.f;
-    delaySync->radius = 14.f;
-    rise->radius = 14.f;
-    riseSync->radius = 14.f;
-
-    rate->yoffset -= 2;
-    rateSync->yoffset -= 2;
-    smooth->yoffset -= 2;
-    delay->yoffset -= 2;
-    delaySync->yoffset -= 2;
-    rise->yoffset -= 2;
-    riseSync->yoffset -= 2;
 
     addAndMakeVisible(rate.get());
     addAndMakeVisible(rateSync.get());
@@ -168,12 +158,11 @@ void LFODisplay::disconnect()
 
 void LFODisplay::timerCallback()
 {
-    auto selectedModId = juce::String(editor.audioProcessor.modulation->selectedMod);
-    auto& displayMod = editor.audioProcessor.displayMod;
+    auto displayLfo = juce::String(editor.audioProcessor.displayLfo);
 
-    if (selectedModId != lfoid && selectedModId.startsWith("lfo"))
+    if (displayLfo != lfoid)
     {
-        connect(selectedModId);
+        connect(displayLfo);
         repaint();
     }
     else if (lfoid.isNotEmpty()) {
@@ -240,6 +229,11 @@ void LFODisplay::connect(juce::String id)
 
 void LFODisplay::paint(juce::Graphics& g)
 {
+    g.setColour(COLOR_PANEL().darker(0.6f));
+    g.fillRect(getLocalBounds());
+    g.setColour(COLOR_BEVEL());
+    g.fillRect(viewBounds);
+
     if (lfoid.isEmpty() || !isVisible()) return;
 
     // draw sync btn
@@ -256,15 +250,15 @@ void LFODisplay::paint(juce::Graphics& g)
     g.setColour(COLOR_VIEWPORT_TEXT());
     g.drawText("Grid " + juce::String(display->gridX), gridBtn.getBounds(), juce::Justification::centredLeft);
     g.drawText("File ", fileBtn.getBounds(), juce::Justification::centredLeft);
-    UIUtils::drawTriangle(g, rotLeftBtn.getBounds().toFloat().reduced(4.f), 3, Colours::white.withAlpha(0.5f));
-    UIUtils::drawTriangle(g, rotRightBtn.getBounds().toFloat().reduced(4.f), 1, Colours::white.withAlpha(0.5f));
+    UIUtils::drawTriangle(g, rotLeftBtn.getBounds().toFloat().reduced(4.f), 3, COLOR_VIEWPORT_TEXT());
+    UIUtils::drawTriangle(g, rotRightBtn.getBounds().toFloat().reduced(4.f), 1, COLOR_VIEWPORT_TEXT());
 
     auto& lfo = editor.audioProcessor.modulation->lfos[lfoidx];
     auto isRoundWave = lfo.pattern.points.size() && lfo.pattern.points[0].type > 1;
-    UIUtils::drawSineWave(g, roundBtn.getBounds().toFloat().reduced(0.f, 3.f), 2, isRoundWave ? COLOR_LFO() : Colour(0xff333333));
+    UIUtils::drawSineWave(g, roundBtn.getBounds().toFloat().reduced(0.f, 3.f), 2, isRoundWave ? COLOR_LFO() : COLOR_VIEWPORT_TEXT());
     UIUtils::drawTriangle(g, fileBtn.getBounds().withTrimmedLeft(23).toFloat().reduced(5.f), 2, Colour(0xff333333));
 
-    g.setColour(Colour(0xff333333));
+    g.setColour(COLOR_VIEWPORT_TEXT());
     auto mode = (LFO::Mode)editor.audioProcessor.params.getRawParameterValue(lfoid + "_mode")->load();
     auto modestr = mode == LFO::Mode::Trigger ? "Trig"
         : mode == LFO::Mode::Sync ? "Sync"
@@ -280,8 +274,20 @@ void LFODisplay::paint(juce::Graphics& g)
 
 void LFODisplay::resized()
 {
-    viewBounds = getLocalBounds().toFloat().withTrimmedBottom(globals::KNOB_HEIGHT).withTrimmedTop(15.f);
-    display->setBounds(viewBounds.toNearestInt());
+    auto bounds = getLocalBounds().toFloat();
+    viewBounds = getLocalBounds()
+        .withTrimmedTop(32 + 4)
+        .withTrimmedBottom(globals::KNOB_HEIGHT).reduced(5).toFloat();
+    display->setBounds(viewBounds.withTrimmedTop(20.f).toNearestInt());
+
+    float gap = 2.f;
+    auto modw = (bounds.getWidth() - gap * 5.f) / 4.f;
+    auto modh = 33.f;
+    for (int i = 0; i < globals::MAX_ENVELOPES; ++i) {
+        auto& lfo = lfos[i];
+        lfo->setBounds((int)(bounds.getX() + i * gap + i * modw + gap), (int)(bounds.getY() + gap - 1.f), (int)modw, (int)modh);
+    }
+
     toggleUIComponents();
 }
 
@@ -299,8 +305,8 @@ void LFODisplay::toggleUIComponents()
     riseSync->setVisible(isSync);
 
     auto bounds = getLocalBounds();
-    auto knobw = int(globals::KNOB_WIDTH * 0.9f);
-    auto knobh = int(globals::KNOB_HEIGHT * 0.9f);
+    auto knobw = globals::KNOB_WIDTH;
+    auto knobh = globals::KNOB_HEIGHT;
     smooth->setBounds(bounds.getCentreX() + knobw, bounds.getBottom() - globals::KNOB_HEIGHT, knobw, knobh);
     rise->setBounds(bounds.getCentreX(), bounds.getBottom() - globals::KNOB_HEIGHT, knobw, knobh);
     delay->setBounds(bounds.getCentreX() - knobw, bounds.getBottom() - globals::KNOB_HEIGHT, knobw, knobh);
@@ -310,7 +316,7 @@ void LFODisplay::toggleUIComponents()
     riseSync->setBounds(rise->getBounds());
     rateSync->setBounds(rate->getBounds());
 
-    gridBtn.setBounds((int)viewBounds.reduced(5.f).getX(), (int)viewBounds.reduced(5.f).getY() - 16, 40, 15);
+    gridBtn.setBounds((int)viewBounds.reduced(5.f).getX(), (int)viewBounds.reduced(5.f).getY(), 40, 15);
     rotLeftBtn.setBounds(gridBtn.getBounds().withX(gridBtn.getRight() + 5).withWidth(15));
     rotRightBtn.setBounds(rotLeftBtn.getBounds().withX(rotLeftBtn.getRight() + 5));
     roundBtn.setBounds(rotRightBtn.getBounds().withX(rotRightBtn.getRight() + 10).withWidth(25));

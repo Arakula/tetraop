@@ -19,6 +19,7 @@
 #include "ui/panels/GlobalsPanel.h"
 #include "ui/panels/FmMatrixPanel.h"
 #include "ui/panels/EnvDisplay.h"
+#include "ui/panels/LfoDisplay.h"
 #include "ui/CustomLookAndFeel.h"
 //#include "ui/widgets/Modulator.h"
 //#include "ui/widgets/Macro.h"
@@ -134,6 +135,7 @@ public:
     std::unique_ptr<GlobalsPanel> globals;
     std::unique_ptr<FmMatrixPanel> fmMatrix;
     std::unique_ptr<EnvDisplay> envelopes;
+    std::unique_ptr<LFODisplay> lfos;
     std::unique_ptr<AboutDialog> aboutDialog;
 
     std::unique_ptr<CustomLookAndFeel> customLookAndFeel;

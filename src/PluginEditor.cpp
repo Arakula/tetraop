@@ -91,6 +91,10 @@ void TetraOPAudioProcessorEditor::buildUI()
     envelopes->setBounds(Rectangle<int>(oscA->getX() + 75, oscD->getBottom() + PANEL_PAD, oscA->getWidth() - 75, 10)
         .withBottom(getBottom() - PANEL_PAD));
 
+    lfos = std::make_unique<LFODisplay>(*this);
+    addAndMakeVisible(lfos.get());
+    lfos->setBounds(envelopes->getBounds().translated(envelopes->getWidth() + PANEL_PAD, 0));
+
     globals = std::make_unique<GlobalsPanel>(*this);
     addAndMakeVisible(globals.get());
     globals->setVisible(!audioProcessor.fmMatrixVisible);

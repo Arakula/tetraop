@@ -19,13 +19,6 @@ EnvDisplay::EnvDisplay(TetraOPAudioProcessorEditor& e)
         envs.push_back(std::move(env));
     }
 
-    delay->yoffset -= 2;
-    attack->yoffset -= 2;
-    hold->yoffset -= 2;
-    decay->yoffset -= 2;
-    sustain->yoffset -= 2;
-    release->yoffset -= 2;
-
     addAndMakeVisible(delay.get());
     addAndMakeVisible(attack.get());
     addAndMakeVisible(hold.get());
@@ -227,7 +220,7 @@ void EnvDisplay::paint(juce::Graphics& g)
     g.setColour(COLOR_PANEL().darker(0.6f));
     g.fillRect(getLocalBounds());
     g.setColour(COLOR_BEVEL());
-    g.fillRect(0, 0, getWidth(), viewportBounds.getBottom());
+    g.fillRect(viewportBounds);
 
     if (envid.isEmpty() || !isVisible()) return;
     isActive = editor.audioProcessor.modulation->modulators[envid].active;
@@ -414,12 +407,12 @@ void EnvDisplay::resized()
         .withTrimmedTop(32 + 4)
         .withTrimmedBottom(globals::KNOB_HEIGHT).reduced(5).toNearestInt();
 
-    float gap = 4.f;
-    auto modw = (bounds.getWidth() - gap * 3.f) / 4.f;
+    float gap = 2.f;
+    auto modw = (bounds.getWidth() - gap * 5.f) / 4.f;
     auto modh = 33.f;
     for (int i = 0; i < globals::MAX_ENVELOPES; ++i) {
         auto& env = envs[i];
-        env->setBounds((int)(bounds.getX() + i * gap + i * modw), (int)bounds.getY() + gap - 1.f, (int)modw, (int)modh);
+        env->setBounds((int)(bounds.getX() + i * gap + i * modw + gap), (int)(bounds.getY() + gap - 1.f), (int)modw, (int)modh);
     }
 
     toggleUIComponents();
@@ -441,9 +434,8 @@ void EnvDisplay::toggleUIComponents()
         ? editor.audioProcessor.params.getRawParameterValue(envid + "_mode")->load()
         : 0;
 
-    auto factor = mode == 3 ? 0.75f : 0.9f;
-    auto knobw = int(globals::KNOB_WIDTH * factor);
-    auto knobh = int(globals::KNOB_HEIGHT * 0.9f);
+    auto knobw = int(globals::KNOB_WIDTH);
+    auto knobh = int(globals::KNOB_HEIGHT);
     int starty = bounds.getBottom() - globals::KNOB_HEIGHT;
 
     delay->radius = mode == 3 ? 11.f : 14.f;

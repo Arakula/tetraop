@@ -932,8 +932,14 @@ void Modulation::setChannelPressure(float value)
 void Modulation::setSelectedMod(const juce::String& id)
 {
     selectedMod = id;
-    if (id.startsWith("env") || id.startsWith("lfo") || id.startsWith("rnd")) {
-        audioProcessor.displayMod = id;
+    if (id.startsWith("env")) {
+        audioProcessor.displayEnv = id;
+    }
+    if (id.startsWith("lfo")) {
+        audioProcessor.displayLfo = id;
+    }
+    if (id.startsWith("rnd")) {
+        // TODO
     }
     UIDirty.store(true);
 }

@@ -76,7 +76,8 @@ public:
     float scale = 1.f;
     int selectedTab = 0;
     bool fmMatrixVisible = false;
-    String displayMod;
+    String displayEnv = "env1";
+    String displayLfo = "lfo1";
 
     juce::AudioProcessorValueTreeState params;
     juce::UndoManager undoManager;
