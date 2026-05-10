@@ -277,12 +277,12 @@ void LFODisplay::resized()
     auto bounds = getLocalBounds().toFloat();
     viewBounds = getLocalBounds()
         .withTrimmedTop(32 + 4)
-        .withTrimmedBottom(globals::KNOB_HEIGHT).reduced(5).toFloat();
+        .withTrimmedBottom(globals::KNOB_HEIGHT - 10).reduced(2,5).toFloat();
     display->setBounds(viewBounds.withTrimmedTop(20.f).toNearestInt());
 
     float gap = 2.f;
     auto modw = (bounds.getWidth() - gap * 5.f) / 4.f;
-    auto modh = 33.f;
+    auto modh = 37.f;
     for (int i = 0; i < globals::MAX_ENVELOPES; ++i) {
         auto& lfo = lfos[i];
         lfo->setBounds((int)(bounds.getX() + i * gap + i * modw + gap), (int)(bounds.getY() + gap - 1.f), (int)modw, (int)modh);

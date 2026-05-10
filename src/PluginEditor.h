@@ -20,9 +20,10 @@
 #include "ui/panels/FmMatrixPanel.h"
 #include "ui/panels/EnvDisplay.h"
 #include "ui/panels/LfoDisplay.h"
+#include "ui/panels/MacrosPanel.h"
 #include "ui/CustomLookAndFeel.h"
 //#include "ui/widgets/Modulator.h"
-//#include "ui/widgets/Macro.h"
+#include "ui/widgets/Macro.h"
 
 using namespace globals;
 
@@ -119,7 +120,7 @@ public:
     void showAboutDialog();
     void showParamContextMenu(ModulatedParam* param);
     // void showModContextMenu(Modulator* mod);
-    // void showMacroRename(Macro* macro);
+    void showMacroRename(Macro* macro);
 
     void paint(Graphics& g) override;
     void mouseUp(const juce::MouseEvent& e) override;
@@ -136,6 +137,7 @@ public:
     std::unique_ptr<FmMatrixPanel> fmMatrix;
     std::unique_ptr<EnvDisplay> envelopes;
     std::unique_ptr<LFODisplay> lfos;
+    std::unique_ptr<MacrosPanel> macros;
     std::unique_ptr<AboutDialog> aboutDialog;
 
     std::unique_ptr<CustomLookAndFeel> customLookAndFeel;

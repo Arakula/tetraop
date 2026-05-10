@@ -86,9 +86,14 @@ void TetraOPAudioProcessorEditor::buildUI()
     addAndMakeVisible(filter2.get());
     filter2->setBounds(filter1->getBounds().translated(0, filter1->getHeight() + PANEL_PAD));
 
+    macros = std::make_unique<MacrosPanel>(*this);
+    addAndMakeVisible(macros.get());
+    macros->setBounds(Rectangle<int>(oscA->getX(), oscD->getBottom() + PANEL_PAD, 75, 10)
+        .withBottom(getBottom() - PANEL_PAD));
+
     envelopes = std::make_unique<EnvDisplay>(*this);
     addAndMakeVisible(envelopes.get());
-    envelopes->setBounds(Rectangle<int>(oscA->getX() + 75, oscD->getBottom() + PANEL_PAD, oscA->getWidth() - 75, 10)
+    envelopes->setBounds(Rectangle<int>(oscA->getX() + 75 + PANEL_PAD, oscD->getBottom() + PANEL_PAD, oscA->getWidth() - 75 - PANEL_PAD, 10)
         .withBottom(getBottom() - PANEL_PAD));
 
     lfos = std::make_unique<LFODisplay>(*this);
@@ -579,24 +584,23 @@ void TetraOPAudioProcessorEditor::showModContextMenu(Modulator* mod)
     }
 */
 
-/*
 void TetraOPAudioProcessorEditor::showMacroRename(Macro* macro)
 {
     (void)macro;
-    auto paramPos = getLocalPoint(macro, macro->getLocalBounds().getCentre());
-    textInputOverlay = std::make_unique<TextInput>(paramPos.x, paramPos.y, [this, macro](String text)
-        {
-            if (text.isEmpty()) {
-                text = String("Macro") + String(macro->index);
-            }
-            audioProcessor.modulation->macroNames[macro->index] = text;
-            removeChildComponent(textInputOverlay.get());
-        }, [this]()
-            {
-                removeChildComponent(textInputOverlay.get());
-            });
-        textInputOverlay->setBounds({ 0, 0, getWidth(), getHeight() });
-        addAndMakeVisible(textInputOverlay.get());
-        textInputOverlay->focus();
-    }
-*/
+    //auto paramPos = getLocalPoint(macro, macro->getLocalBounds().getCentre());
+    //textInputOverlay = std::make_unique<TextInput>(paramPos.x, paramPos.y, [this, macro](String text)
+    //    {
+    //        if (text.isEmpty()) {
+    //            text = String("Macro") + String(macro->index);
+    //        }
+    //        audioProcessor.modulation->macroNames[macro->index] = text;
+    //        removeChildComponent(textInputOverlay.get());
+    //    }, [this]()
+    //        {
+    //            removeChildComponent(textInputOverlay.get());
+    //        });
+    //    textInputOverlay->setBounds({ 0, 0, getWidth(), getHeight() });
+    //    addAndMakeVisible(textInputOverlay.get());
+    //    textInputOverlay->focus();
+    //}
+}

@@ -99,10 +99,10 @@ void UIUtils::drawTriangle(Graphics& g, Rectangle<float> bounds, int direction, 
     g.fillPath(p);
 }
 
-void UIUtils::drawPanel(Graphics& g, Rectangle<float> bounds, bool drawHeader)
+void UIUtils::drawPanel(Graphics& g, Rectangle<float> bounds, bool drawHeader, bool darker)
 {
     bounds = bounds.translated(0.f, 0.f);
-	g.setColour(COLOR_PANEL());
+	g.setColour(COLOR_PANEL().darker(darker ? 0.6f : 0.f));
 	g.fillRoundedRectangle(bounds, PANEL_CORNER);
 
     g.setColour(Colours::white.withAlpha(0.1f));

@@ -4,6 +4,7 @@
 #include "../../Globals.h"
 #include "../widgets/Rotary.h"
 #include "../widgets/LayoutPicker.h"
+#include "../widgets/Macro.h"
 
 class TetraOPAudioProcessorEditor;
 using namespace globals;
@@ -14,7 +15,7 @@ class MacrosPanel
 {
 public:
 
-	std::unique_ptr<LayoutPicker> layout;
+    std::vector<std::unique_ptr<Macro>> macros;
 
     MacrosPanel(TetraOPAudioProcessorEditor& e);
     ~MacrosPanel() override;

@@ -17,6 +17,7 @@ void ModulatorsPanel::parameterChanged(const juce::String&, float)
 
 void ModulatorsPanel::paint(Graphics& g)
 {
+	(void)g;
 }
 
 void ModulatorsPanel::resized()

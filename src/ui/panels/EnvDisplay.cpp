@@ -405,11 +405,11 @@ void EnvDisplay::resized()
     auto bounds = getLocalBounds().toFloat();
     viewportBounds = getLocalBounds()
         .withTrimmedTop(32 + 4)
-        .withTrimmedBottom(globals::KNOB_HEIGHT).reduced(5).toNearestInt();
+        .withTrimmedBottom(globals::KNOB_HEIGHT - 10).reduced(2,5).toNearestInt();
 
     float gap = 2.f;
     auto modw = (bounds.getWidth() - gap * 5.f) / 4.f;
-    auto modh = 33.f;
+    auto modh = 37.f;
     for (int i = 0; i < globals::MAX_ENVELOPES; ++i) {
         auto& env = envs[i];
         env->setBounds((int)(bounds.getX() + i * gap + i * modw + gap), (int)(bounds.getY() + gap - 1.f), (int)modw, (int)modh);

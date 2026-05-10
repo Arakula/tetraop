@@ -1,36 +1,27 @@
 #include "Macro.h"
 #include "../../PluginEditor.h"
 
-Macro::Macro(RipplerAudioProcessorEditor& e, int index)
+Macro::Macro(TetraOPAudioProcessorEditor& e, int index)
 	: index(index)
     , editor(e)
-    , theme(e.theme)
 	, macroId("macro" + juce::String(index+1))
     , macroIdx(index)
 {
 	rotary = std::make_unique<Rotary>(editor, macroId, "Macro" + juce::String(index + 1), Rotary::Percent);
-	rotary->setName ("rotary");
-	addAndMakeVisible(rotary.get());
-	rotary->radius = rotary->radius * 0.99f; // force image to re-render using the new rotary width/height
-	rotary->yoffset -= 3;
-	rotary->labelSize = 13.f;
-	rotary->drawValue = false;
-	rotary->drawBase = false;
+	rotary->setSmall();
 	rotary->drawTextLabel = false;
-	rotary->mod_offset = 3.f;
-	rotary->mod_value_offset = 3.f;
+	addAndMakeVisible(rotary.get());
 
-	nameBtn.setName ("nameBtn");
 	addAndMakeVisible(nameBtn);
 	nameBtn.setAlpha(0.f);
 	nameBtn.onClick = [this]
 		{
-            editor.audioProcessor.undomgr->createUndo();
+            //editor.audioProcessor.undomgr->createUndo();
 			editor.showMacroRename(this);
 		};
 
 	startTimerHz(30);
-	editor.registerModParam(rotary.get(), RipplerAudioProcessorEditor::kMacro);
+	editor.registerModParam(rotary.get());
 }
 
 Macro::~Macro()
@@ -99,32 +90,27 @@ void Macro::paint(juce::Graphics& g)
 {
 	// draw background
 	auto bounds = getLocalBounds().toFloat().reduced(0.5f);
-	g.setColour(theme.COLOR_SHADE_MID());
+	g.setColour(Colour(0xff333333));
 	juce::Path p;
 	p.addRoundedRectangle(bounds.getX(), bounds.getY(), lpad, bounds.getHeight(), 2.f, 2.f, true, false, true, false);
 	g.fillPath(p);
 
-	if (selected && theme.IS_LIGHT_THEME) {
-		g.setColour(theme.COLOR_ACTIVE().withAlpha(0.5f));
-		g.fillRoundedRectangle(bounds, 2.f);
-	}
-
 	// draw outline
-	g.setColour(theme.COLOR_SHADE_HIGH().withAlpha(0.5f));
+	g.setColour(Colour(0xff333333));
 	g.drawVerticalLine((int)(bounds.getX() + lpad), bounds.getY(), bounds.getBottom());
 	g.setColour(juce::Colour(selected
-		? theme.COLOR_ACTIVE().withMultipliedBrightness(theme.IS_LIGHT_THEME ? 0.5f : 1.f)
-		: theme.COLOR_SHADE_HIGH()));
+		? COLOR_ACTIVE().withMultipliedBrightness(1.f)
+		: Colour(0xff333333)));
 	g.drawRoundedRectangle(bounds, 2.f, 1.f);
 
 	// draw handle
 	UIUtils::drawHandle(g, bounds
 		.withTrimmedRight(bounds.getWidth() - lpad)
-		.withHeight(16.f).translated(3.f, 3.f), theme.COLOR_TEXT_BRIGHT());
+		.withHeight(16.f).translated(3.f, 3.f), COLOR_VIEWPORT_TEXT());
 
 	// draw connections number
 	g.setFont(juce::FontOptions(10.f));
-	g.setColour(theme.COLOR_TEXT_DIM());
+	g.setColour(COLOR_VIEWPORT_TEXT());
 	g.drawFittedText(juce::String(connections), bounds
 		.withTrimmedRight(bounds.getWidth() - lpad)
 		.withY(20.f)
@@ -132,7 +118,7 @@ void Macro::paint(juce::Graphics& g)
 		juce::Justification::centred, 1);
 
 	// draw text
-	float fontSize = 13.0f;
+	float fontSize = 14.0f;
 	juce::String text = macroName;
 	auto area = nameBtn.getBounds();
 	juce::Font font(juce::FontOptions(13.f));
@@ -144,7 +130,7 @@ void Macro::paint(juce::Graphics& g)
 	}
 
 	g.setFont(font);
-	g.setColour(connections ? theme.COLOR_TEXT_BRIGHT() : (theme.COLOR_TEXT_BRIGHT()).withAlpha(theme.IS_LIGHT_THEME ? .6f : 0.3f));
+	g.setColour(connections ? COLOR_VIEWPORT_TEXT() : (COLOR_VIEWPORT_TEXT()).withAlpha(0.3f));
 	g.drawText(text, (int)area.getX(), (int)area.getY(), (int)area.getWidth(), (int)area.getHeight(), juce::Justification::centred, false);
 }
 
@@ -152,4 +138,8 @@ void Macro::paint(juce::Graphics& g)
 
 void Macro::resized()
 {
+	auto bounds = getLocalBounds();
+
+	rotary->setBounds(bounds.withTrimmedLeft(lpad).toNearestInt());
+	nameBtn.setBounds(rotary->getBounds().withHeight(20.f).withBottomY(rotary->getBottom()));
 }

@@ -4,10 +4,9 @@
 #include "../UIUtils.h"
 #include "../ModulatedParam.h"
 #include "../ModulationDragSource.h"
-#include "../../Theme.h"
 #include "Rotary.h"
 
-class RipplerAudioProcessorEditor;
+class TetraOPAudioProcessorEditor;
 
 class Macro
     : public juce::Component
@@ -17,7 +16,7 @@ class Macro
 public:
     std::unique_ptr<Rotary>rotary;
 
-    Macro(RipplerAudioProcessorEditor& e, int index);
+    Macro(TetraOPAudioProcessorEditor& e, int index);
     ~Macro() override;
 
     void timerCallback() override;
@@ -31,8 +30,7 @@ public:
 
     int index;
 private:
-    RipplerAudioProcessorEditor& editor;
-    Theme& theme;
+    TetraOPAudioProcessorEditor& editor;
     juce::String macroId;
     juce::String macroIdx;
     bool selected = false;
