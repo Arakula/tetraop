@@ -115,10 +115,14 @@ void TetraOPAudioProcessorEditor::buildUI()
     fmMatrix->setVisible(audioProcessor.fmMatrixVisible);
     fmMatrix->setBounds(globals->getBounds());
 
-
     tmp = std::make_unique<TMP>(audioProcessor);
     addAndMakeVisible(tmp.get());
     tmp->setBounds(100, 20, 100, 20);
+
+    dragDropOverlay = std::make_unique<DragDropOverlay>();
+    addChildComponent (dragDropOverlay.get());
+    dragDropOverlay->setInterceptsMouseClicks(false, false);
+    dragDropOverlay->setBounds(0, 0, getWidth(), getHeight());
 
     juce::Desktop::getInstance().addGlobalMouseListener(this);
     audioProcessor.modulation->UIDirty.store(true); // refresh connections on startup
@@ -161,7 +165,6 @@ void TetraOPAudioProcessorEditor::loadTheme() const
 
 void TetraOPAudioProcessorEditor::timerCallback()
 {
-    /*
     if (isDragDropModulation) {
         dragDropOverlay->repaint();
     }
@@ -174,7 +177,7 @@ void TetraOPAudioProcessorEditor::timerCallback()
         if (modulatedParams.find(conn.dst) != modulatedParams.end()) {
             auto param = modulatedParams[conn.dst];
             if (param->isShowing()) {
-                auto val = audioProcessor.modulation->getModulatedNorm(conn.dst);
+                auto val = audioProcessor.modulation->getModulatedNormSafe(conn.dst);
                 if (param->modValue != val || param->voiceActive != voiceActive) { // save on repaints
                     param->modValue = val;
                     param->voiceActive = voiceActive;
@@ -186,14 +189,12 @@ void TetraOPAudioProcessorEditor::timerCallback()
 
     // handle new modulation connects or disconnects
     // also handle selected modulator change
-    if (audioProcessor.modulation->UIDirty.load()) {
-        audioProcessor.modulation->UIDirty.store(false);
+    if (audioProcessor.modulation->UIDirty.exchange(false)) {
+        //if (matrixPanel->isVisible()) {
+        //    matrixPanel->setConnections(connections);
+        //}
 
-        if (matrixPanel->isVisible()) {
-            matrixPanel->setConnections(connections);
-        }
-
-        std::unordered_set<std::string> modulated;
+        std::unordered_set<juce::String> modulated;
         for (auto& conn : connections) {
             modulated.insert(conn.dst);
         }
@@ -236,14 +237,13 @@ void TetraOPAudioProcessorEditor::timerCallback()
             }
         }
     }
-    */
 }
 
 void TetraOPAudioProcessorEditor::startDragDrop(String modID, juce::Component* component)
 {
     (void)modID;
     (void)component;
-    /*
+
     auto modColor = modID.startsWith("env")
         ? COLOR_ENVELOPE()
         : modID.startsWith("lfo")
@@ -257,15 +257,14 @@ void TetraOPAudioProcessorEditor::startDragDrop(String modID, juce::Component* c
     isDragDropModulation = true;
     dragDropModID = modID;
     dragDropOverlay->setVisible(true);
-    auto centre = component->getLocalBounds().getCentre();
-    dragDropOverlay->arrowStart = dragDropOverlay->getLocalPoint(component, centre).toFloat();
+    dragDropOverlay->arrowStart = dragDropOverlay->getLocalPoint(component, Point<int>{8, 8}).toFloat();
     dragDropOverlay->arrowEnd = dragDropOverlay->arrowStart;
     dragDropOverlay->arrowColor = modColor;
 
     auto connections = audioProcessor.modulation->getConnections();
-    std::unordered_set<std::string> modulated;
+    std::unordered_set<juce::String> modulated;
     for (auto& conn : connections) {
-        if (conn.src == modID.toStdString()) {
+        if (conn.src == modID) {
             modulated.insert(conn.dst);
         }
     }
@@ -277,7 +276,6 @@ void TetraOPAudioProcessorEditor::startDragDrop(String modID, juce::Component* c
             param->repaint();
         }
     }
-    */
 }
 
 /*
@@ -285,8 +283,6 @@ void TetraOPAudioProcessorEditor::startDragDrop(String modID, juce::Component* c
 */
 void TetraOPAudioProcessorEditor::mouseUp(const juce::MouseEvent& e)
 {
-    (void)e;
-    /*
     if (isDragDropModulation) {
         isDragDropModulation = false;
         dragDropOverlay->setVisible(false);
@@ -312,7 +308,6 @@ void TetraOPAudioProcessorEditor::mouseUp(const juce::MouseEvent& e)
         audioProcessor.modulation->setSelectedMod(dragDropModID.toStdString());
         dragDropModID = "";
     }
-    */
 }
 
 /*
@@ -321,8 +316,6 @@ void TetraOPAudioProcessorEditor::mouseUp(const juce::MouseEvent& e)
 */
 void TetraOPAudioProcessorEditor::quickConnect(String paramId)
 {
-    (void)paramId;
-    /*
     if (!modulatedParams.count(paramId.toStdString()))
         return;
 
@@ -344,7 +337,6 @@ void TetraOPAudioProcessorEditor::quickConnect(String paramId)
     audioProcessor.params.getParameter(modSliderId)->setValueNotifyingHost(0.5f); // 0.5f norm is zero value
     auto& param = modulatedParams[paramId.toStdString()];
     param->modId = modSliderId;
-    */
 }
 
 void TetraOPAudioProcessorEditor::setMouseHoverParam(ModulatedParam* param)

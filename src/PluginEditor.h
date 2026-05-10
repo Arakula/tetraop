@@ -22,8 +22,8 @@
 #include "ui/panels/LfoDisplay.h"
 #include "ui/panels/MacrosPanel.h"
 #include "ui/panels/ModulatorsPanel.h"
+#include "ui/panels/DragDropOverlay.h"
 #include "ui/CustomLookAndFeel.h"
-//#include "ui/widgets/Modulator.h"
 #include "ui/widgets/Macro.h"
 
 using namespace globals;
@@ -144,7 +144,7 @@ public:
 
     std::unique_ptr<CustomLookAndFeel> customLookAndFeel;
     bool isDragDropModulation = false;
-    //std::unique_ptr<DragDropOverlay> dragDropOverlay;
+    std::unique_ptr<DragDropOverlay> dragDropOverlay;
 
     //std::unique_ptr<FloatInput> floatInputOverlay;
     //std::unique_ptr<TextInput> textInputOverlay;
@@ -158,7 +158,7 @@ public:
     float resizeRatio = 1.f;
 private:
     String dragDropModID = "";
-    std::map<std::string, ModulatedParam*> modulatedParams;
+    std::map<juce::String, ModulatedParam*> modulatedParams;
     std::unique_ptr<MidiKeyboardComponent> keyboardComponent;
     ModulatedParam* mouseHoverParam = nullptr;
 

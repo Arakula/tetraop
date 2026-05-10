@@ -66,7 +66,7 @@ public:
     float osrate = 88200.f; // oversampled srate
     float iosrate = 1.f / 44100.f; // inverse oversampled srate
     double beatsPerSecond = 1.0;
-    double secondsPerBeat = 0.01;
+    double secondsPerBeat = 0.5;
     double timeInSeconds = 0.0;
     bool playing = false;
     int currBlockSize = 128;

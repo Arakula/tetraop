@@ -36,7 +36,7 @@ namespace globals {
 	constexpr float KNOB_RADIUS_SM = 10.f;
 	constexpr float KNOB_YOFFSET = -2.f;
 	constexpr float KNOB_YOFFSET_SM = -6.f;
-	constexpr float KNOB_MOD_OFFSET = 2.f;
+	constexpr float KNOB_MOD_OFFSET = 8.f;
 	constexpr float KNOB_MOD_THICKNESS = 2.f;
     constexpr float KNOB_MODVAL_RADIUS = 1.5f;
     constexpr float KNOB_MODVAL_OFFSET = 2.f;
