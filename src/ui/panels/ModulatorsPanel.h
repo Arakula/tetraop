@@ -4,6 +4,7 @@
 #include "../../Globals.h"
 #include "../widgets/Rotary.h"
 #include "../widgets/LayoutPicker.h"
+#include "../widgets/Modulator.h"
 
 class TetraOPAudioProcessorEditor;
 using namespace globals;
@@ -14,7 +15,11 @@ class ModulatorsPanel
 {
 public:
 
-	std::unique_ptr<LayoutPicker> layout;
+    std::unique_ptr<Modulator> vel;
+    std::unique_ptr<Modulator> key;
+    std::unique_ptr<Modulator> at;
+    std::unique_ptr<Modulator> rand;
+    std::unique_ptr<Modulator> mwheel;
 
     ModulatorsPanel(TetraOPAudioProcessorEditor& e);
     ~ModulatorsPanel() override;

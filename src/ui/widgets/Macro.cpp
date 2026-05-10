@@ -140,6 +140,6 @@ void Macro::resized()
 {
 	auto bounds = getLocalBounds();
 
-	rotary->setBounds(bounds.withTrimmedLeft(lpad).toNearestInt());
-	nameBtn.setBounds(rotary->getBounds().withHeight(20.f).withBottomY(rotary->getBottom()));
+	rotary->setBounds(bounds.withTrimmedLeft((int)lpad));
+	nameBtn.setBounds(rotary->getBounds().withHeight(20).withBottomY(rotary->getBottom()));
 }

@@ -14,7 +14,7 @@ EnvDisplay::EnvDisplay(TetraOPAudioProcessorEditor& e)
     release = std::make_unique<Rotary>(editor, "env1_rel", "Rel", Rotary::secondsMillis);
 
     for (int i = 0; i < globals::MAX_ENVELOPES; ++i) {
-        auto env = std::make_unique<Modulator>(editor, juce::String("env") + juce::String(i + 1), true);
+        auto env = std::make_unique<Modulator>(editor, juce::String("env") + juce::String(i + 1));
         addAndMakeVisible(env.get());
         envs.push_back(std::move(env));
     }
@@ -414,6 +414,9 @@ void EnvDisplay::resized()
         auto& env = envs[i];
         env->setBounds((int)(bounds.getX() + i * gap + i * modw + gap), (int)(bounds.getY() + gap - 1.f), (int)modw, (int)modh);
     }
+
+    auto& env = envs[MAX_ENVELOPES - 1];
+    env->setBounds(env->getBounds().withRight(int(bounds.getRight() - (int)gap))); // visual fix
 
     toggleUIComponents();
 }

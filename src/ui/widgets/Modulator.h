@@ -19,7 +19,7 @@ public:
     bool ismodwheel = false;
     bool drawoutline = true;
 
-    Modulator(TetraOPAudioProcessorEditor& e, juce::String modId, bool isDark);
+    Modulator(TetraOPAudioProcessorEditor& e, juce::String modId);
     ~Modulator() override;
 
     void timerCallback() override;
@@ -41,7 +41,6 @@ public:
 private:
     TetraOPAudioProcessorEditor& editor;
     int modidx = 0;
-    bool isDark;
     float lpad = 20.f;
     bool selected = false;
     uint64_t version = 0; // display id of the modulator, used for LFOs and RNDs

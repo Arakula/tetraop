@@ -29,7 +29,6 @@ void MacrosPanel::paint(Graphics& g)
 void MacrosPanel::resized()
 {
     auto bounds = getLocalBounds().toFloat();
-    DBG(bounds.getHeight());
 
     float gap = 2.f;
     auto modw = bounds.getWidth() - gap * 2.f;

@@ -1,10 +1,9 @@
 #include "Modulator.h"
 #include "../../PluginEditor.h"
 
-Modulator::Modulator(TetraOPAudioProcessorEditor& e, juce::String modId, bool isDark)
+Modulator::Modulator(TetraOPAudioProcessorEditor& e, juce::String modId)
     : modId(modId)
     , editor(e)
-    , isDark(isDark)
 {
     startTimerHz(30);
     isenv = modId.startsWith("env");

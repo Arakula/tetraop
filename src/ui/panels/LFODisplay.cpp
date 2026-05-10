@@ -12,7 +12,7 @@ LFODisplay::LFODisplay(TetraOPAudioProcessorEditor& e)
     juce::Desktop::getInstance().addGlobalMouseListener(this);
 
     for (int i = 0; i < globals::MAX_LFOS; ++i) {
-        auto lfo = std::make_unique<Modulator>(editor, juce::String("lfo") + juce::String(i + 1), true);
+        auto lfo = std::make_unique<Modulator>(editor, juce::String("lfo") + juce::String(i + 1));
         addAndMakeVisible(lfo.get());
         lfos.push_back(std::move(lfo));
     }
@@ -283,10 +283,13 @@ void LFODisplay::resized()
     float gap = 2.f;
     auto modw = (bounds.getWidth() - gap * 5.f) / 4.f;
     auto modh = 37.f;
-    for (int i = 0; i < globals::MAX_ENVELOPES; ++i) {
+    for (int i = 0; i < globals::MAX_LFOS; ++i) {
         auto& lfo = lfos[i];
         lfo->setBounds((int)(bounds.getX() + i * gap + i * modw + gap), (int)(bounds.getY() + gap - 1.f), (int)modw, (int)modh);
     }
+
+    auto& env = lfos[MAX_LFOS - 1];
+    env->setBounds(env->getBounds().withRight(int(bounds.getRight() - gap))); // visual fix
 
     toggleUIComponents();
 }
