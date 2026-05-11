@@ -126,13 +126,16 @@ void TetraOPAudioProcessorEditor::buildUI()
 
     juce::Desktop::getInstance().addGlobalMouseListener(this);
     audioProcessor.modulation->UIDirty.store(true); // refresh connections on startup
-
-    toggleFmMatrix(); // REMOVE ME
 }
 
 void TetraOPAudioProcessorEditor::toggleFmMatrix()
 {
     audioProcessor.fmMatrixVisible = !audioProcessor.fmMatrixVisible;
+    toggleUIComponents();
+}
+
+void TetraOPAudioProcessorEditor::toggleUIComponents()
+{
     globals->setVisible(!audioProcessor.fmMatrixVisible);
     fmMatrix->setVisible(audioProcessor.fmMatrixVisible);
 }
@@ -384,10 +387,9 @@ void TetraOPAudioProcessorEditor::selectTab(int tab)
     repaint();
 }
 
-void TetraOPAudioProcessorEditor::parameterChanged(const juce::String& parameterID, float newValue)
+void TetraOPAudioProcessorEditor::parameterChanged(const juce::String&, float)
 {
-    (void)parameterID;
-    (void)newValue;
+    MessageManager::callAsync([this] { toggleUIComponents(); });
 };
 
 void TetraOPAudioProcessorEditor::paint(Graphics& g)

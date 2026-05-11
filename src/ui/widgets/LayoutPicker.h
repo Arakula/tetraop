@@ -26,13 +26,18 @@ class LayoutPicker
     , private juce::AudioProcessorValueTreeState::Listener
 {
 public:
+    TextButton editBtn{ "edit" };
+
     LayoutPicker(TetraOPAudioProcessorEditor& p);
     ~LayoutPicker() override;
     void parameterChanged(const juce::String& parameterID, float value) override;
 
+    void mouseEnter(const MouseEvent& e) override;
+    void mouseExit(const MouseEvent& e) override;
     void mouseDown(const MouseEvent& e) override;
 	void mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override;
 
+    void resized() override;
     void paint(Graphics& g) override;
 
 private:

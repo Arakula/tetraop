@@ -117,6 +117,7 @@ public:
     void quickConnect(String paramId);
     void setMouseHoverParam(ModulatedParam* param);
     void toggleFmMatrix();
+    void toggleUIComponents();
     void selectTab(int tab);
     void showAboutDialog();
     void showParamContextMenu(ModulatedParam* param);

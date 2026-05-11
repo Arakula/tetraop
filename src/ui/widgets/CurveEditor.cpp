@@ -416,29 +416,34 @@ void CurveEditor::paint(juce::Graphics& g)
     }
 
     if (drawSeek) {
-        juce::Path seek;
-        auto seekwidth = 30;
         auto start = seekPos * bounds.getWidth();
-        int xStart = std::max<int>(0, (int)(start - seekwidth));
         int xEnd = std::min<int>((int)start, (int)pixels - 1);
 
-        auto points = std::vector<juce::Point<float>>{};
-        for (int x = xStart; x < xEnd; ++x) {
-            float norm = x / (bounds.getWidth() - 1); // [0,1] across bounds
-            float px = bounds.getX() + x;
-            float py = bounds.getY() + bounds.getHeight() * (1 - pattern->get_y_at(norm));
-            points.push_back({ px, py });
-        }
-
-        if (points.size()) {
-            juce::Colour c = juce::Colour(color).brighter(1.0f);
-            for (int i = 0; i < int (points.size()) - 1; ++i) {
-                g.setColour(c.withAlpha((i + 1) / (float)points.size()));
-                auto& p1 = points[i];
-                auto& p2 = points[i + 1];
-                g.drawLine(p1.x, p1.y, p2.x, p2.y, 2.f);
-            }
-        }
+        g.setColour(COLOR_LFO().withAlpha(0.5f));
+        g.drawVerticalLine((int)bounds.getX() + xEnd, bounds.getY(), bounds.getBottom());
+        //juce::Path seek;
+        //auto seekwidth = 30;
+        //auto start = seekPos * bounds.getWidth();
+        //int xStart = std::max<int>(0, (int)(start - seekwidth));
+        //int xEnd = std::min<int>((int)start, (int)pixels - 1);
+        //
+        //auto points = std::vector<juce::Point<float>>{};
+        //for (int x = xStart; x < xEnd; ++x) {
+        //    float norm = x / (bounds.getWidth() - 1); // [0,1] across bounds
+        //    float px = bounds.getX() + x;
+        //    float py = bounds.getY() + bounds.getHeight() * (1 - pattern->get_y_at(norm));
+        //    points.push_back({ px, py });
+        //}
+        //
+        //if (points.size()) {
+        //    juce::Colour c = juce::Colour(color).brighter(1.0f);
+        //    for (int i = 0; i < int (points.size()) - 1; ++i) {
+        //        g.setColour(c.withAlpha((i + 1) / (float)points.size()));
+        //        auto& p1 = points[i];
+        //        auto& p2 = points[i + 1];
+        //        g.drawLine(p1.x, p1.y, p2.x, p2.y, 2.f);
+        //    }
+        //}
     }
 }
 

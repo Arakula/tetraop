@@ -329,6 +329,14 @@ LayoutPicker::LayoutPicker(TetraOPAudioProcessorEditor& p)
 	: editor(p)
 {
     editor.audioProcessor.params.addParameterListener("layout", this);
+
+    addChildComponent(editBtn);
+    editBtn.setAlpha(0.f);
+    editBtn.onClick = [this] 
+        { 
+            editBtn.setVisible(false);
+            editor.toggleFmMatrix(); 
+        };
 }
 
 LayoutPicker::~LayoutPicker()
@@ -336,21 +344,46 @@ LayoutPicker::~LayoutPicker()
     editor.audioProcessor.params.removeParameterListener("layout", this);
 }
 
-void LayoutPicker::parameterChanged(const juce::String&, float)
+void LayoutPicker::parameterChanged(const juce::String& pid, float val)
 {
+    if (pid == "layout" && val != 10.f)
+        editBtn.setVisible(false);
+
 	MessageManager::callAsync([this]{ repaint(); });
+}
+
+
+void LayoutPicker::mouseEnter(const MouseEvent& e)
+{
+    auto screenPos = e.getScreenPosition();
+    if (!getScreenBounds().contains(screenPos))
+        return; // ignore child components mouse enter
+
+    int layout = (int)editor.audioProcessor.params.getRawParameterValue("layout")->load();
+    if (layout == 10)
+        editBtn.setVisible(true);
+    repaint();
+}
+
+void LayoutPicker::mouseExit(const MouseEvent& e)
+{
+    auto screenPos = e.getScreenPosition();
+    if (getScreenBounds().contains(screenPos))
+        return; // ignore child components mouse exit
+
+    editBtn.setVisible(false);
+    repaint();
 }
 
 void LayoutPicker::mouseDown(const MouseEvent&)
 {
     auto parentBounds = getScreenBounds();
     juce::Rectangle<int> targetArea(
-        parentBounds.getX() + 40,
-        parentBounds.getY() + 80,
+        parentBounds.getX() + 30,
+        parentBounds.getY() + 60,
         1,
         1
     );
-
 
     auto* content = new LayoutPickerWidget();
     content->setSize(40 * 6, 40 * 2);
@@ -364,6 +397,7 @@ void LayoutPicker::mouseDown(const MouseEvent&)
         {
             auto param = editor.audioProcessor.params.getParameter("layout");
             param->setValueNotifyingHost(param->convertTo0to1((float)res));
+            if (res == 11) editor.toggleFmMatrix();
             callout.exitModalState(0);
         };
 }
@@ -374,45 +408,60 @@ void LayoutPicker::mouseWheelMove(const juce::MouseEvent& event, const juce::Mou
     (void)wheel;
 }
 
+void LayoutPicker::resized()
+{
+    auto b = getLocalBounds();
+    editBtn.setBounds(Rectangle<int>(40, 20).withX(b.getCentreX() - 20).withY(5));
+}
+
 void LayoutPicker::paint(Graphics& g)
 {
     auto b = getLocalBounds().toFloat();
     g.setColour(COLOR_BACKGROUND().darker(0.5f));
     g.fillRoundedRectangle(b.reduced(0.5f), 5.f);
 
+    if (editBtn.isVisible())
+    {
+        g.setColour(COLOR_KNOB_LABEL());
+        g.fillRoundedRectangle(editBtn.getBounds().toFloat(), 3.f);
+        g.setColour(COLOR_BACKGROUND());
+        g.setFont(16.f);
+        g.drawText("Edit", editBtn.getBounds().toFloat(), Justification::centred);
+    }
+
     auto layout = (FmMatrix::Layout)editor.audioProcessor.params.getRawParameterValue("layout")->load();
 
     switch (layout)
     {
         case FmMatrix::A_B_C_D: 
-            drawA_B_C_D(g, b, 1.f);
+            drawA_B_C_D(g, b, .75f);
             break;
         case FmMatrix::DCBA: 
-            drawDCBA(g, b, 1.f);
+            drawDCBA(g, b, 0.75f);
             break; 
         case FmMatrix::DC_BA: 
-            drawDC_BA(g, b, 1.f);
+            drawDC_BA(g, b, 0.75f);
             break; 
         case FmMatrix::DC_B_A: 
-            drawDC_B_A(g, b, 1.f);
+            drawDC_B_A(g, b, 0.75f);
             break;
         case FmMatrix::DA_DB_DC: 
-            drawDA_DB_DC(g, b, 1.f);
+            drawDA_DB_DC(g, b, 0.75f);
             break;
         case FmMatrix::BA_CA_DA: 
-            drawBA_CA_DA(g, b, 1.f);
+            drawBA_CA_DA(g, b, 0.75f);
             break;
         case FmMatrix::A_CB_DC: 
-            drawA_CB_DC(g, b, 1.f);
+            drawA_CB_DC(g, b, 0.75f);
             break;
         case FmMatrix::DC_CA_CB: 
-            drawDC_CA_CB(g, b, 1.f);
+            drawDC_CA_CB(g, b, 0.75f);
             break;
         case FmMatrix::DC_DB_BA_CA: 
-            drawDC_DB_BA_CA(g, b, 1.f);
+            drawDC_DB_BA_CA(g, b, 0.75f);
             break;
         case FmMatrix::DB_CB_BA: 
-            drawDB_CB_BA(g, b, 1.f);
+            drawDB_CB_BA(g, b, 0.75f);
             break;
         default:
             g.setFont(FontOptions(16.f));

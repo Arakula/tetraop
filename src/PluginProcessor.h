@@ -76,6 +76,7 @@ public:
     float scale = 1.f;
     int selectedTab = 0;
     bool fmMatrixVisible = false;
+    bool showRMMatrix = false;
     String displayEnv = "env1";
     String displayLfo = "lfo1";
 

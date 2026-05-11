@@ -507,9 +507,9 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
             if constexpr (ring)
             {
                 B.out = B.out * (one - rmmtx[1][1]) + B.out * lb * rmmtx[1][1];
-                if constexpr (AOn) B.out = B.out * (one - rmmtx[1][0]) + B.out * la * rmmtx[1][0];
-                if constexpr (COn) B.out = B.out * (one - rmmtx[1][2]) + B.out * lc * rmmtx[1][2];
-                if constexpr (DOn) B.out = B.out * (one - rmmtx[1][3]) + B.out * ld * rmmtx[1][3];
+                if constexpr (AOn) B.out = B.out * (one - rmmtx[0][1]) + B.out * la * rmmtx[0][1];
+                if constexpr (COn) B.out = B.out * (one - rmmtx[2][1]) + B.out * lc * rmmtx[2][1];
+                if constexpr (DOn) B.out = B.out * (one - rmmtx[3][1]) + B.out * ld * rmmtx[3][1];
             }
 
             Bwindow(B.out, fm_phase);
@@ -523,9 +523,9 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
             if constexpr (ring)
             {
                 C.out = C.out * (one - rmmtx[2][2]) + C.out * lc * rmmtx[2][2];
-                if constexpr (AOn) C.out = C.out * (one - rmmtx[2][0]) + C.out * la * rmmtx[2][0];
-                if constexpr (BOn) C.out = C.out * (one - rmmtx[2][1]) + C.out * lb * rmmtx[2][1];
-                if constexpr (DOn) C.out = C.out * (one - rmmtx[2][3]) + C.out * ld * rmmtx[2][3];
+                if constexpr (AOn) C.out = C.out * (one - rmmtx[0][2]) + C.out * la * rmmtx[0][2];
+                if constexpr (BOn) C.out = C.out * (one - rmmtx[1][2]) + C.out * lb * rmmtx[1][2];
+                if constexpr (DOn) C.out = C.out * (one - rmmtx[3][2]) + C.out * ld * rmmtx[3][2];
             }
 
             Cwindow(C.out, fm_phase);
@@ -539,9 +539,9 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
             if constexpr (ring)
             {
                 D.out = D.out * (one - rmmtx[3][3]) + D.out * ld * rmmtx[3][3];
-                if constexpr (AOn) D.out = D.out * (one - rmmtx[3][0]) + D.out * la * rmmtx[3][0];
-                if constexpr (BOn) D.out = D.out * (one - rmmtx[3][1]) + D.out * lb * rmmtx[3][1];
-                if constexpr (COn) D.out = D.out * (one - rmmtx[3][2]) + D.out * lc * rmmtx[3][2];
+                if constexpr (AOn) D.out = D.out * (one - rmmtx[0][3]) + D.out * la * rmmtx[0][3];
+                if constexpr (BOn) D.out = D.out * (one - rmmtx[1][3]) + D.out * lb * rmmtx[1][3];
+                if constexpr (COn) D.out = D.out * (one - rmmtx[2][3]) + D.out * lc * rmmtx[2][3];
             }
 
             Dwindow(D.out, D.phase);

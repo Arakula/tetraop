@@ -360,30 +360,23 @@ void EnvDisplay::paint(juce::Graphics& g)
         auto points = std::vector<juce::Point<float>>{};
         for (int x = xStart; x <= xEnd; ++x) {
             float t_vis = (float)x / (pixels - 1);
-            //float t_real = visualToReal(t_vis);
-
+            float t_real = visualToReal(t_vis);
+            
             auto px = bounds.getX() + x;
-            //auto py = bounds.getY() + bounds.getHeight() * (1.0f - p.get_y_at(t_real));
-            auto py = bounds.getY();
+            auto py = bounds.getY() + bounds.getHeight() * (1.0f - p.get_y_at(t_real));
             points.push_back({ px, py });
         }
 
         if (!points.empty() && xEnd != pixels - 1) {
-            g.setColour(COLOR_ENVELOPE().withAlpha(0.5f));
-            auto& point = points.back();
-            g.drawVerticalLine((int)point.x, bounds.getY(), bounds.getBottom());
+            juce::Colour c = COLOR_ENVELOPE().brighter(1.0f);
+            for (int i = 0; i < int (points.size()) - 1; ++i)
+            {
+                g.setColour(c.withAlpha((i + 1) / (float)points.size()));
+                auto& p1 = points[i];
+                auto& p2 = points[i + 1];
+                g.drawLine(p1.x, p1.y, p2.x, p2.y, 2.f);
+            }
         }
-
-        //if (!points.empty() && xEnd != pixels - 1) {
-        //    juce::Colour c = COLOR_ENVELOPE().brighter(1.0f);
-        //    for (int i = 0; i < int (points.size()) - 1; ++i)
-        //    {
-        //        g.setColour(c.withAlpha((i + 1) / (float)points.size()));
-        //        auto& p1 = points[i];
-        //        auto& p2 = points[i + 1];
-        //        g.drawLine(p1.x, p1.y, p2.x, p2.y, 2.f);
-        //    }
-        //}
     }
 
     // recompute envelope sections

@@ -13,6 +13,9 @@ class FmMatrixPanel
 {
 public:
 
+    TextButton closeBtn { "close" };
+    TextButton fmBtn{ "fm" };
+    TextButton rmBtn{ "rm" };
     std::unique_ptr<Rotary> fm[16];
     std::unique_ptr<Rotary> rm[16];
     std::unique_ptr<Rotary> out[4];

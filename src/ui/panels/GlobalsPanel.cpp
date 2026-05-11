@@ -27,8 +27,7 @@ void GlobalsPanel::paint(Graphics& g)
 void GlobalsPanel::resized()
 {
 	auto b = getLocalBounds();
-
-	layout->setBounds(0,25,80,80);
+	layout->setBounds(0,25,60,60);
 }
 
 
