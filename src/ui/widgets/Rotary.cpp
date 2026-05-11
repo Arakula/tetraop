@@ -572,6 +572,10 @@ void Rotary::drawLabel(juce::Graphics& g, float slider_val)
                 ss << std::fixed << std::setprecision(2) << slider_val << " s";
             text = ss.str();
         }
+        else if (format == Format::TimeFactor) {
+            auto v = std::pow(4.f, 1.f * slider_val);
+            text = String((int)std::round(v * 100.f)) + " %";
+        }
     }
 
     g.setColour(Colour(COLOR_KNOB_LABEL()));

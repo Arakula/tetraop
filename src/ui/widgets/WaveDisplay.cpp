@@ -244,7 +244,7 @@ void WaveDisplay::drawWaveform(Graphics& g, float* waveform, int size, float pha
     }
 
     g.setColour(COLOR_ACTIVE());
-    g.strokePath(p, juce::PathStrokeType(1.5f));
+    g.strokePath(p, juce::PathStrokeType(1.4f));
 }
 
 bool WaveDisplay::isInterestedInFileDrag(const juce::StringArray& files)

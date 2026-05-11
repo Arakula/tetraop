@@ -4,6 +4,7 @@
 #include "../../Globals.h"
 #include "../widgets/Rotary.h"
 #include "../widgets/LayoutPicker.h"
+#include "../widgets/ValuePicker.h"
 
 class TetraOPAudioProcessorEditor;
 using namespace globals;
@@ -15,6 +16,16 @@ class GlobalsPanel
 public:
 
 	std::unique_ptr<LayoutPicker> layout;
+    std::unique_ptr<Rotary> time;
+    std::unique_ptr<Rotary> pitch;
+    std::unique_ptr<Rotary> vel;
+    std::unique_ptr<Rotary> glide;
+
+    std::unique_ptr<ValuePicker> poly;
+    std::unique_ptr<ValuePicker> bend;
+
+    TextButton monoBtn{ "mono" };
+    TextButton legatoBtn{ "legato" };
 
     GlobalsPanel(TetraOPAudioProcessorEditor& e);
     ~GlobalsPanel() override;

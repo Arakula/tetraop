@@ -43,7 +43,6 @@ public:
     std::unique_ptr<Modulation> modulation;
     std::vector<float> leftBuf;
     std::vector<float> rightBuf;
-    float velsense = 1.f; // velocity sensitivity
 
     //
     int polyphony = 32;

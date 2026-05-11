@@ -224,14 +224,15 @@ void EnvDisplay::paint(juce::Graphics& g)
 
     if (envid.isEmpty() || !isVisible()) return;
     isActive = editor.audioProcessor.modulation->modulators[envid].active;
+    auto globalTime = editor.audioProcessor.modulation->globalTimeFactor;
     auto mode = (Envelope::Mode)editor.audioProcessor.params.getRawParameterValue(envid + "_mode")->load();
     auto bounds = viewportBounds.reduced(4).toFloat();
-    auto del = editor.audioProcessor.params.getRawParameterValue(envid + "_del")->load();
-    auto att = std::max(0.0001f, editor.audioProcessor.params.getRawParameterValue(envid + "_att")->load());
-    auto hld = editor.audioProcessor.params.getRawParameterValue(envid + "_hld")->load();
-    auto dec = std::max(0.0001f, editor.audioProcessor.params.getRawParameterValue(envid + "_dec")->load());
+    auto del = editor.audioProcessor.params.getRawParameterValue(envid + "_del")->load() * globalTime;
+    auto att = std::max(0.0001f, editor.audioProcessor.params.getRawParameterValue(envid + "_att")->load()) * globalTime;
+    auto hld = editor.audioProcessor.params.getRawParameterValue(envid + "_hld")->load() * globalTime;
+    auto dec = std::max(0.0001f, editor.audioProcessor.params.getRawParameterValue(envid + "_dec")->load()) * globalTime;
     auto sus = editor.audioProcessor.params.getRawParameterValue(envid + "_sus")->load();
-    auto rel = editor.audioProcessor.params.getRawParameterValue(envid + "_rel")->load();
+    auto rel = editor.audioProcessor.params.getRawParameterValue(envid + "_rel")->load() * globalTime;
     auto tatt = editor.audioProcessor.params.getRawParameterValue(envid + "_tenatt")->load();
     auto tdec = editor.audioProcessor.params.getRawParameterValue(envid + "_tendec")->load();
     auto trel = editor.audioProcessor.params.getRawParameterValue(envid + "_tenrel")->load();
@@ -338,10 +339,24 @@ void EnvDisplay::paint(juce::Graphics& g)
     }
 
     g.setColour(COLOR_ENVELOPE());
-    g.strokePath(path, juce::PathStrokeType(1.f));
+    g.strokePath(path, juce::PathStrokeType(1.4f));
     path.closeSubPath();
-    g.setColour(COLOR_ENVELOPE().withAlpha(0.1f));
-    g.fillPath(path);
+    path.lineTo(bounds.getBottomRight());
+    path.lineTo(bounds.getBottomLeft());
+    path.closeSubPath();
+
+    juce::ColourGradient grad(
+        COLOR_ENVELOPE().withMultipliedAlpha(0.25f),
+        bounds.getTopLeft().toFloat(),
+        COLOR_ENVELOPE().withAlpha(0.0f),
+        bounds.getBottomLeft().toFloat(),
+        false
+    );
+    g.saveState();
+    g.setGradientFill(grad);
+    g.reduceClipRegion(path);
+    g.fillRect(bounds);
+    g.restoreState();
 
     // draw seek
     juce::Path seek;

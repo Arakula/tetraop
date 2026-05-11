@@ -120,7 +120,8 @@ void OSC::startBlock(int startSample, int numSamples)
 	auto pitch_cents = mod->getPolyValue(prefix + "pitch_cents", voiceId, blkoffset);
 	auto pitch_semis = mod->getPolyValue(prefix + "pitch_semis", voiceId, blkoffset);
 	auto pitch_oct = mod->getPolyValue(prefix + "pitch_oct", voiceId, blkoffset);
-	auto total_cents = pitch_cents + (pitch_semis * 100.0f) + (pitch_oct * 1200.0f);
+	auto pitch_global = audioProcessor.modulation->globalPitchSemis;
+	auto total_cents = pitch_cents + (pitch_semis * 100.0f) + (pitch_global * 100.f) + (pitch_oct * 1200.0f);
 
 	Utils::setMasked(osc.pitch_ratio_targ, Utils::centsToRatio(total_cents), mask);
 	Utils::setMasked(osc.dist_amt, mod->getPolyValue(prefix + "phase_dist_amt", voiceId, blkoffset), mask);

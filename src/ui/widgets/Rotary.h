@@ -46,6 +46,7 @@ public:
         OSCMorphB2f,
         OSCMorphC2f,
         OSCMorphD2f,
+        TimeFactor,
     };
     float radius = KNOB_RADIUS;
     float yoffset = KNOB_YOFFSET;

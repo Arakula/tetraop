@@ -30,6 +30,7 @@ void Voice::noteStarted()
     auto note = getCurrentlyPlayingNote();
     vel = audioProcessor.modulation->velCurve.get_y_at(note.noteOnVelocity.asUnsignedFloat());
     vel_targ = vel;
+    vel_step = 0.f;
     key = note.initialNote / 127.f;
     mpe_channel = note.midiChannel;
 
@@ -65,6 +66,9 @@ void Voice::noteStarted()
     msk[lane] = true;
     SIMDM mask = SIMDM(msk);
     Utils::setMasked(voice.env, 0.f, mask);
+
+    auto velsense = audioProcessor.params.getRawParameterValue("vel_sense")->load();
+    Utils::setMasked(voice.vel_mult, vel * velsense + 1.0f - velsense, mask);
 }
 
 void Voice::noteRetriggered()
@@ -157,7 +161,20 @@ void Voice::startBlock(int startSample, int numSamples)
     if (fastKill)
         env_targ *= 0.01f; // TODO use a proper fadeout
     Utils::setMasked(voice.env_step, (env_targ - voice.env.get(lane)) / numSamples, mask);
-    Utils::setMasked(voice.vel_mult, vel * audioProcessor.velsense + 1.0f - audioProcessor.velsense, mask);
+
+    // velocity is interpolated to avoid clicks in MONO mode
+    if (vel_step != 0.f)
+    {
+        auto velsense = audioProcessor.params.getRawParameterValue("vel_sense")->load();
+        Utils::setMasked(voice.vel_mult, vel * velsense + 1.0f - velsense, mask);
+        vel += vel_step;
+
+        if (vel_step > 0.f && vel >= vel_targ || vel_step < 0.f && vel <= vel_targ)
+        {
+            vel = vel_targ;
+            vel_step = 0.f;
+        }
+    }
 
     updateFilters(false, blkoffset);
     if (audioProcessor.synth->fm->layout == FmMatrix::Layout::Custom 

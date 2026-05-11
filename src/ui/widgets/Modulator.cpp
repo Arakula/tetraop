@@ -290,15 +290,37 @@ void Modulator::drawValueBuffer(juce::Graphics& g, juce::Rectangle<float>& bound
             p.lineTo(px, py);
         }
     }
-    juce::Colour c = juce::Colour(isenv
+    
+    g.setColour(getModColor());
+    g.strokePath(p, juce::PathStrokeType(1.4f));
+
+    p.lineTo(bounds.getBottomRight());
+    p.lineTo(bounds.getBottomLeft());
+    p.closeSubPath();
+
+    juce::ColourGradient grad(
+        getModColor().withMultipliedAlpha(0.25f),
+        bounds.getTopLeft().toFloat(),
+        getModColor().withAlpha(0.f),
+        bounds.getBottomLeft().toFloat(),
+        false
+    );
+    g.saveState();
+    g.setGradientFill(grad);
+    g.reduceClipRegion(p);
+    g.fillRect(bounds);
+    g.restoreState();
+}
+
+Colour Modulator::getModColor()
+{
+    return juce::Colour(isenv
         ? COLOR_ENVELOPE()
         : islfo ? COLOR_LFO()
         : ismacro ? COLOR_MACRO()
         : isrnd ? COLOR_RND()
         : COLOR_OTHER_MOD()
     );
-    g.setColour(c);
-    g.strokePath(p, juce::PathStrokeType(1.f));
 }
 
 void Modulator::drawEnvelope(juce::Graphics& g, juce::Rectangle<float>& bounds)
@@ -353,7 +375,24 @@ void Modulator::drawEnvelope(juce::Graphics& g, juce::Rectangle<float>& bounds)
     }
 
     g.setColour(COLOR_ENVELOPE());
-    g.strokePath(path, juce::PathStrokeType(1.f));
+    g.strokePath(path, juce::PathStrokeType(1.4f));
+
+    path.lineTo(bounds.getBottomRight());
+    path.lineTo(bounds.getBottomLeft());
+    path.closeSubPath();
+
+    juce::ColourGradient grad(
+        getModColor().withMultipliedAlpha(0.25f),
+        bounds.getTopLeft().toFloat(),
+        getModColor().withAlpha(0.f),
+        bounds.getBottomLeft().toFloat(),
+        false
+    );
+    g.saveState();
+    g.setGradientFill(grad);
+    g.reduceClipRegion(path);
+    g.fillRect(bounds);
+    g.restoreState();
 }
 
 void Modulator::drawLFO(juce::Graphics& g, juce::Rectangle<float>& bounds)
@@ -373,7 +412,24 @@ void Modulator::drawLFO(juce::Graphics& g, juce::Rectangle<float>& bounds)
     }
 
     g.setColour(juce::Colour(COLOR_LFO()));
-    g.strokePath(path, juce::PathStrokeType(1.f));
+    g.strokePath(path, juce::PathStrokeType(1.4f));
+
+    path.lineTo(bounds.getBottomRight());
+    path.lineTo(bounds.getBottomLeft());
+    path.closeSubPath();
+
+    juce::ColourGradient grad(
+        getModColor().withMultipliedAlpha(0.25f),
+        bounds.getTopLeft().toFloat(),
+        getModColor().withAlpha(0.f),
+        bounds.getBottomLeft().toFloat(),
+        false
+    );
+    g.saveState();
+    g.setGradientFill(grad);
+    g.reduceClipRegion(path);
+    g.fillRect(bounds);
+    g.restoreState();
 }
 
 void Modulator::resized()

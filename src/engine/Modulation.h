@@ -149,6 +149,8 @@ public:
 	float sustainPedalValue = 0.f;
 	float expressPedalValue = 0.f;
 	float softPedalValue = 0.f;
+	float globalPitchSemis = 1.f;
+	float globalTimeFactor = 1.f;
 
 	std::array<juce::String, globals::MAX_MACROS> macroNames;
 

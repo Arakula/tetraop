@@ -331,13 +331,23 @@ void CurveEditor::paint(juce::Graphics& g)
     }
 
     g.setColour(color);
-    g.strokePath(path, juce::PathStrokeType(1.f));
-    path.lineTo(bounds.getRight(), bounds.getBottom());
-    path.lineTo(bounds.getX(), bounds.getBottom());
+    g.strokePath(path, juce::PathStrokeType(1.4f));
+    path.lineTo(bounds.getBottomRight());
+    path.lineTo(bounds.getBottomLeft());
     path.closeSubPath();
     if (drawShade) {
-        g.setColour(color.withAlpha(0.1f));
-        g.fillPath(path);
+        juce::ColourGradient grad(
+            color.withMultipliedAlpha(0.25f),
+            bounds.getTopLeft().toFloat(),
+            color.withAlpha(0.0f),
+            bounds.getBottomLeft().toFloat(),
+            false
+        );
+        g.saveState();
+        g.setGradientFill(grad);
+        g.reduceClipRegion(path);
+        g.fillRect(bounds);
+        g.restoreState();
     }
 
     if (usemultisel) {

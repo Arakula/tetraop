@@ -36,6 +36,7 @@ public:
     void drawEnvelope(juce::Graphics& g, juce::Rectangle<float>& bounds);
     void drawLFO(juce::Graphics& g, juce::Rectangle<float>& bounds);
     void resized() override;
+    Colour getModColor();
 
     juce::String modId;
 private:

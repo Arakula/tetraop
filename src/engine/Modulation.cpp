@@ -170,12 +170,12 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
         if (i > 1 && mod.connections == 0) continue;
         auto mode = (Envelope::Mode)audioProcessor.params.getRawParameterValue(prefix + "_mode")->load();
         auto& handles = envParamHandles[i];
-        float delay = getValue(handles.delay);
-        float attack = getValue(handles.attack);
-        float hold = getValue(handles.hold);
-        float decay = getValue(handles.decay);
+        float delay = getValue(handles.delay) * globalTimeFactor;
+        float attack = getValue(handles.attack) * globalTimeFactor;
+        float hold = getValue(handles.hold) * globalTimeFactor;
+        float decay = getValue(handles.decay) * globalTimeFactor;
         float sustain = getValue(handles.sustain);
-        float release = getValue(handles.release);
+        float release = getValue(handles.release) * globalTimeFactor;
         float tenatt = getValue(handles.tensionAttack);
         float tendec = getValue(handles.tensionDecay);
         float tenrel = getValue(handles.tensionRelease);
@@ -213,7 +213,7 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
 
         auto smooth = getValue(handles.smooth);
 
-        auto duration = rate;
+        auto duration = rate * globalTimeFactor;
         bool srateChanged = lfo.srate != srate;
         lfo.init(srate, duration, delay, rise, mode);
         if (lfo.smooth != smooth || srateChanged) {
@@ -237,7 +237,7 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
             rate *= secondsPerBeat;
 
         auto& rnd = rnds[i];
-        rnd.init(rate, mode, global);
+        rnd.init(rate * globalTimeFactor, mode, global);
     }
 
     auto lastVoice = (Voice*)audioProcessor.synth->getVoice(lastUsedVoice);
@@ -370,6 +370,8 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
         ? mpe[lastVoice->mpe_channel].lift : 0.f;
 
     tickMacros(nsamples, (float)srate);
+    globalTimeFactor = std::pow(4.f, -1.f * getValue("global_time", false, nsamples, (float)srate));
+    globalPitchSemis = getValue("global_pitch", false, nsamples, (float)srate);
 }
 
 void Modulation::endBlock(int nsamples)
