@@ -11,6 +11,17 @@ LFO::LFO()
 void LFO::init(double _srate, float _duration, float _delay, float _rise, Mode _mode)
 {
 	srate = (float)_srate;
+
+	// lfos are absolute
+	// compensate lfo phase when the duration changes
+	// so that the lfo does not jump on rate change
+	if (duration != _duration) {
+		for (auto& voice : voices) {
+			float currentPhase = std::fmod((voice.x + voice.phase_offset) / duration, 1.0f);
+			voice.phase_offset = currentPhase * _duration - voice.x;
+		}
+	}
+
 	duration = _duration;
 	rise = _rise;
 	delay = _delay;
