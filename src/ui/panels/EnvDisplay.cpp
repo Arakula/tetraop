@@ -393,8 +393,8 @@ void EnvDisplay::paint(juce::Graphics& g)
 
     // draw mode btn
     auto text = mode == 0 ? "ADSR" : mode == 1 ? "AHD" : mode == 2 ? "DADSR" : "DAHDSR";
-    g.setFont(juce::FontOptions(12.f));
-    g.setColour(Colours::white.withAlpha(0.1f));
+    g.setFont(juce::FontOptions(11.f));
+    g.setColour(COLOR_VIEWPORT_TEXT());
     g.drawText(text, modeBtn.getBounds(), juce::Justification::centredRight);
     //UIUtils::drawTriangle(g, modeBtn.getBounds().withWidth(15).withX(modeBtn.getRight() - 15)
     //    .toFloat().reduced(4.f), 2, COLOR_VIEWPORT_TEXT_DIM());
@@ -431,7 +431,7 @@ void EnvDisplay::toggleUIComponents()
     release->setVisible(false);
 
     auto bounds = getLocalBounds();
-    modeBtn.setBounds(bounds.getRight() - 60 - 10, 10 + viewportBounds.getY(), 60, 15);
+    modeBtn.setBounds(bounds.getRight() - 60 - 15, viewportBounds.getY() + 5, 60, 15);
 
     auto mode = envid.isNotEmpty()
         ? editor.audioProcessor.params.getRawParameterValue(envid + "_mode")->load()

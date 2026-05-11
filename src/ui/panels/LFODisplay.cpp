@@ -256,7 +256,7 @@ void LFODisplay::paint(juce::Graphics& g)
     auto& lfo = editor.audioProcessor.modulation->lfos[lfoidx];
     auto isRoundWave = lfo.pattern.points.size() && lfo.pattern.points[0].type > 1;
     UIUtils::drawSineWave(g, roundBtn.getBounds().toFloat().reduced(0.f, 3.f), 2, isRoundWave ? COLOR_LFO() : COLOR_VIEWPORT_TEXT());
-    UIUtils::drawTriangle(g, fileBtn.getBounds().withTrimmedLeft(23).toFloat().reduced(5.f), 2, Colour(0xff333333));
+    UIUtils::drawTriangle(g, fileBtn.getBounds().withTrimmedLeft(23).toFloat().reduced(5.f), 2, COLOR_VIEWPORT_TEXT());
 
     g.setColour(COLOR_VIEWPORT_TEXT());
     auto mode = (LFO::Mode)editor.audioProcessor.params.getRawParameterValue(lfoid + "_mode")->load();
@@ -264,7 +264,7 @@ void LFODisplay::paint(juce::Graphics& g)
         : mode == LFO::Mode::Sync ? "Sync"
         : "Env";
     g.drawText(modestr, modeBtn.getBounds(), juce::Justification::centredLeft);
-    UIUtils::drawTriangle(g, modeBtn.getBounds().withTrimmedLeft(23).toFloat().reduced(5.f), 2, Colour(0xff333333));
+    UIUtils::drawTriangle(g, modeBtn.getBounds().withTrimmedLeft(23).toFloat().reduced(5.f), 2, COLOR_VIEWPORT_TEXT());
 
     auto& mod = editor.audioProcessor.modulation->modulators[lfoid];
     display->drawSeek = mod.active && mod.connections;
