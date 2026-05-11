@@ -203,7 +203,7 @@ void Rotary::mouseDrag(const juce::MouseEvent& e) {
     cur_normed_value += slider_change;
     auto param = editor.audioProcessor.params.getParameter(editingMod ? modId : paramId);
 
-    if (format == Format::PitchSemis && !e.mods.isShiftDown()) {
+    if (format == Format::PitchSemis && !e.mods.isShiftDown() && !editingMod) {
         // snap values for pitch knob
         auto val = param->convertFrom0to1(cur_normed_value);
         param->setValueNotifyingHost(param->convertTo0to1(std::round(val)));

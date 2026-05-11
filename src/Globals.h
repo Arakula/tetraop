@@ -96,8 +96,8 @@ namespace globals {
 		colors["COLOR_C"] = Colour(0xffFFC300);
 		colors["COLOR_D"] = Colour(0xffF34713);
 
-		colors["COLOR_ENVELOPE"] = juce::Colour(0xffB43A1F);
-		colors["COLOR_LFO"] = juce::Colour(0xff0DBA8C);
+		colors["COLOR_ENVELOPE"] = juce::Colour(0xffff3700);
+		colors["COLOR_LFO"] = juce::Colour(0xff00ffb7);
 		colors["COLOR_RND"] = juce::Colour(0xffff34a6);
 		colors["COLOR_OTHER_MOD"] = juce::Colour(0xffffd234);
 		colors["COLOR_MACRO"] = juce::Colour(0xffc7ff34);

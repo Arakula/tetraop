@@ -225,7 +225,7 @@ void EnvDisplay::paint(juce::Graphics& g)
     if (envid.isEmpty() || !isVisible()) return;
     isActive = editor.audioProcessor.modulation->modulators[envid].active;
     auto mode = (Envelope::Mode)editor.audioProcessor.params.getRawParameterValue(envid + "_mode")->load();
-    auto bounds = viewportBounds.toFloat();
+    auto bounds = viewportBounds.reduced(4).toFloat();
     auto del = editor.audioProcessor.params.getRawParameterValue(envid + "_del")->load();
     auto att = std::max(0.0001f, editor.audioProcessor.params.getRawParameterValue(envid + "_att")->load());
     auto hld = editor.audioProcessor.params.getRawParameterValue(envid + "_hld")->load();
@@ -360,23 +360,30 @@ void EnvDisplay::paint(juce::Graphics& g)
         auto points = std::vector<juce::Point<float>>{};
         for (int x = xStart; x <= xEnd; ++x) {
             float t_vis = (float)x / (pixels - 1);
-            float t_real = visualToReal(t_vis);
+            //float t_real = visualToReal(t_vis);
 
             auto px = bounds.getX() + x;
-            auto py = bounds.getY() + bounds.getHeight() * (1.0f - p.get_y_at(t_real));
+            //auto py = bounds.getY() + bounds.getHeight() * (1.0f - p.get_y_at(t_real));
+            auto py = bounds.getY();
             points.push_back({ px, py });
         }
 
         if (!points.empty() && xEnd != pixels - 1) {
-            juce::Colour c = COLOR_ENVELOPE().brighter(1.0f);
-            for (int i = 0; i < int (points.size()) - 1; ++i)
-            {
-                g.setColour(c.withAlpha((i + 1) / (float)points.size()));
-                auto& p1 = points[i];
-                auto& p2 = points[i + 1];
-                g.drawLine(p1.x, p1.y, p2.x, p2.y, 2.f);
-            }
+            g.setColour(COLOR_ENVELOPE().withAlpha(0.5f));
+            auto& point = points.back();
+            g.drawVerticalLine((int)point.x, bounds.getY(), bounds.getBottom());
         }
+
+        //if (!points.empty() && xEnd != pixels - 1) {
+        //    juce::Colour c = COLOR_ENVELOPE().brighter(1.0f);
+        //    for (int i = 0; i < int (points.size()) - 1; ++i)
+        //    {
+        //        g.setColour(c.withAlpha((i + 1) / (float)points.size()));
+        //        auto& p1 = points[i];
+        //        auto& p2 = points[i + 1];
+        //        g.drawLine(p1.x, p1.y, p2.x, p2.y, 2.f);
+        //    }
+        //}
     }
 
     // recompute envelope sections

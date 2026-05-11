@@ -146,19 +146,29 @@ void Modulator::paint(juce::Graphics& g)
     auto bounds = getLocalBounds().toFloat().reduced(0.5f);
 
     // draw bg
-    g.setColour(juce::Colours::transparentWhite.withAlpha(0.01f));
+    g.setColour(Colours::white.withAlpha(0.02f));
     g.fillRoundedRectangle(bounds, 2.f);
     juce::Path p;
     p.addRoundedRectangle(bounds.getX(), bounds.getY(), lpad, bounds.getHeight(), 2.f, 2.f, true, false, true, false);
-    g.setColour(juce::Colours::transparentWhite.withAlpha(0.01f));
+    g.setColour(Colour(0xff333333));
     g.fillPath(p);
+    if (isenv && editor.audioProcessor.displayEnv == modId)
+    {
+        g.setColour(COLOR_ENVELOPE().withAlpha(0.075f));
+        g.fillRoundedRectangle(bounds, 2.f);
+    }
+    else if (islfo && editor.audioProcessor.displayLfo == modId)
+    {
+        g.setColour(COLOR_LFO().withAlpha(0.075f));
+        g.fillRoundedRectangle(bounds, 2.f);
+    }
 
     // draw outline
-    g.setColour(juce::Colours::transparentWhite.withAlpha(0.1f));
+    g.setColour(juce::Colours::black.withAlpha(0.25f));
     g.drawVerticalLine((int)(bounds.getX() + lpad), bounds.getY(), bounds.getBottom());
     g.setColour(juce::Colour(selected
         ? COLOR_ACTIVE()
-        : juce::Colours::transparentWhite.withAlpha(0.1f)));
+        : juce::Colours::black.withAlpha(0.25f)));
     g.drawRoundedRectangle(bounds, 2.f, 1.f);
 
     // draw handle
@@ -168,14 +178,14 @@ void Modulator::paint(juce::Graphics& g)
         .translated(3.f, 3.f), juce::Colours::white);
 
     g.setFont(juce::FontOptions(10.f));
-    g.setColour(juce::Colours::transparentWhite.withAlpha(0.5f));
+    g.setColour(juce::Colours::white.withAlpha(0.5f));
     g.drawFittedText(juce::String(connections), bounds
         .withTrimmedRight(bounds.getWidth() - lpad)
         .withTrimmedTop(bounds.getHeight() / 2.f).toNearestInt(),
         juce::Justification::centred, 1);
 
     g.setFont(juce::FontOptions(12.f));
-    g.setColour(juce::Colours::transparentWhite.withAlpha(0.5f));
+    g.setColour(juce::Colours::white.withAlpha(0.5f));
     g.drawFittedText(modId.toUpperCase(), bounds
         .withTrimmedLeft(lpad)
         .withTrimmedBottom(bounds.getHeight() / 2.f).toNearestInt()
@@ -206,35 +216,35 @@ void Modulator::paint(juce::Graphics& g)
         drawLFO(g, drawBounds);
     }
     else if (isrnd) {
-        UIUtils::drawRandGen(g, drawBounds.translated(5.f, 1.f), juce::Colour(0xff333333));
+        UIUtils::drawRandGen(g, drawBounds.translated(5.f, 1.f), juce::Colours::white.withAlpha(0.5f));
     }
     else {
         if (modId == "mod") {
-            UIUtils::drawModwheel(g, drawBounds.translated(12.5f, 4.5f), juce::Colour(0xff333333));
+            UIUtils::drawModwheel(g, drawBounds.translated(12.5f, 0.f), juce::Colours::white.withAlpha(0.5f));
         }
         else if (modId == "vel") {
-            UIUtils::drawVel(g, drawBounds.translated(13.f, 0.f), juce::Colour(0xff333333));
+            UIUtils::drawVel(g, drawBounds.translated(13.f, 0.f), juce::Colours::white.withAlpha(0.5f));
         }
         else if (modId == "key") {
-            UIUtils::drawKeys(g, drawBounds.translated(13.5f, 0.5f), juce::Colour(0xff333333));
+            UIUtils::drawKeys(g, drawBounds.translated(13.5f, 0.5f), juce::Colours::white.withAlpha(0.5f));
         }
         else if (modId == "at") {
-            UIUtils::drawHand(g, drawBounds.translated(13.f, 0.f), juce::Colour(0xff333333));
+            UIUtils::drawHand(g, drawBounds.translated(13.f, 0.f), juce::Colours::white.withAlpha(0.5f));
         }
         else if (modId == "rand") {
-            UIUtils::drawRand(g, drawBounds.translated(7.5f, 1.5f), juce::Colour(0xff333333));
+            UIUtils::drawRand(g, drawBounds.translated(7.5f, 1.5f), juce::Colours::white.withAlpha(0.5f));
         }
         else if (modId == "x") {
-            UIUtils::drawXMod(g, drawBounds.translated(10.f, 3.f), juce::Colour(0xff333333));
+            UIUtils::drawXMod(g, drawBounds.translated(10.f, 3.f), juce::Colours::white.withAlpha(0.5f));
         }
         else if (modId == "y") {
-            UIUtils::drawYMod(g, drawBounds.translated(15.f, 0.f), juce::Colour(0xff333333));
+            UIUtils::drawYMod(g, drawBounds.translated(15.f, 0.f), juce::Colours::white.withAlpha(0.5f));
         }
         else if (modId == "z") {
-            UIUtils::drawZMod(g, drawBounds.translated(7.f, 3.f), juce::Colour(0xff333333));
+            UIUtils::drawZMod(g, drawBounds.translated(7.f, 3.f), juce::Colours::white.withAlpha(0.5f));
         }
         else if (modId == "lift") {
-            UIUtils::drawLift(g, drawBounds.translated(14.f, 0.f), juce::Colour(0xff333333));
+            UIUtils::drawLift(g, drawBounds.translated(14.f, 0.f), juce::Colours::white.withAlpha(0.5f));
         }
     }
 }

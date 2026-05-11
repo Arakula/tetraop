@@ -100,7 +100,7 @@ LFODisplay::LFODisplay(TetraOPAudioProcessorEditor& e)
         };
 
     display = std::make_unique<CurveEditor>(editor, &editor.audioProcessor.modulation->lfos[0].pattern, 
-        5.f, COLOR_LFO(), COLOR_ACTIVE(), true, true);
+        4.f, COLOR_LFO(), COLOR_ACTIVE(), true, true);
     addAndMakeVisible(display.get());
     display->gridX = (int)editor.audioProcessor.params.getRawParameterValue("lfo_grid")->load();
     display->snap = (bool)editor.audioProcessor.params.getRawParameterValue("lfo_grid_snap")->load();

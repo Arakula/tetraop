@@ -257,7 +257,7 @@ void TetraOPAudioProcessorEditor::startDragDrop(String modID, juce::Component* c
     isDragDropModulation = true;
     dragDropModID = modID;
     dragDropOverlay->setVisible(true);
-    dragDropOverlay->arrowStart = dragDropOverlay->getLocalPoint(component, Point<int>{8, 8}).toFloat();
+    dragDropOverlay->arrowStart = dragDropOverlay->getLocalPoint(component, Point<int>{10, 10}).toFloat();
     dragDropOverlay->arrowEnd = dragDropOverlay->arrowStart;
     dragDropOverlay->arrowColor = modColor;
 

@@ -96,11 +96,11 @@ void Macro::paint(juce::Graphics& g)
 	g.fillPath(p);
 
 	// draw outline
-	g.setColour(Colour(0xff333333));
+	g.setColour(Colours::black.withAlpha(0.25f));
 	g.drawVerticalLine((int)(bounds.getX() + lpad), bounds.getY(), bounds.getBottom());
 	g.setColour(juce::Colour(selected
 		? COLOR_ACTIVE().withMultipliedBrightness(1.f)
-		: Colour(0xff333333)));
+		: Colours::black.withAlpha(0.25f)));
 	g.drawRoundedRectangle(bounds, 2.f, 1.f);
 
 	// draw handle
@@ -110,7 +110,7 @@ void Macro::paint(juce::Graphics& g)
 
 	// draw connections number
 	g.setFont(juce::FontOptions(10.f));
-	g.setColour(COLOR_VIEWPORT_TEXT());
+	g.setColour(juce::Colours::white.withAlpha(0.5f));
 	g.drawFittedText(juce::String(connections), bounds
 		.withTrimmedRight(bounds.getWidth() - lpad)
 		.withY(20.f)

@@ -16,7 +16,7 @@ ModulatorsPanel::ModulatorsPanel(TetraOPAudioProcessorEditor& e)
 	rand = std::make_unique<Modulator>(editor, "rand");
 	addAndMakeVisible(rand.get());
 
-	mwheel = std::make_unique<Modulator>(editor, "mwheel");
+	mwheel = std::make_unique<Modulator>(editor, "mod");
 	addAndMakeVisible(mwheel.get());
 }
 
