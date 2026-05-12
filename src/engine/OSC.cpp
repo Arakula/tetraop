@@ -68,6 +68,18 @@ void OSC::trigger(int note, float srate)
 	osc.pinkNoiseGen[lane].reseed(seed);
 }
 
+void OSC::retrigger(int note, float srate)
+{
+	auto& vox = audioProcessor.synth->vox[batch];
+	auto& osc = vox.osc[id];
+	bool msk[4] = { false, false, false, false };
+	msk[lane] = true;
+	SIMDM mask = SIMDM(msk);
+
+	Utils::setMasked(osc.freq, 440.0f * std::pow(2.0f, (note - 69) / 12.0f), mask);
+	Utils::setMasked(osc.phase_inc, osc.freq.get(lane) / srate, mask);
+}
+
 void OSC::startBlock(int startSample, int numSamples)
 {
 	auto& vox = audioProcessor.synth->vox[batch];

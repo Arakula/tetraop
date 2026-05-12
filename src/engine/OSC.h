@@ -72,6 +72,7 @@ public:
     OSC& operator=(OSC&&) = default;
 
     void trigger(int note, float srate);
+    void retrigger(int note, float srate);
     void startBlock(int startSample, int numSamples);
     void recalcUnison(SIMDUnison& unison) const;
 

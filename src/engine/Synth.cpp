@@ -396,6 +396,7 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
             left[startSample + s] += (outL[s] * v.voice.env * v.voice.vel_mult).sum();
             right[startSample + s] += (outR[s] * v.voice.env * v.voice.vel_mult).sum();
             v.voice.env += v.voice.env_step;
+            v.voice.vel_mult += v.voice.vel_step;
         }
     }
 

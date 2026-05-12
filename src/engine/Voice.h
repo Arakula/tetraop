@@ -16,8 +16,9 @@ public:
     {
         std::array<float, 4> key; // float 0..127 note pressed used to get wavetable
         SIMDF env;
-        SIMDF vel_mult;
         SIMDF env_step;
+        SIMDF vel_mult;
+        SIMDF vel_step;
 
         // matrix coefficients
         // these are updated per block so that the FM matrix is fully modulatable (when layout is custom)

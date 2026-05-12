@@ -69,12 +69,22 @@ void Voice::noteStarted()
 
     auto velsense = audioProcessor.params.getRawParameterValue("vel_sense")->load();
     Utils::setMasked(voice.vel_mult, vel * velsense + 1.0f - velsense, mask);
+    Utils::setMasked(voice.vel_step, 0.f, mask);
 }
 
 void Voice::noteRetriggered()
 {
+    bool msk[4] = { false, false, false, false };
+    msk[lane] = true;
+    SIMDM mask = SIMDM(msk);
+
     audioProcessor.modulation->lastUsedVoice = id;
     auto& envmod = audioProcessor.modulation->envs[0];
+
+    pressed = true;
+    pressed_ts = pressed_ts_counter;
+    pressed_ts_counter += 1;
+
     if (released && envmod.mode != Envelope::AHD)
     {
         attack_elapsed = envmod.getMatchingAttackTimeFromRelease(attack_elapsed, release_elapsed);
@@ -82,13 +92,23 @@ void Voice::noteRetriggered()
         released = false;
     }
 
+    bool legato = (bool)audioProcessor.params.getRawParameterValue("legato")->load();
+    if (!legato)
+    {
+        attack_elapsed = 0;
+        release_elapsed = 0;
+        released = false;
+    }
+
     auto note = getCurrentlyPlayingNote();
 
-    // in mono mode retain velocity during retriggers
-    if (!audioProcessor.synth->lastEventWasNoteOff && !released)
+    // hammering a new note with others pressed in MONO
+    // set current velocity to the new velocity
+    // if its hammerOff retain velocity
+    bool isHammerOn = !audioProcessor.synth->lastEventWasNoteOff && !released;
+    if (isHammerOn)
     {
         vel_targ = audioProcessor.modulation->velCurve.get_y_at(note.noteOnVelocity.asUnsignedFloat());
-        vel_step = (vel_targ - vel) / float(getSampleRate() * 0.005); // 5 ms interpolation to avoid clicks
     }
 
     key = note.initialNote / 127.f;
@@ -101,6 +121,11 @@ void Voice::noteRetriggered()
     else
     {
         noteSmoother.setValueUnsmoothed (key);
+    }
+
+    for (int i = 0; i < MAX_OSCILLATORS; i++)
+    {
+        osc[i].retrigger(note.initialNote, srate);
     }
 
     auto& voice = audioProcessor.synth->vox[batch].voice;
@@ -162,18 +187,12 @@ void Voice::startBlock(int startSample, int numSamples)
         env_targ *= 0.01f; // TODO use a proper fadeout
     Utils::setMasked(voice.env_step, (env_targ - voice.env.get(lane)) / numSamples, mask);
 
-    // velocity is interpolated to avoid clicks in MONO mode
-    if (vel_step != 0.f)
+    if (vel != vel_targ)
     {
-        auto velsense = audioProcessor.params.getRawParameterValue("vel_sense")->load();
-        Utils::setMasked(voice.vel_mult, vel * velsense + 1.0f - velsense, mask);
-        vel += vel_step;
-
-        if (vel_step > 0.f && vel >= vel_targ || vel_step < 0.f && vel <= vel_targ)
-        {
-            vel = vel_targ;
-            vel_step = 0.f;
-        }
+        float velsense = audioProcessor.params.getRawParameterValue("vel_sense")->load();
+        float vcurr = vel * velsense + 1.0f - velsense;
+        float vtarg = vel_targ * velsense + 1.0f - velsense;
+        Utils::setMasked(voice.vel_step, (vtarg - vcurr) / numSamples, mask);
     }
 
     updateFilters(false, blkoffset);
@@ -184,15 +203,26 @@ void Voice::startBlock(int startSample, int numSamples)
     }
 }
 
-void Voice::endBlock(int startSample, int numSamples)
+void Voice::endBlock(int, int numSamples)
 {
-    (void)startSample;
     noteSmoother.process(numSamples);
 
     if (released)
         release_elapsed += (float)(numSamples * israte);
     else
         attack_elapsed += (float)(numSamples * israte);
+
+    // velocity is interpolated over a block in MONO mode
+    if (vel != vel_targ) 
+    {
+        auto& voice = audioProcessor.synth->vox[batch].voice;
+        bool msk[4] = { false, false, false, false };
+        msk[lane] = true;
+        SIMDM mask = SIMDM(msk);
+
+        vel = vel_targ;
+        Utils::setMasked(voice.vel_step, 0.f, mask);
+    }
 
     // check if envelope has finished
     if (released && release_elapsed > audioProcessor.modulation->envs[0].rel)
