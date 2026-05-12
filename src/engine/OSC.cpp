@@ -11,8 +11,9 @@ OSC::OSC(int _id, int _voiceId, TetraOPAudioProcessor& p)
 {
 }
 
-void OSC::trigger(int note, float srate)
+void OSC::trigger(int note, float _srate)
 {
+	srate = _srate;
 	auto& vox = audioProcessor.synth->vox[batch];
 	auto& osc = vox.osc[id];
 	bool msk[4] = {false, false, false, false};
@@ -68,8 +69,9 @@ void OSC::trigger(int note, float srate)
 	osc.pinkNoiseGen[lane].reseed(seed);
 }
 
-void OSC::retrigger(int note, float srate)
+void OSC::retrigger(int note, float _srate)
 {
+	srate = _srate;
 	auto& vox = audioProcessor.synth->vox[batch];
 	auto& osc = vox.osc[id];
 	bool msk[4] = { false, false, false, false };
@@ -82,12 +84,20 @@ void OSC::retrigger(int note, float srate)
 
 void OSC::startBlock(int startSample, int numSamples)
 {
+	auto voice = (Voice*)audioProcessor.synth->getVoice(voiceId);
 	auto& vox = audioProcessor.synth->vox[batch];
 	auto& osc = vox.osc[id];
 	auto& unison = osc.unison[lane];
 	bool msk[4] = { false, false, false, false };
 	msk[lane] = true;
 	SIMDM mask = SIMDM(msk);
+
+	// recalc frequency during glide
+	if (voice->glide)
+	{
+		Utils::setMasked(osc.freq, 440.0f * std::pow(2.0f, (voice->glide_curr * 127.f - 69) / 12.0f), mask);
+		Utils::setMasked(osc.phase_inc, osc.freq.get(lane) / srate, mask);
+	}
 
 	int blkoffset = startSample - audioProcessor.currBlockPos + numSamples;
 	auto& mod = audioProcessor.modulation;
@@ -133,7 +143,8 @@ void OSC::startBlock(int startSample, int numSamples)
 	auto pitch_semis = mod->getPolyValue(prefix + "pitch_semis", voiceId, blkoffset);
 	auto pitch_oct = mod->getPolyValue(prefix + "pitch_oct", voiceId, blkoffset);
 	auto pitch_global = audioProcessor.modulation->globalPitchSemis;
-	auto total_cents = pitch_cents + (pitch_semis * 100.0f) + (pitch_global * 100.f) + (pitch_oct * 1200.0f);
+	auto pitch_bend = (float)audioProcessor.synth->getVoice(voiceId)->getCurrentlyPlayingNote().totalPitchbendInSemitones;
+	auto total_cents = pitch_cents + (pitch_semis * 100.0f) + (pitch_global * 100.f) + (pitch_oct * 1200.0f) + (pitch_bend * 100.f);
 
 	Utils::setMasked(osc.pitch_ratio_targ, Utils::centsToRatio(total_cents), mask);
 	Utils::setMasked(osc.dist_amt, mod->getPolyValue(prefix + "phase_dist_amt", voiceId, blkoffset), mask);

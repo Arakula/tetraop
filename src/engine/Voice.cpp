@@ -34,15 +34,15 @@ void Voice::noteStarted()
     key = note.initialNote / 127.f;
     mpe_channel = note.midiChannel;
 
-    if (glideInfo.fromNote >= 0 && glideInfo.portamento)
+    float glide_total = audioProcessor.params.getRawParameterValue("glide")->load() * 0.001f;
+    glide_elapsed = 0;
+    glide = glide_total > 0.0f && glideInfo.fromNote >= 0 && glideInfo.fromNote != note.initialNote;
+    glide_curr = key;
+    if (glide)
     {
-        noteSmoother.setTime (glideInfo.rate);
-        noteSmoother.setValueUnsmoothed (glideInfo.fromNote / 127.0f);
-        noteSmoother.setValue (note.initialNote / 127.0f);
-    }
-    else
-    {
-        noteSmoother.setValueUnsmoothed (note.initialNote / 127.0f);
+        glide_start = glideInfo.fromNote / 127.0f;
+        glide_curr = glide_start;
+        glide_targ = note.initialNote / 127.0f;
     }
 
     for (int i = 0; i < MAX_OSCILLATORS; i++)
@@ -113,14 +113,14 @@ void Voice::noteRetriggered()
 
     key = note.initialNote / 127.f;
 
-    if (glideInfo.fromNote >= 0 && glideInfo.portamento)
+    float glide_total = audioProcessor.params.getRawParameterValue("glide")->load() * 0.001f;
+    glide_elapsed = 0;
+    glide = glide_total > 0.0f && glideInfo.fromNote >= 0;
+    if (glide)
     {
-        noteSmoother.setTime (glideInfo.rate);
-        noteSmoother.setValue (key);
-    }
-    else
-    {
-        noteSmoother.setValueUnsmoothed (key);
+        glide_elapsed = 0;
+        glide_start = glide_curr;
+        glide_targ = note.initialNote / 127.0f;
     }
 
     for (int i = 0; i < MAX_OSCILLATORS; i++)
@@ -168,7 +168,6 @@ void Voice::noteTimbreChanged()
 void Voice::setCurrentSampleRate (double newRate)
 {
     MPESynthesiserVoice::setCurrentSampleRate (newRate);
-    noteSmoother.setSampleRate (newRate);
     srate = (float)getSampleRate();
     israte = 1.f / srate;
 }
@@ -201,16 +200,35 @@ void Voice::startBlock(int startSample, int numSamples)
     {
         updateMatrix(voice, blkoffset);
     }
+
+    if (glide) 
+    {
+        float glide_total = audioProcessor.params.getRawParameterValue("glide")->load() * 0.001f;
+        float glide_tension = audioProcessor.params.getRawParameterValue("glide_tension")->load();
+        float glide_power = glide_tension != 0.f ? std::pow(1.1f, std::fabs(glide_tension * globals::POWER_CURVE_POWER)) : 0.f;
+
+        if (glide_elapsed < glide_total && glide_total > 0.f) 
+        {
+            auto t = glide_elapsed / glide_total;
+            if (glide_tension > 0.f)
+                t = std::pow(t, glide_power);
+            if (glide_tension < 0.f)
+                t = 1.f - std::pow(1.f - t, glide_power);
+
+            glide_curr = glide_start + (glide_targ - glide_start) * t;
+        }
+    }
 }
 
 void Voice::endBlock(int, int numSamples)
 {
-    noteSmoother.process(numSamples);
-
     if (released)
         release_elapsed += (float)(numSamples * israte);
     else
         attack_elapsed += (float)(numSamples * israte);
+
+    if (glide)
+        glide_elapsed += (float)(numSamples * israte);
 
     // velocity is interpolated over a block in MONO mode
     if (vel != vel_targ) 

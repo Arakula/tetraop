@@ -48,6 +48,7 @@ public:
         PinkNoiseGen pinkNoiseGen[4];
     };
 
+    float srate = 44100.f;
     String prefix = "";
     int batch = 0; // SIMD group
     int lane = 0; // SIMD lane inside batch

@@ -38,10 +38,10 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
 
     layout.add(std::make_unique<AudioParameterInt>("polyphony", "Polyphony", 2, 32, 32));
     layout.add(std::make_unique<AudioParameterBool>("legato", "Legato", false));
-    layout.add(std::make_unique<AudioParameterBool>("portamento", "Portamento", false));
     layout.add(std::make_unique<AudioParameterBool>("mono", "Mono", false));
     layout.add(std::make_unique<AudioParameterBool>("mpe", "MPE", false));
     layout.add(std::make_unique<AudioParameterFloat>("glide", "Glide", NormalisableRange<float>(0.0f, 8000.0f, 1.f, 0.5f), 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("glide_tension", "Glide Tension", -1.f, 1.f, 0.f));
     layout.add(std::make_unique<AudioParameterFloat>("global_time", "Global Time", -1.f, 1.f, 0.f));
     layout.add(std::make_unique<AudioParameterFloat>("global_pitch", "Global Time", -24.f, 24.f, 0.f));
     layout.add(std::make_unique<AudioParameterFloat>("vel_sense", "Vel Sense", 0.f, 1.f, 1.f));
@@ -232,6 +232,8 @@ TetraOPAudioProcessor::TetraOPAudioProcessor()
     params.addParameterListener("legato", this);
     params.addParameterListener("mono", this);
     params.addParameterListener("mpe", this);
+    params.addParameterListener("glide", this);
+    params.addParameterListener("pitch_bend", this);
 
 }
 
@@ -495,10 +497,13 @@ void TetraOPAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     {
         polyphony = (int)params.getRawParameterValue("polyphony")->load();
         mpe_enabled = (bool)params.getRawParameterValue("mpe")->load();
-        synth->setMono((bool)params.getRawParameterValue("mono")->load());
+        bool mono = (bool)params.getRawParameterValue("mono")->load();
+        float glide = params.getRawParameterValue("glide")->load();
+        synth->setMono(mono);
         synth->setLegato((bool)params.getRawParameterValue("legato")->load());
-        synth->setPortamento((bool)params.getRawParameterValue("portamento")->load());
-        synth->setGlideRate(params.getRawParameterValue("glide")->load());
+        synth->setGlideRate(glide);
+        synth->setPortamento(mono && glide > 0.f);
+        synth->setPitchBendRange((int)params.getRawParameterValue("pitch_bend")->load());
         synth->setMPE(mpe_enabled);
         synth->setNumVoices(polyphony);
         configsChanged = false;

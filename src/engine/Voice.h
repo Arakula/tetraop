@@ -73,11 +73,17 @@ public:
     float key = 0.f; // norm note used for keytracking
     int mpe_channel = 1;
 
+    float glide_elapsed = 0;
+    bool glide = false;
+    float glide_start = 0;
+    float glide_targ = 0;
+    float glide_curr = 0;
+
     std::vector<OSC> osc;
 
     Voice (TetraOPAudioProcessor& p, int id);
 
-    float getCurrentNote() override { return noteSmoother.getCurrentValue() * 127.0f; }
+    float getCurrentNote() override { return key * 127.0f; }
 
     void noteStarted() override;
     void noteRetriggered() override;
@@ -99,7 +105,6 @@ public:
 private:
     static inline uint64_t pressed_ts_counter = 1;
     TetraOPAudioProcessor& audioProcessor;
-    gin::EasedValueSmoother<float> noteSmoother;
 
     float ampKeyTrack = 1.0f;
     double phase = 0.f;
