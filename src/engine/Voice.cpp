@@ -216,6 +216,10 @@ void Voice::startBlock(int startSample, int numSamples)
                 t = 1.f - std::pow(1.f - t, glide_power);
 
             glide_curr = glide_start + (glide_targ - glide_start) * t;
+        } 
+        else
+        {
+            glide_curr = glide_targ;
         }
     }
 }

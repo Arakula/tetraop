@@ -24,6 +24,9 @@ GlobalsPanel::GlobalsPanel(TetraOPAudioProcessorEditor& e)
 	glide = std::make_unique<Rotary>(editor, "glide", "Glide", Rotary::millis);
 	addAndMakeVisible(glide.get());
 
+	glideTension = std::make_unique<PowerCurve>(editor, "glide_tension", false);
+	addAndMakeVisible(glideTension.get());
+
 	poly = std::make_unique<ValuePicker>(editor, "polyphony");
 	poly->isInteger = true;
 	poly->precision = 0;
@@ -72,6 +75,9 @@ void GlobalsPanel::paint(Graphics& g)
 	g.drawText("Poly", poly->getBounds().translated(0, -25), Justification::centred);
 	g.drawText("Bend", bend->getBounds().translated(0, -25), Justification::centred);
 
+	g.setColour(COLOR_KNOB_LABEL());
+	g.drawText("Curve", glideTension->getBounds().withHeight(20).expanded(5, 0).translated(0, 34), Justification::centred);
+
 	auto mono = (bool)editor.audioProcessor.params.getRawParameterValue("mono")->load();
 	auto legato = (bool)editor.audioProcessor.params.getRawParameterValue("legato")->load();
 
@@ -113,6 +119,7 @@ void GlobalsPanel::resized()
 	pitch->setBounds(time->getBounds().translated(KNOB_WIDTH, 0));
 	vel->setBounds(time->getX() - KNOB_WIDTH, time->getBottom(), KNOB_WIDTH, KNOB_HEIGHT);
 	glide->setBounds(vel->getRight(), vel->getY(), KNOB_WIDTH, KNOB_HEIGHT);
+	glideTension->setBounds(glide->getBounds().translated(KNOB_WIDTH, 0).reduced(10, 20));
 
 	poly->setBounds(vel->getBounds().withHeight(20).reduced(5, 0).translated(0, int(KNOB_HEIGHT * 1.5f)));
 	bend->setBounds(glide->getBounds().withHeight(20).reduced(5, 0).translated(0, int(KNOB_HEIGHT * 1.5f)));
