@@ -152,15 +152,15 @@ void Modulator::paint(juce::Graphics& g)
     p.addRoundedRectangle(bounds.getX(), bounds.getY(), lpad, bounds.getHeight(), 2.f, 2.f, true, false, true, false);
     g.setColour(Colour(0xff333333));
     g.fillPath(p);
-    if (isenv && editor.audioProcessor.displayEnv == modId)
+
+    bool isDisplayed = isenv && editor.audioProcessor.displayEnv == modId
+        || islfo && editor.audioProcessor.displayLfo == modId
+        || selected;
+
+    if (isDisplayed)
     {
-        g.setColour(COLOR_ENVELOPE().withAlpha(0.075f));
-        g.fillRoundedRectangle(bounds, 2.f);
-    }
-    else if (islfo && editor.audioProcessor.displayLfo == modId)
-    {
-        g.setColour(COLOR_LFO().withAlpha(0.075f));
-        g.fillRoundedRectangle(bounds, 2.f);
+        g.setColour(getModColor().withAlpha(0.5f));
+        g.drawRoundedRectangle(bounds, 2.f, 1.f);
     }
 
     // draw outline
@@ -177,6 +177,7 @@ void Modulator::paint(juce::Graphics& g)
         .withHeight(bounds.getHeight() / 2.f)
         .translated(3.f, 3.f), juce::Colours::white);
 
+    // draw connections
     g.setFont(juce::FontOptions(10.f));
     g.setColour(juce::Colours::white.withAlpha(0.5f));
     g.drawFittedText(juce::String(connections), bounds
@@ -184,6 +185,7 @@ void Modulator::paint(juce::Graphics& g)
         .withTrimmedTop(bounds.getHeight() / 2.f).toNearestInt(),
         juce::Justification::centred, 1);
 
+    // draw modid
     g.setFont(juce::FontOptions(12.f));
     g.setColour(juce::Colours::white.withAlpha(0.5f));
     g.drawFittedText(modId.toUpperCase(), bounds
@@ -255,6 +257,7 @@ void Modulator::drawValueBuffer(juce::Graphics& g, juce::Rectangle<float>& bound
     auto pixelCount = (int)bounds.getWidth();
     auto bufSize = (int)valbuf.size();
     bool pathOpen = false;
+    int startX = -1;
     for (int x = 0; x < pixelCount; ++x)
     {
         float t = (float)x / (pixelCount - 1);
@@ -277,6 +280,7 @@ void Modulator::drawValueBuffer(juce::Graphics& g, juce::Rectangle<float>& bound
             continue;
         }
 
+        if (startX == -1) startX = x;
         float value = v0 * (1.0f - frac) + v1 * frac;
 
         float px = bounds.getX() + x;
@@ -290,12 +294,15 @@ void Modulator::drawValueBuffer(juce::Graphics& g, juce::Rectangle<float>& bound
             p.lineTo(px, py);
         }
     }
-    
+
+    if (startX == -1)
+        return; // nothing to display, path didn't start
+
     g.setColour(getModColor());
     g.strokePath(p, juce::PathStrokeType(1.4f));
 
     p.lineTo(bounds.getBottomRight());
-    p.lineTo(bounds.getBottomLeft());
+    p.lineTo(bounds.getBottomLeft().withX(bounds.getX() + startX));
     p.closeSubPath();
 
     juce::ColourGradient grad(
