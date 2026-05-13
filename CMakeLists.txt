@@ -140,6 +140,7 @@ target_link_libraries(${PROJECT_NAME}
         tuning-library
         gin
         gin_dsp
+        gin_svg
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

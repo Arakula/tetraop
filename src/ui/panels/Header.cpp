@@ -18,6 +18,7 @@ Header::Header(TetraOPAudioProcessorEditor& e)
 {
 	addAndMakeVisible(logo);
 	logo.setAlpha(0.f);
+	logo.onClick = [this] { editor.showAboutDialog();};
 
 	addAndMakeVisible(lib);
 	lib.setAlpha(0.f);
@@ -66,6 +67,34 @@ void Header::paint(Graphics& g)
 {
 	g.setColour(COLOR_PANEL().darker(0.6f));
     g.fillRect(getLocalBounds());
+
+	UIUtils::drawLogo(g, logo.getBounds().reduced(5).toFloat(), COLOR_KNOB_LABEL());
+
+	g.setFont(16.f);
+	g.drawText("LIB", lib.getBounds().toFloat(), Justification::centred);
+	g.drawText("SYN", syn.getBounds().toFloat(), Justification::centred);
+	g.drawText("FXS", fxs.getBounds().toFloat(), Justification::centred);
+	g.drawText("MOD", mod.getBounds().toFloat(), Justification::centred);
+	g.drawText("CFG", cfg.getBounds().toFloat(), Justification::centred);
+
+	int tab = editor.audioProcessor.selectedTab;
+	auto selbounds = (tab == 0 ? syn.getBounds()
+		: tab == 1 ? fxs.getBounds()
+		: tab == 2 ? mod.getBounds()
+		: tab == 3 ? cfg.getBounds()
+		: lib.getBounds()).toFloat();
+
+	g.setColour(COLOR_BACKGROUND());
+	g.fillRect(selbounds);
+
+	auto txt = tab == 0 ? "SYN"
+		: tab == 1 ? "FXS"
+		: tab == 2 ? "MOD"
+		: tab == 3 ? "CFG"
+		: "LIB";
+
+	g.setColour(COLOR_ACTIVE());
+	g.drawText(txt, selbounds, Justification::centred);
 }
 
 void Header::resized()

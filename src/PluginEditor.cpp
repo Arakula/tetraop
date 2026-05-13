@@ -33,10 +33,6 @@ void TetraOPAudioProcessorEditor::buildUI()
     customLookAndFeel->scale = audioProcessor.scale;
     setLookAndFeel(customLookAndFeel.get());
 
-    aboutDialog = std::make_unique<AboutDialog>();
-    addChildComponent(aboutDialog.get());
-    aboutDialog->setBounds(0, 0, getWidth(), getHeight());
-
     resizeCorner = std::make_unique<ResizeCorner>();
     addAndMakeVisible(resizeCorner.get());
     resizeCorner->setBounds(getWidth() - 15, getHeight() - 15, 15, 15);
@@ -123,6 +119,10 @@ void TetraOPAudioProcessorEditor::buildUI()
     addChildComponent (dragDropOverlay.get());
     dragDropOverlay->setInterceptsMouseClicks(false, false);
     dragDropOverlay->setBounds(0, 0, getWidth(), getHeight());
+
+    aboutDialog = std::make_unique<AboutDialog>();
+    addChildComponent(aboutDialog.get());
+    aboutDialog->setBounds(0, 0, getWidth(), getHeight());
 
     juce::Desktop::getInstance().addGlobalMouseListener(this);
     audioProcessor.modulation->UIDirty.store(true); // refresh connections on startup
