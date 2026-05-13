@@ -4,7 +4,6 @@
 #include "../Globals.h"
 
 using namespace globals;
-class RipplerAudioProcessorEditor;
 
 class UIUtils {
 public:
@@ -59,6 +58,8 @@ public:
 	static void drawClock(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour color);
 	static void drawNote(juce::Graphics& g, juce::Rectangle<float> bounds, int mode, juce::Colour color);
 	static void drawChain(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour color);
+
+	static void drawLogo(juce::Graphics& g, Rectangle<float> bounds, Colour color);
 
     static bool startUnboundedMouse(juce::Component& c, const juce::MouseEvent& e)
     {

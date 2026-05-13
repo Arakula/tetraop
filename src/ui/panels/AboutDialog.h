@@ -50,7 +50,7 @@ public:
         g.saveState();
         //UIUtils::drawLogo(g, row.toFloat().withTrimmedLeft(100.f).translated(20.f, 20.f), COLOR_TEXT_BRIGHT(), 1.5f);
         g.setColour(Colours::white);
-        g.drawText("RIPPLER", row, Justification::centred);
+        g.drawText("TetraOP", row, Justification::centred);
         g.drawText(String("v") + String(PROJECT_VERSION), row.withTrimmedTop(50), Justification::centred);
         g.restoreState();
 

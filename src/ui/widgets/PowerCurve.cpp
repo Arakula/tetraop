@@ -85,7 +85,7 @@ void PowerCurve::paint(juce::Graphics& g)
 
 void PowerCurve::mouseDown(const juce::MouseEvent& e)
 {
-    //editor.audioProcessor.undomgr->createUndo();
+    editor.audioProcessor.undomgr->createUndo();
 	UIUtils::startUnboundedMouse(*this, e);
 	mouse_down = true;
 	auto param = editor.audioProcessor.params.getParameter(paramId);
@@ -127,7 +127,7 @@ void PowerCurve::mouseUp(const juce::MouseEvent& e)
 }
 
 void PowerCurve::mouseDoubleClick(const juce::MouseEvent&) {
-    //editor.audioProcessor.undomgr->createUndo();
+    editor.audioProcessor.undomgr->createUndo();
 	auto param = editor.audioProcessor.params.getParameter(paramId);
 	param->beginChangeGesture();
 	param->setValueNotifyingHost(param->getDefaultValue());
@@ -137,7 +137,7 @@ void PowerCurve::mouseDoubleClick(const juce::MouseEvent&) {
 void PowerCurve::mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel)
 {
 	if (mouse_down) return;
-    //editor.audioProcessor.undomgr->createUndo();
+    editor.audioProcessor.undomgr->createUndo();
 
 	auto step = UIUtils::wheelStep(wheel, wheelAccum);
 	if (step == 0) return;

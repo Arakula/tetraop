@@ -23,36 +23,11 @@
 #include "ui/panels/MacrosPanel.h"
 #include "ui/panels/ModulatorsPanel.h"
 #include "ui/panels/DragDropOverlay.h"
+#include "ui/panels/Header.h"
 #include "ui/CustomLookAndFeel.h"
 #include "ui/widgets/Macro.h"
 
 using namespace globals;
-
-class TMP
-    : public juce::Component
-    , private juce::Timer
-{
-public:
-    TetraOPAudioProcessor& audioProcessor;
-    TMP(TetraOPAudioProcessor& p) : audioProcessor(p)
-    {
-        startTimerHz(30);
-    };
-
-    void timerCallback() override
-    {
-        repaint();
-    }
-
-    void paint(Graphics& g) override
-    {
-        auto b = getLocalBounds();
-        g.setFont(FontOptions(16.f));
-        g.setColour(Colours::white);
-        g.drawText(String("CPU ") + String(audioProcessor.synth->getCpuUsage()), b, Justification::centredLeft);
-        g.drawText(String("V ") + String(audioProcessor.synth->getNumActiveVoices()), b, Justification::centredRight);
-    }
-};
 
 class ResizeCorner : public juce::Component
 {
@@ -141,6 +116,7 @@ public:
     std::unique_ptr<LFODisplay> lfos;
     std::unique_ptr<MacrosPanel> macros;
     std::unique_ptr<ModulatorsPanel> mods;
+    std::unique_ptr<Header> header;
     std::unique_ptr<AboutDialog> aboutDialog;
 
     std::unique_ptr<CustomLookAndFeel> customLookAndFeel;
@@ -152,7 +128,6 @@ public:
     std::unique_ptr<ResizeCorner> resizeCorner;
 
     TooltipWindow tooltipWindow;
-    std::unique_ptr<TMP> tmp;
 
     bool resizing = false;
     float resizeStart = 1.f;

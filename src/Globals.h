@@ -15,6 +15,7 @@ namespace globals {
 	constexpr int MAX_MODS = 4; // max visible mods like vel ktrack modwheel on the right panel
 	constexpr int EQ_BANDS = 4;
 	constexpr int MAX_UNISON = 16;
+	constexpr int MAX_UNDO = 200;
 	constexpr float MORPH_SECONDS = 0.005f;
 	constexpr float DB2LOG = 0.11512925464970228420089957273422f;
 	constexpr float LOG10 = 2.30258509299f;
@@ -27,6 +28,7 @@ namespace globals {
 	constexpr int PANEL_PAD = 2;
 	constexpr int FILTER_PANEL_HMARGIN = 10;
 	constexpr float PANEL_CORNER = 0.f;
+	constexpr int HEADER_HEIGHT = 44;
 	constexpr int PANEL_HEADER_HEIGHT = 24;
 	constexpr int KNOB_WIDTH = 60;
 	constexpr int KNOB_HEIGHT = 75;

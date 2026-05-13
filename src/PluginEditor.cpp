@@ -8,7 +8,7 @@ TetraOPAudioProcessorEditor::TetraOPAudioProcessorEditor(TetraOPAudioProcessor& 
     : AudioProcessorEditor(p)
     , audioProcessor(p)
 {
-    setSize(KNOB_WIDTH * (2+2+2+2 + 3) +KNOB_WIDTH_SM * 6 + PANEL_PAD * 4 + int(FILTER_PANEL_HMARGIN * 2.5), 620);
+    setSize(KNOB_WIDTH * (2+2+2+2 + 3) +KNOB_WIDTH_SM * 6 + PANEL_PAD * 4 + int(FILTER_PANEL_HMARGIN * 2.5), 620 + HEADER_HEIGHT + PANEL_PAD);
     Desktop::getInstance().setGlobalScaleFactor(audioProcessor.scale);
     startTimerHz(60);
 
@@ -62,9 +62,13 @@ void TetraOPAudioProcessorEditor::buildUI()
             audioProcessor.saveSettings();
         };
 
+    header = std::make_unique<Header>(*this);
+    addAndMakeVisible(header.get());
+    header->setBounds(0, 0, getWidth(), HEADER_HEIGHT);
+
     oscA = std::make_unique<OSCPanel>(*this, 0);
     addAndMakeVisible(oscA.get());
-    oscA->setBounds(PANEL_PAD, PANEL_PAD, KNOB_WIDTH * 4 + KNOB_WIDTH_SM * 3, KNOB_HEIGHT * 2 + PANEL_HEADER_HEIGHT + 7);
+    oscA->setBounds(PANEL_PAD, PANEL_PAD + HEADER_HEIGHT, KNOB_WIDTH * 4 + KNOB_WIDTH_SM * 3, KNOB_HEIGHT * 2 + PANEL_HEADER_HEIGHT + 7);
 
     oscB = std::make_unique<OSCPanel>(*this, 1);
     addAndMakeVisible(oscB.get());
@@ -114,10 +118,6 @@ void TetraOPAudioProcessorEditor::buildUI()
     addAndMakeVisible(fmMatrix.get());
     fmMatrix->setVisible(audioProcessor.fmMatrixVisible);
     fmMatrix->setBounds(globals->getBounds());
-
-    tmp = std::make_unique<TMP>(audioProcessor);
-    addAndMakeVisible(tmp.get());
-    tmp->setBounds(100, 20, 100, 20);
 
     dragDropOverlay = std::make_unique<DragDropOverlay>();
     addChildComponent (dragDropOverlay.get());

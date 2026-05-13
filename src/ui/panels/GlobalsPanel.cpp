@@ -67,6 +67,9 @@ void GlobalsPanel::parameterChanged(const juce::String&, float)
 
 void GlobalsPanel::paint(Graphics& g)
 {
+	g.setColour(COLOR_PANEL().darker(0.6f));
+	g.fillRect(getLocalBounds());
+
 	g.setColour(COLOR_KNOB_LABEL());
 	g.setFont(FontOptions(16.f));
 	g.drawText("Globals", 5, 0, 80, 25, Justification::centredLeft);

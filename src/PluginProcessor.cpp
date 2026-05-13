@@ -88,7 +88,7 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add(std::make_unique<AudioParameterFloat>("rm_db", "RM DB", 0.f, 1.f, 0.f));
     layout.add(std::make_unique<AudioParameterFloat>("rm_dc", "RM DC", 0.f, 1.f, 0.f));
     layout.add(std::make_unique<AudioParameterFloat>("rm_dd", "RM DD", 0.f, 1.f, 0.f));
-    
+
 
     for (int i = 0; i < MAX_OSCILLATORS; ++i)
     {
@@ -224,6 +224,7 @@ TetraOPAudioProcessor::TetraOPAudioProcessor()
     loadSettings();
 
     tablesMgr = std::make_unique<TablesManager>(*this, waveTablesFolder);
+    presetmgr = std::make_unique<PresetManager>(*this, presetsFolder);
 
     synth = std::make_unique<Synth>(*this);
     modulation = std::make_unique<Modulation>(*this);
@@ -234,6 +235,9 @@ TetraOPAudioProcessor::TetraOPAudioProcessor()
     params.addParameterListener("mpe", this);
     params.addParameterListener("glide", this);
     params.addParameterListener("pitch_bend", this);
+
+    presetmgr->loadInit();
+    undomgr = std::make_unique<UndoMgr>(*this);
 
 }
 
@@ -581,6 +585,10 @@ void TetraOPAudioProcessor::setStateInformation (const void* data, int sizeInByt
     if (!xmlState) return;
     auto state = ValueTree::fromXml(*xmlState);
     if (!state.isValid()) return;
+
+    if (undomgr && !undomgr->isUndoing && presetmgr->selectedPreset.name.isNotEmpty()) {
+        undomgr->createUndo();
+    }
 
     auto parameters = state.getChildWithName("PARAMETERS");
     auto lfos = state.getChildWithName("LFOS");

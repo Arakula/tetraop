@@ -162,7 +162,7 @@ void EnvDisplay::mouseDown(const juce::MouseEvent& e)
     if (section != 1 && section != 3 && section != 4)
         return;
 
-    //editor.audioProcessor.undomgr->createUndo();
+    editor.audioProcessor.undomgr->createUndo();
 
     paramId = envid + (section == 1 ? "_tenatt" : section == 3 ? "_tendec" : "_tenrel");
     UIUtils::startUnboundedMouse(*this, e);
@@ -206,7 +206,7 @@ void EnvDisplay::mouseDoubleClick(const juce::MouseEvent& e) {
     if (section != 1 && section != 3 && section != 4)
         return;
 
-    //editor.audioProcessor.undomgr->createUndo();
+    editor.audioProcessor.undomgr->createUndo();
     paramId = envid + (section == 1 ? "_tenatt" : section == 3 ? "_tendec" : "_tenrel");
 
     auto param = editor.audioProcessor.params.getParameter(paramId);
@@ -376,7 +376,7 @@ void EnvDisplay::paint(juce::Graphics& g)
         for (int x = xStart; x <= xEnd; ++x) {
             float t_vis = (float)x / (pixels - 1);
             float t_real = visualToReal(t_vis);
-            
+
             auto px = bounds.getX() + x;
             auto py = bounds.getY() + bounds.getHeight() * (1.0f - p.get_y_at(t_real));
             points.push_back({ px, py });
@@ -535,7 +535,7 @@ void EnvDisplay::showEnvelopeModeMenu()
         .withTargetScreenArea({ menuPos.getX() - 50, menuPos.getY(), 1, 1 }),
         [this](int result) {
             if (result == 0) return;
-            //editor.audioProcessor.undomgr->createUndo();
+            editor.audioProcessor.undomgr->createUndo();
             auto param = editor.audioProcessor.params.getParameter(envid + "_mode");
             param->setValueNotifyingHost(param->convertTo0to1(float(result - 1)));
         });

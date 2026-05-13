@@ -28,6 +28,8 @@
 #include "engine/Synth.h"
 #include "engine/Modulation.h"
 #include "engine/TablesManager.h"
+#include "engine/UndoMgr.h"
+#include "engine/PresetManager.h"
 
 
 class TetraOPAudioProcessor
@@ -44,6 +46,16 @@ public:
     std::vector<float> leftBuf;
     std::vector<float> rightBuf;
 
+    // Undo
+    std::unique_ptr<UndoMgr> undomgr;
+
+    // Presets
+    std::unique_ptr<PresetManager> presetmgr;
+
+    // instance
+    String importExportDir = ""; // default dir for import export
+    float scale = 1.f;
+
     //
     int polyphony = 32;
     bool mpe_enabled = false;
@@ -59,7 +71,6 @@ public:
     std::unique_ptr<Tunings::Tuning> tuning;
     String tuningFileDir = ""; // default directory for open tuning file dialog
 
-
     // Playhead
     float srate = 44100.f;
     float osrate = 88200.f; // oversampled srate
@@ -72,7 +83,6 @@ public:
     int currBlockPos = 0;
 
     // UI
-    float scale = 1.f;
     int selectedTab = 0;
     bool fmMatrixVisible = false;
     bool showRMMatrix = false;

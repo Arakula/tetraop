@@ -100,6 +100,8 @@ void Rotary::mouseDown(const juce::MouseEvent& e)
         return;
     }
 
+    editor.audioProcessor.undomgr->createUndo();
+
     if (onMouseDown)
         onMouseDown();
 
@@ -128,6 +130,9 @@ void Rotary::mouseDown(const juce::MouseEvent& e)
 void Rotary::mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel)
 {
     if (mouse_down) return; // prevent crash, param is already mutating
+
+    editor.audioProcessor.undomgr->createUndo();
+
     if (e.mods.isCommandDown() && modId.isEmpty()) {
         editor.quickConnect(paramId);
     }
@@ -181,6 +186,8 @@ void Rotary::mouseDoubleClick(const juce::MouseEvent& e) {
     float dy = (float)(e.y - getHeight() * 0.5f - yoffset);
     float dist_center = std::sqrt(dx * dx + dy * dy);
     auto modedit = (e.mods.isCommandDown() || dist_center >= radius + mod_offset) && modId.isNotEmpty();
+
+    editor.audioProcessor.undomgr->createUndo();
 
     if (modedit) {
         editor.audioProcessor.modulation->disconnectSelectedMod(paramId.toStdString());

@@ -96,7 +96,7 @@ void CurveEditor::mouseDown(const juce::MouseEvent& e)
         }
 
         if (selectedPoint > 0 || selectedMidpoint > 0) {
-            //editor.audioProcessor.undomgr->createUndo();
+            editor.audioProcessor.undomgr->createUndo();
 
             if (selectedPoint > 0) {
                 UIUtils::startUnboundedMouse(*this, e);
@@ -228,7 +228,7 @@ void CurveEditor::mouseDoubleClick(const juce::MouseEvent& e) {
         return;
     }
 
-    //editor.audioProcessor.undomgr->createUndo();
+    editor.audioProcessor.undomgr->createUndo();
 
     if (usemultisel && multisel.mouseHover > -1) {
         multisel.clearSelection();
@@ -256,14 +256,14 @@ void CurveEditor::mouseDoubleClick(const juce::MouseEvent& e) {
     pattern->buildSegments();
     pattern->incrementVersion();
     if (onChange) onChange();
-    //editor.audioProcessor.undomgr->createUndo();
+    editor.audioProcessor.undomgr->createUndo();
     repaint();
 }
 
 bool CurveEditor::keyPressed(const juce::KeyPress& key)
 {
     if (key == juce::KeyPress::deleteKey && usemultisel && !multisel.selectionPoints.empty()) {
-        //editor.audioProcessor.undomgr->createUndo();
+        editor.audioProcessor.undomgr->createUndo();
         multisel.deleteSelectedPoints();
         if (onChange) onChange();
         return true;
@@ -275,7 +275,7 @@ bool CurveEditor::keyPressed(const juce::KeyPress& key)
 
 void CurveEditor::mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel)
 {
-    //editor.audioProcessor.undomgr->createUndo();
+    editor.audioProcessor.undomgr->createUndo();
     if (onWheel) onWheel(e, wheel);
     if (!islfo) return;
     auto step = UIUtils::wheelStep(wheel, wheelAccum);

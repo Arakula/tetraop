@@ -16,7 +16,7 @@ Macro::Macro(TetraOPAudioProcessorEditor& e, int index)
 	nameBtn.setAlpha(0.f);
 	nameBtn.onClick = [this]
 		{
-            //editor.audioProcessor.undomgr->createUndo();
+            editor.audioProcessor.undomgr->createUndo();
 			editor.showMacroRename(this);
 		};
 

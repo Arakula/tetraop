@@ -31,7 +31,7 @@ LFODisplay::LFODisplay(TetraOPAudioProcessorEditor& e)
 
     rotLeftBtn.onClick = [this]
         {
-            //editor.audioProcessor.undomgr->createUndo();
+            editor.audioProcessor.undomgr->createUndo();
             auto& lfo = editor.audioProcessor.modulation->lfos[lfoidx];
             lfo.pattern.rotate(-1.f / display->gridX);
             lfo.pattern.buildSegments();
@@ -40,7 +40,7 @@ LFODisplay::LFODisplay(TetraOPAudioProcessorEditor& e)
 
     rotRightBtn.onClick = [this]
         {
-            //editor.audioProcessor.undomgr->createUndo();
+            editor.audioProcessor.undomgr->createUndo();
             auto& lfo = editor.audioProcessor.modulation->lfos[lfoidx];
             lfo.pattern.rotate(1.f / display->gridX);
             lfo.pattern.buildSegments();
@@ -49,7 +49,7 @@ LFODisplay::LFODisplay(TetraOPAudioProcessorEditor& e)
 
     roundBtn.onClick = [this]
         {
-            //editor.audioProcessor.undomgr->createUndo();
+            editor.audioProcessor.undomgr->createUndo();
             auto& lfo = editor.audioProcessor.modulation->lfos[lfoidx];
             bool isRoundCurve = lfo.pattern.points.size() && lfo.pattern.points[0].type > 1;
             for (auto& point : lfo.pattern.points) {
@@ -99,7 +99,7 @@ LFODisplay::LFODisplay(TetraOPAudioProcessorEditor& e)
             showSyncMenu();
         };
 
-    display = std::make_unique<CurveEditor>(editor, &editor.audioProcessor.modulation->lfos[0].pattern, 
+    display = std::make_unique<CurveEditor>(editor, &editor.audioProcessor.modulation->lfos[0].pattern,
         4.f, COLOR_LFO(), COLOR_ACTIVE(), true, true);
     addAndMakeVisible(display.get());
     display->gridX = (int)editor.audioProcessor.params.getRawParameterValue("lfo_grid")->load();
@@ -367,7 +367,7 @@ void LFODisplay::showModeMenu()
         .withTargetScreenArea({ menuPos.getX() - 70, menuPos.getY(), 1, 1 }),
         [this](int result) {
             if (result == 0) return;
-            //editor.audioProcessor.undomgr->createUndo();
+            editor.audioProcessor.undomgr->createUndo();
             auto param = editor.audioProcessor.params.getParameter("lfo" + juce::String(lfoidx + 1) + "_mode");
             param->setValueNotifyingHost(param->convertTo0to1(result - 1.f));
         });
@@ -390,7 +390,7 @@ void LFODisplay::showSyncMenu()
         .withTargetScreenArea({ menuPos.getX(), menuPos.getY(), 1, 1 }),
         [this](int result) {
             if (result == 0) return;
-            //editor.audioProcessor.undomgr->createUndo();
+            editor.audioProcessor.undomgr->createUndo();
             auto param = editor.audioProcessor.params.getParameter(lfoid + "_sync");
             param->setValueNotifyingHost(param->convertTo0to1((float)(result - 1)));
         });
@@ -403,7 +403,7 @@ void LFODisplay::loadLfoFile(const juce::File& file)
     if (array == nullptr)
         return;
 
-    //editor.audioProcessor.undomgr->createUndo();
+    editor.audioProcessor.undomgr->createUndo();
     auto& lfo = editor.audioProcessor.modulation->lfos[lfoidx];
     lfo.pattern.clear();
     // Insert points in reverse order. Pattern::insertPoint uses lower_bound,
@@ -530,7 +530,7 @@ void LFODisplay::showFileMenu()
     });
 
     menu.addItem("Paste", [this] {
-        //editor.audioProcessor.undomgr->createUndo();
+        editor.audioProcessor.undomgr->createUndo();
         auto& lfo = editor.audioProcessor.modulation->lfos[lfoidx];
         lfo.pattern.paste();
         lfo.pattern.buildSegments();

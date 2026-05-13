@@ -700,3 +700,22 @@ void UIUtils::drawChain(juce::Graphics& g, juce::Rectangle<float> bounds, juce::
     g.setColour(color);
     g.strokePath(p, juce::PathStrokeType(1.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 }
+
+void UIUtils::drawLogo(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour color)
+{
+    juce::Path p = juce::Drawable::parseSVGPath(
+        R"svg(
+            <svg width="35" height="35" viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15.768 3C16.5378 1.66667 18.4623 1.66667 19.2321 3L22.2631 8.25C23.0329 9.58333 22.0707 11.25 20.5311 11.25H14.4689C12.9293 11.25 11.9671 9.58333 12.7369 8.25L15.768 3Z" fill="#D9D9D9"/>
+                <path d="M15.768 32C16.5378 33.3333 18.4623 33.3333 19.2321 32L22.2631 26.75C23.0329 25.4167 22.0707 23.75 20.5311 23.75H14.4689C12.9293 23.75 11.9671 25.4167 12.7369 26.75L15.768 32Z" fill="#D9D9D9"/>
+                <path d="M31.7326 18.7606C33.1343 18.0053 33.1343 15.9947 31.7326 15.2394L26.6987 12.5268C25.3663 11.8088 23.75 12.7738 23.75 14.2874L23.75 19.7126C23.75 21.2262 25.3663 22.1912 26.6987 21.4732L31.7326 18.7606Z" fill="#D9D9D9"/>
+                <path d="M3.26735 18.7606C1.86568 18.0053 1.86568 15.9947 3.26736 15.2394L8.30126 12.5268C9.63374 11.8088 11.25 12.7738 11.25 14.2874L11.25 19.7126C11.25 21.2262 9.63373 22.1912 8.30126 21.4732L3.26735 18.7606Z" fill="#D9D9D9"/>
+            </svg>
+        )svg"
+    );
+
+    //p.applyTransform(juce::AffineTransform::scale(scale));
+    p.applyTransform(juce::AffineTransform::translation(bounds.getX(), bounds.getY()));
+    g.setColour(color);
+    g.fillPath(p);
+}
