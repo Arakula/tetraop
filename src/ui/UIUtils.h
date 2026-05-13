@@ -60,6 +60,10 @@ public:
 	static void drawChain(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour color);
 
 	static void drawLogo(juce::Graphics& g, Rectangle<float> bounds, Colour color);
+	static void drawSave(juce::Graphics& g, Rectangle<float> bounds, Colour color);
+	static void drawEllipsis(juce::Graphics& g, Rectangle<float> bounds, Colour color);
+	static void drawCPU(juce::Graphics& g, Rectangle<float> bounds, Colour color);
+	static void drawVoices(juce::Graphics& g, Rectangle<float> bounds, Colour color);
 
     static bool startUnboundedMouse(juce::Component& c, const juce::MouseEvent& e)
     {

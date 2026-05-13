@@ -30,6 +30,7 @@ public:
 class Header
     : public juce::Component
     , private juce::AudioProcessorValueTreeState::Listener
+    , private juce::Timer
 {
 public:
 
@@ -51,6 +52,7 @@ public:
     Header(TetraOPAudioProcessorEditor& e);
     ~Header() override;
 
+    void timerCallback() override;
     void parameterChanged(const juce::String& parameterID, float newValue) override;
     void paint(Graphics& g) override;
     void resized() override;

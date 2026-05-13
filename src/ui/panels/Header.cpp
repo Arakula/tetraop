@@ -4,11 +4,28 @@
 
 void CPUMeter::paint(Graphics& g)
 {
-	auto b = getLocalBounds();
+	auto b = getLocalBounds().toFloat();
+	g.setColour(COLOR_PANEL());
+	g.fillRoundedRectangle(b, 3.f);
+
     g.setFont(FontOptions(16.f));
-    g.setColour(Colours::white);
-    g.drawText(String("CPU ") + String((int)editor.audioProcessor.synth->getCpuUsage()), b, Justification::centredLeft);
-    g.drawText(String("V ") + String(editor.audioProcessor.synth->getNumActiveVoices()), b, Justification::centredRight);
+    g.setColour(COLOR_KNOB_LABEL());
+
+	auto pad = 0.f;
+	auto w = (b.getWidth() - pad * 2);
+	auto x = pad + w / 4 / 2;
+
+	UIUtils::drawCPU(g, Rectangle<float>(x - 6, 6.f, 16.f, 16.f), COLOR_KNOB_LABEL());
+	x += w / 4;
+
+    g.drawText(String((int)editor.audioProcessor.synth->getCpuUsage()), Rectangle<float>(x - 16.f, 6.f, 32.f, 16.f), Justification::centred);
+	x += w / 4;
+
+	UIUtils::drawVoices(g, Rectangle<float>(x - 6, 6.f, 16.f, 16.f), COLOR_KNOB_LABEL());
+	x += w / 4;
+
+    g.drawText(String(editor.audioProcessor.synth->getNumActiveVoices()), Rectangle<float>(x - 16.f, 6.f, 32.f, 16.f), Justification::centred);
+	
 }
 
 ///////////////////////////////////////////////
@@ -16,24 +33,51 @@ void CPUMeter::paint(Graphics& g)
 Header::Header(TetraOPAudioProcessorEditor& e)
 	: editor(e)
 {
+	startTimerHz(5);
+
 	addAndMakeVisible(logo);
 	logo.setAlpha(0.f);
 	logo.onClick = [this] { editor.showAboutDialog();};
 
 	addAndMakeVisible(lib);
 	lib.setAlpha(0.f);
+	lib.onClick = [this]
+		{
+			editor.selectTab(4);
+			toggleUIComponents();
+		};
 
 	addAndMakeVisible(syn);
 	syn.setAlpha(0.f);
+	syn.onClick = [this]
+		{
+			editor.selectTab(0);
+			toggleUIComponents();
+		};
 
 	addAndMakeVisible(fxs);
 	fxs.setAlpha(0.f);
+	fxs.onClick = [this]
+		{
+			editor.selectTab(1);
+			toggleUIComponents();
+		};
 
 	addAndMakeVisible(mod);
 	mod.setAlpha(0.f);
+	mod.onClick = [this]
+		{
+			editor.selectTab(2);
+			toggleUIComponents();
+		};
 
 	addAndMakeVisible(cfg);
 	cfg.setAlpha(0.f);
+	cfg.onClick = [this]
+		{
+			editor.selectTab(3);
+			toggleUIComponents();
+		};
 
 	addAndMakeVisible(prevPreset);
 	prevPreset.setAlpha(0.f);
@@ -56,6 +100,13 @@ Header::Header(TetraOPAudioProcessorEditor& e)
 
 Header::~Header()
 {
+}
+
+void Header::timerCallback()
+{
+	if (editor.audioProcessor.presetmgr->nameDirty.exchange(false)) {
+		repaint();
+	}
 }
 
 void Header::parameterChanged(const juce::String&, float)
@@ -86,6 +137,7 @@ void Header::paint(Graphics& g)
 
 	g.setColour(COLOR_BACKGROUND());
 	g.fillRect(selbounds);
+	g.fillRoundedRectangle(prevPreset.getBounds().withRight(menuBtn.getRight()).toFloat(), 5.f);
 
 	auto txt = tab == 0 ? "SYN"
 		: tab == 1 ? "FXS"
@@ -95,6 +147,14 @@ void Header::paint(Graphics& g)
 
 	g.setColour(COLOR_ACTIVE());
 	g.drawText(txt, selbounds, Justification::centred);
+
+	g.setColour(COLOR_KNOB_LABEL());
+	g.drawFittedText(editor.audioProcessor.presetmgr->selectedPreset.name, preset.getBounds(), Justification::centred, 1);
+
+	UIUtils::drawTriangle(g, prevPreset.getBounds().toFloat().reduced(10.f), 3, COLOR_KNOB_LABEL());
+	UIUtils::drawTriangle(g, nextPreset.getBounds().toFloat().reduced(10.f), 1, COLOR_KNOB_LABEL());
+	UIUtils::drawSave(g, saveBtn.getBounds().reduced(5).toFloat(), COLOR_KNOB_LABEL());
+	UIUtils::drawEllipsis(g, menuBtn.getBounds().toFloat().translated(-2,6), COLOR_KNOB_LABEL());
 }
 
 void Header::resized()
@@ -106,13 +166,13 @@ void Header::resized()
 	mod.setBounds(fxs.getBounds().translated(fxs.getWidth(), 0));
 	cfg.setBounds(mod.getBounds().translated(mod.getWidth(), 0));
 
-	prevPreset.setBounds(400, 8, 28, 28);
+	prevPreset.setBounds(365, 8, 28, 28);
 	nextPreset.setBounds(prevPreset.getRight(), 8, 28, 28);
 	preset.setBounds(nextPreset.getRight(), 8, 200, 28);
 	saveBtn.setBounds(preset.getRight(), 8, 28, 28);
-	menuBtn.setBounds(saveBtn.getRight(), 8, 28, 28);
+	menuBtn.setBounds(saveBtn.getRight(), 8, 28, 16);
 
-	cpuMeter->setBounds(700, 8, 90, 28);
+	cpuMeter->setBounds(menuBtn.getRight() + 16, 8, 90, 28);
 }
 
 

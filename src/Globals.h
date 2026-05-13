@@ -77,6 +77,7 @@ namespace globals {
 	inline Colour COLOR_RND() { return colors.at("COLOR_RND"); }
 	inline Colour COLOR_OTHER_MOD() { return colors.at("COLOR_OTHER_MOD"); }
 	inline Colour COLOR_MACRO() { return colors.at("COLOR_MACRO"); }
+	inline Colour COLOR_TEXT_DIM() { return colors.at("COLOR_TEXT_DIM"); }
 
 	inline void loadDefaultTheme() {
 		themeLoaded = true;
