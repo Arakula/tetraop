@@ -4,6 +4,7 @@
 #include "../../Globals.h"
 #include "../UIUtils.h"
 #include "../widgets/Rotary.h"
+#include "../widgets/Meter.h"
 
 class TetraOPAudioProcessorEditor;
 using namespace globals;
@@ -50,6 +51,7 @@ public:
     std::unique_ptr<CPUMeter> cpuMeter;
 
 	std::unique_ptr<Rotary> gain;
+	std::unique_ptr<Meter> meter;
 
     Header(TetraOPAudioProcessorEditor& e);
     ~Header() override;

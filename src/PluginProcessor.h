@@ -88,6 +88,8 @@ public:
     bool showRMMatrix = false;
     String displayEnv = "env1";
     String displayLfo = "lfo1";
+    std::atomic<float> rmsL;
+    std::atomic<float> rmsR;
 
     juce::AudioProcessorValueTreeState params;
     juce::UndoManager undoManager;

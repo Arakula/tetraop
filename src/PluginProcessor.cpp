@@ -514,8 +514,9 @@ void TetraOPAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
         configsChanged = false;
     }
 
+    float masterGain = modulation->getValue("master_gain", false, numSamples, srate);
     int pos = 0;
-    int todo = buffer.getNumSamples();
+    int todo = numSamples;
 
     synth->startBlock();
     while (todo > 0)
@@ -530,6 +531,10 @@ void TetraOPAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
         modulation->endBlock(thisBlock);
     }
     synth->endBlock(numSamples);
+
+    buffer.applyGain(masterGain);
+    rmsL.store(buffer.getMagnitude(0, 0, numSamples));
+    rmsR.store(buffer.getMagnitude(1, 0, numSamples));
 
     dspLock.exit();
 }

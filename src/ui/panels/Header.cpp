@@ -25,7 +25,7 @@ void CPUMeter::paint(Graphics& g)
 	x += w / 4;
 
     g.drawText(String(editor.audioProcessor.synth->getNumActiveVoices()), Rectangle<float>(x - 16.f, 6.f, 32.f, 16.f), Justification::centred);
-	
+
 }
 
 ///////////////////////////////////////////////
@@ -96,7 +96,7 @@ Header::Header(TetraOPAudioProcessorEditor& e)
 	addAndMakeVisible(undoBtn);
 	undoBtn.setAlpha(0.f);
 	undoBtn.onClick = [this] { editor.audioProcessor.undomgr->undo(); };
-	
+
 	addAndMakeVisible(redoBtn);
 	redoBtn.setAlpha(0.f);
 	redoBtn.onClick = [this] { editor.audioProcessor.undomgr->redo(); };
@@ -111,6 +111,9 @@ Header::Header(TetraOPAudioProcessorEditor& e)
 	gain->setDark();
 	gain->yoffset += 4;
 	editor.registerModParam(gain.get());
+
+	meter = std::make_unique<Meter>(editor.audioProcessor);
+	addAndMakeVisible(meter.get());
 }
 
 Header::~Header()
@@ -119,11 +122,11 @@ Header::~Header()
 
 void Header::timerCallback()
 {
-	if (editor.audioProcessor.presetmgr->nameDirty.exchange(false)) 
+	if (editor.audioProcessor.presetmgr->nameDirty.exchange(false))
 	{
 		repaint();
 	}
-	if (editor.audioProcessor.undomgr->UIDirty.exchange(false)) 
+	if (editor.audioProcessor.undomgr->UIDirty.exchange(false))
 	{
 		repaint();
 	}
@@ -200,6 +203,7 @@ void Header::resized()
 
 	cpuMeter->setBounds(redoBtn.getRight() + 12, 8, 90, 28);
 	gain->setBounds(Rectangle<int>(HEADER_HEIGHT, HEADER_HEIGHT).withY(0).withX(cpuMeter->getRight() + 12).translated(0,5));
+	meter->setBounds(Rectangle<int>(28,20).withY(14).withX(gain->getRight() + 12).withRight(getRight() - 12));
 }
 
 
