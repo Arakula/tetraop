@@ -183,7 +183,7 @@ void OSC::recalcUnison(SIMDUnison& unison, int unison_mod) const
 	for (int i = 0; i < unison.voices; ++i)
 		unison_mask[i] = 1.f;
 
-	alignas(sizeof(SIMDF)) auto unison_ratio = Unison::generateDetuneRatios(unison.voices, unison_detune, unison_spread);
+	alignas(sizeof(SIMDF)) auto unison_ratio = Unison::generateDetuneRatios(unison.voices, unison_detune, unison_spread, (Unison::Mode)unison_mod);
 	for (int i = 0; i < 4; ++i)
 	{
 		unison.mask[i].load(&unison_mask[i * 4]);

@@ -32,7 +32,7 @@ public:
         return out;
     }
 
-    static Arr16f generateDetuneRatios(int nvoices, float detune, float spread)
+    static Arr16f generateDetuneRatios(int nvoices, float detune, float spread, Mode mode = Mode::kUnison)
     {
         alignas(sizeof(SIMDF)) Arr16f out{};
         if (nvoices < 2) return out;
@@ -54,6 +54,16 @@ public:
             float warpedPos = std::copysign(std::pow(std::abs(normPos), exponent), normPos);
             float detuneCents = warpedPos * detune;
             out[i] = Utils::centsToRatio(detuneCents);
+
+            // Alternate voices
+            if (i % 2 != 0)
+            {
+                if (mode == Mode::kSub)
+                    out[i] *= 0.5f;
+
+                else if (mode == Mode::kFifths)
+                    out[i] *= 1.5f;
+            }
         }
 
         return out;
@@ -114,6 +124,32 @@ public:
         return out;
     }
 
+    static Arr16f generateGainAlternate(int nvoices,
+        float blend,
+        bool normalizeRMS = true)
+    {
+        alignas(sizeof(SIMDF)) Arr16f out {};
+        float sumSq = 0.f;
+
+        for (int i = 0; i < nvoices; ++i)
+        {
+            const float g = (i % 2 == 0) ? 1.f : blend;
+
+            out[i] = g;
+            sumSq += g * g;
+        }
+
+        if (normalizeRMS)
+        {
+            const float norm = 1.f / std::sqrt(sumSq);
+
+            for (int i = 0; i < nvoices; ++i)
+                out[i] *= norm;
+        }
+
+        return out;
+    }
+
     static Arr16f generateVoicesGain(int nvoices, float blend, bool normalizeRMS = true, Mode mode = Mode::kUnison)
     {
         alignas(sizeof(SIMDF)) Arr16f out {};
@@ -126,6 +162,11 @@ public:
         if (mode == Mode::kGaussian)
         {
             return generateGainGauss(nvoices, blend, normalizeRMS);
+        }
+
+        if (mode == Mode::kAlternate || mode == Mode::kSub)
+        {
+            return generateGainAlternate(nvoices, blend, normalizeRMS);
         }
 
         if (nvoices == 2) 
