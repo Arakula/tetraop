@@ -29,10 +29,10 @@ FilterPanel::FilterPanel(TetraOPAudioProcessorEditor& e, int _fid)
 	drive = std::make_unique<Rotary>(e, prefix + "drive", "Drive", Rotary::Percent);
 	mix = std::make_unique<Rotary>(e, prefix + "mix", "Mix", Rotary::Percent);
 
-	editor.registerModParam(cut.get());
-	editor.registerModParam(res.get());
-	editor.registerModParam(drive.get());
-	editor.registerModParam(mix.get());
+	editor.registerModParam(cut.get(), fid == 0 ? TetraOPAudioProcessorEditor::kFilter1 : TetraOPAudioProcessorEditor::kFilter2);
+	editor.registerModParam(res.get(), fid == 0 ? TetraOPAudioProcessorEditor::kFilter1 : TetraOPAudioProcessorEditor::kFilter2);
+	editor.registerModParam(drive.get(), fid == 0 ? TetraOPAudioProcessorEditor::kFilter1 : TetraOPAudioProcessorEditor::kFilter2);
+	editor.registerModParam(mix.get(), fid == 0 ? TetraOPAudioProcessorEditor::kFilter1 : TetraOPAudioProcessorEditor::kFilter2);
 
 	addAndMakeVisible(cut.get());
 	addAndMakeVisible(res.get());

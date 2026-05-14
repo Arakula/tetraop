@@ -110,7 +110,7 @@ Header::Header(TetraOPAudioProcessorEditor& e)
 	gain->setSmall();
 	gain->setDark();
 	gain->yoffset += 4;
-	editor.registerModParam(gain.get());
+	editor.registerModParam(gain.get(), TetraOPAudioProcessorEditor::kGlobal);
 
 	meter = std::make_unique<Meter>(editor.audioProcessor);
 	addAndMakeVisible(meter.get());

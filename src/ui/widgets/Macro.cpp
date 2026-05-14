@@ -22,7 +22,7 @@ Macro::Macro(TetraOPAudioProcessorEditor& e, int index)
 		};
 
 	startTimerHz(30);
-	editor.registerModParam(rotary.get());
+	editor.registerModParam(rotary.get(), TetraOPAudioProcessorEditor::kMacro);
 }
 
 Macro::~Macro()

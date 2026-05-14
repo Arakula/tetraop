@@ -179,12 +179,12 @@ void TetraOPAudioProcessorEditor::timerCallback()
     for (auto& conn : connections) {
         if (modulatedParams.find(conn.dst) != modulatedParams.end()) {
             auto param = modulatedParams[conn.dst];
-            if (param->isShowing()) {
+            if (param.ref->isShowing()) {
                 auto val = audioProcessor.modulation->getModulatedNormSafe(conn.dst);
-                if (param->modValue != val || param->voiceActive != voiceActive) { // save on repaints
-                    param->modValue = val;
-                    param->voiceActive = voiceActive;
-                    param->repaint();
+                if (param.ref->modValue != val || param.ref->voiceActive != voiceActive) { // save on repaints
+                    param.ref->modValue = val;
+                    param.ref->voiceActive = voiceActive;
+                    param.ref->repaint();
                 }
             }
         }
@@ -204,8 +204,8 @@ void TetraOPAudioProcessorEditor::timerCallback()
 
         // handle connects and disconnects
         for (auto& [paramId, param] : modulatedParams) {
-            param->modulated = modulated.count(paramId) > 0;
-            param->setModId(""); // start by disabling current modulator for every param
+            param.ref->modulated = modulated.count(paramId) > 0;
+            param.ref->setModId(""); // start by disabling current modulator for every param
         }
 
         auto& selmod = audioProcessor.modulation->selectedMod;
@@ -226,17 +226,17 @@ void TetraOPAudioProcessorEditor::timerCallback()
                 auto param = modulatedParams[conn.dst];
                 if (conn.src == selmod) {
                     // if the param is modulated by the selected mod, activate it
-                    param->setModId(juce::String("mod") + juce::String(conn.id) + "_amt");
-                    param->modBipolar = conn.bipolar;
-                    param->modColor = conn.bypass ? Colours::transparentBlack : selmodColor;
+                    param.ref->setModId(juce::String("mod") + juce::String(conn.id) + "_amt");
+                    param.ref->modBipolar = conn.bipolar;
+                    param.ref->modColor = conn.bypass ? Colours::transparentBlack : selmodColor;
                 }
             }
         }
 
         // finally repaint all params
         for (auto& [paramId, param] : modulatedParams) {
-            if (param->isShowing()) {
-                param->repaint();
+            if (param.ref->isShowing()) {
+                param.ref->repaint();
             }
         }
     }
@@ -273,10 +273,10 @@ void TetraOPAudioProcessorEditor::startDragDrop(String modID, juce::Component* c
     }
 
     for (auto& [paramId, param] : modulatedParams) {
-        if (param->isShowing() && modulated.count(paramId) == 0) {
-            param->showDragAndDrop = true;
-            param->dragAndDropColour = modColor.withAlpha(0.5f);
-            param->repaint();
+        if (param.ref->isShowing() && modulated.count(paramId) == 0) {
+            param.ref->showDragAndDrop = true;
+            param.ref->dragAndDropColour = modColor.withAlpha(0.5f);
+            param.ref->repaint();
         }
     }
 }
@@ -299,12 +299,12 @@ void TetraOPAudioProcessorEditor::mouseUp(const juce::MouseEvent& e)
         // for each modulatable param turn off drag and drop
         // if the drag and drop finished on the param make a new connection
         for (auto& [paramId, param] : modulatedParams) {
-            if (param->showDragAndDrop) {
-                param->showDragAndDrop = false;
-                if (param->getName() == id) {
+            if (param.ref->showDragAndDrop) {
+                param.ref->showDragAndDrop = false;
+                if (param.ref->getName() == id) {
                     audioProcessor.modulation->connect(dragDropModID.toStdString(), id.toStdString());
                 }
-                param->repaint();
+                param.ref->repaint();
             }
         }
 
@@ -339,7 +339,7 @@ void TetraOPAudioProcessorEditor::quickConnect(String paramId)
     auto modSliderId = "mod" + String(conn->id) + "_amt";
     audioProcessor.params.getParameter(modSliderId)->setValueNotifyingHost(0.5f); // 0.5f norm is zero value
     auto& param = modulatedParams[paramId.toStdString()];
-    param->modId = modSliderId;
+    param.ref->modId = modSliderId;
 }
 
 void TetraOPAudioProcessorEditor::setMouseHoverParam(ModulatedParam* param)
@@ -347,14 +347,14 @@ void TetraOPAudioProcessorEditor::setMouseHoverParam(ModulatedParam* param)
     mouseHoverParam = param;
 }
 
-void TetraOPAudioProcessorEditor::registerModParam(ModulatedParam* param)
+void TetraOPAudioProcessorEditor::registerModParam(ModulatedParam* param, ParamCategory cat)
 {
-    modulatedParams[param->paramId.toStdString()] = param;
+    modulatedParams[param->paramId] = { param, cat };
 }
 
 void TetraOPAudioProcessorEditor::unregisterModParam(ModulatedParam* param)
 {
-    modulatedParams.erase(param->paramId.toStdString());
+    modulatedParams.erase(param->paramId);
 }
 
 void TetraOPAudioProcessorEditor::selectTab(int tab)

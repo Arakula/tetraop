@@ -12,7 +12,7 @@ class LayoutPickerWidget : public juce::Component
 {
 public:
     void paint(Graphics& g) override;
-    void mouseDown(const MouseEvent& e) override;
+    void mouseUp(const MouseEvent& e) override;
     void mouseMove(const MouseEvent& e) override;
     void mouseExit(const MouseEvent& e) override;
 

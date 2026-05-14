@@ -119,12 +119,12 @@ void EnvDisplay::connect(juce::String id)
     sustain->setParamId(envid + "_sus");
     release->setParamId(envid + "_rel");
 
-    editor.registerModParam(delay.get());
-    editor.registerModParam(attack.get());
-    editor.registerModParam(hold.get());
-    editor.registerModParam(decay.get());
-    editor.registerModParam(sustain.get());
-    editor.registerModParam(release.get());
+    editor.registerModParam(delay.get(), TetraOPAudioProcessorEditor::kEnvelope);
+    editor.registerModParam(attack.get(), TetraOPAudioProcessorEditor::kEnvelope);
+    editor.registerModParam(hold.get(), TetraOPAudioProcessorEditor::kEnvelope);
+    editor.registerModParam(decay.get(), TetraOPAudioProcessorEditor::kEnvelope);
+    editor.registerModParam(sustain.get(), TetraOPAudioProcessorEditor::kEnvelope);
+    editor.registerModParam(release.get(), TetraOPAudioProcessorEditor::kEnvelope);
 
     editor.audioProcessor.modulation->UIDirty.store(true); // refresh connections
     toggleUIComponents();

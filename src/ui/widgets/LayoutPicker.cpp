@@ -163,7 +163,7 @@ void LayoutPickerWidget::paint(Graphics& g)
 
 // =========================================================
 
-void LayoutPickerWidget::mouseDown(const MouseEvent&)
+void LayoutPickerWidget::mouseUp(const MouseEvent&)
 {
     if (hoverx > -1 && hovery > -1 && onClick)
     {

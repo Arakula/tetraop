@@ -75,7 +75,32 @@ class TetraOPAudioProcessorEditor
   , private juce::Timer
 {
 public:
+    enum ParamCategory {
+        kOther,
+        kGlobal,
+        kOSCA,
+        kOSCB,
+        kOSCC,
+        kOSCD,
+        kFilter1,
+        kFilter2,
+        kEnvelope,
+        kLFO,
+        kRand,
+        kMacro,
+        kFX,
+        kModulation,
+        kFmMatrix,
+        kNumCats,
+    };
+
+    struct ModParam {
+        ModulatedParam* ref;
+        ParamCategory cat;
+    };
+
     TetraOPAudioProcessor& audioProcessor;
+    std::map<juce::String, ModParam> modulatedParams;
 
     TetraOPAudioProcessorEditor (TetraOPAudioProcessor&);
     ~TetraOPAudioProcessorEditor() override;
@@ -86,7 +111,7 @@ public:
 
     void timerCallback() override;
     void parameterChanged(const juce::String& parameterID, float newValue) override;
-    void registerModParam(ModulatedParam* param);
+    void registerModParam(ModulatedParam* param, ParamCategory cat);
     void unregisterModParam(ModulatedParam* param);
     void startDragDrop(String mod, Component* comp);
     void quickConnect(String paramId);
@@ -134,7 +159,6 @@ public:
     float resizeRatio = 1.f;
 private:
     String dragDropModID = "";
-    std::map<juce::String, ModulatedParam*> modulatedParams;
     std::unique_ptr<MidiKeyboardComponent> keyboardComponent;
     ModulatedParam* mouseHoverParam = nullptr;
 

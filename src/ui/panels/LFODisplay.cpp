@@ -223,13 +223,13 @@ void LFODisplay::connect(juce::String id)
     rise->setParamId(lfoid + "_rise");
     riseSync->setParamId(lfoid + "_rise_sync");
 
-    editor.registerModParam(rate.get());
-    editor.registerModParam(rateSync.get());
-    editor.registerModParam(smooth.get());
-    editor.registerModParam(delay.get());
-    editor.registerModParam(delaySync.get());
-    editor.registerModParam(rise.get());
-    editor.registerModParam(riseSync.get());
+    editor.registerModParam(rate.get(), TetraOPAudioProcessorEditor::kLFO);
+    editor.registerModParam(rateSync.get(), TetraOPAudioProcessorEditor::kLFO);
+    editor.registerModParam(smooth.get(), TetraOPAudioProcessorEditor::kLFO);
+    editor.registerModParam(delay.get(), TetraOPAudioProcessorEditor::kLFO);
+    editor.registerModParam(delaySync.get(), TetraOPAudioProcessorEditor::kLFO);
+    editor.registerModParam(rise.get(), TetraOPAudioProcessorEditor::kLFO);
+    editor.registerModParam(riseSync.get(), TetraOPAudioProcessorEditor::kLFO);
 
     toggleUIComponents();
     editor.audioProcessor.modulation->UIDirty.store(true); // refresh connections

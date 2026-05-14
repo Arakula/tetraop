@@ -44,17 +44,22 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 	blend->setSmall();
 	wide->setSmall();
 
-	editor.registerModParam(level.get());
-	editor.registerModParam(pan.get());
-	editor.registerModParam(phase.get());
-	editor.registerModParam(rand.get());
-	editor.registerModParam(morph.get());
-	editor.registerModParam(dist.get());
-	editor.registerModParam(detune.get());
-	editor.registerModParam(blend.get());
-	editor.registerModParam(wide.get());
-	editor.registerModParam(semis.get());
-	editor.registerModParam(cents.get());
+	auto cat = oscId == 0 ? TetraOPAudioProcessorEditor::kOSCA
+		: oscId == 1 ? TetraOPAudioProcessorEditor::kOSCB
+		: oscId == 2 ? TetraOPAudioProcessorEditor::kOSCC
+		: TetraOPAudioProcessorEditor::kOSCD;
+
+	editor.registerModParam(level.get(), cat);
+	editor.registerModParam(pan.get(), cat);
+	editor.registerModParam(phase.get(), cat);
+	editor.registerModParam(rand.get(), cat);
+	editor.registerModParam(morph.get(), cat);
+	editor.registerModParam(dist.get(), cat);
+	editor.registerModParam(detune.get(), cat);
+	editor.registerModParam(blend.get(), cat);
+	editor.registerModParam(wide.get(), cat);
+	editor.registerModParam(semis.get(), cat);
+	editor.registerModParam(cents.get(), cat);
 
 	addAndMakeVisible(level.get());
 	addAndMakeVisible(pan.get());

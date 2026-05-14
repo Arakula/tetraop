@@ -12,11 +12,11 @@ GlobalsPanel::GlobalsPanel(TetraOPAudioProcessorEditor& e)
 
 	time = std::make_unique<Rotary>(editor, "global_time", "Time", Rotary::TimeFactor, true);
 	addAndMakeVisible(time.get());
-	editor.registerModParam(time.get());
+	editor.registerModParam(time.get(), TetraOPAudioProcessorEditor::kGlobal);
 
 	pitch = std::make_unique<Rotary>(editor, "global_pitch", "Pitch", Rotary::PitchSemis, true);
 	addAndMakeVisible(pitch.get());
-	editor.registerModParam(pitch.get());
+	editor.registerModParam(pitch.get(), TetraOPAudioProcessorEditor::kGlobal);
 
 	vel = std::make_unique<Rotary>(editor, "vel_sense", "Vel", Rotary::Percent);
 	addAndMakeVisible(vel.get());
