@@ -90,6 +90,7 @@ public:
 
 	static inline SIMDF skew(SIMDF phase, SIMDF amt)
 	{
+		amt *= 0.99f; // FIX - prevent crashes
 		auto p1 = SIMDF(0.25f) + amt * 0.25f;
 		auto p2 = SIMDF(0.75f) - amt * 0.25f;
 		auto y1 = SIMDF(0.25f);
