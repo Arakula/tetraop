@@ -40,8 +40,8 @@ FmMatrixPanel::FmMatrixPanel(TetraOPAudioProcessorEditor& e)
 			rm[idx] = std::make_unique<Rotary>(editor, rmparam, "", Rotary::Percent);
 			addAndMakeVisible(fm[idx].get());
 			addChildComponent(rm[idx].get());
-			fm[idx]->setDarkSmall();
-			rm[idx]->setDarkSmall();
+			fm[idx]->setMatrixBtn();
+			rm[idx]->setMatrixBtn();
 			editor.registerModParam(fm[idx].get());
 			editor.registerModParam(fm[idx].get());
 			fm[idx]->colorValue = j == 0 ? COLOR_A() : j == 1 ? COLOR_B() : j == 2 ? COLOR_C() : COLOR_D();
@@ -54,7 +54,7 @@ FmMatrixPanel::FmMatrixPanel(TetraOPAudioProcessorEditor& e)
 		out[i] = std::make_unique<Rotary>(editor, "fm_" + prefix[i] + "out", "", Rotary::Percent);
 		addAndMakeVisible(out[i].get());
 		editor.registerModParam(out[i].get());
-		out[i]->setDarkSmall();
+		out[i]->setMatrixBtn();
 		out[i]->colorValue = i == 0 ? COLOR_A() : i == 1 ? COLOR_B() : i == 2 ? COLOR_C() : COLOR_D();
 	}
 }

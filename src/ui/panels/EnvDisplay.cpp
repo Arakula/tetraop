@@ -13,6 +13,13 @@ EnvDisplay::EnvDisplay(TetraOPAudioProcessorEditor& e)
     sustain = std::make_unique<Rotary>(editor, "env1_sus", "Sus", Rotary::Percent);
     release = std::make_unique<Rotary>(editor, "env1_rel", "Rel", Rotary::secondsMillis);
 
+    delay->setDark();
+    attack->setDark();
+    hold->setDark();
+    decay->setDark();
+    sustain->setDark();
+    release->setDark();
+
     for (int i = 0; i < globals::MAX_ENVELOPES; ++i) {
         auto env = std::make_unique<Modulator>(editor, juce::String("env") + juce::String(i + 1));
         addAndMakeVisible(env.get());

@@ -40,6 +40,8 @@ public:
     TextButton fxs { "effects" };
     TextButton mod { "modmatrix" };
     TextButton cfg { "configs" };
+    TextButton undoBtn{ "undo" };
+    TextButton redoBtn{ "redo" };
     TextButton prevPreset;
     TextButton nextPreset;
     TextButton preset;
@@ -57,6 +59,7 @@ public:
     void paint(Graphics& g) override;
     void resized() override;
     void toggleUIComponents();
+    void showPresets();
 
 private:
     TetraOPAudioProcessorEditor& editor;

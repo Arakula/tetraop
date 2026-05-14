@@ -84,6 +84,14 @@ LFODisplay::LFODisplay(TetraOPAudioProcessorEditor& e)
     rise = std::make_unique<Rotary>(editor, "lfo1_rise", "Rise", Rotary::seconds1f);
     riseSync = std::make_unique<Rotary>(editor, "lfo1_rise_sync", "Rise", Rotary::DelayTempo);
 
+    rate->setDark();
+    rateSync->setDark();
+    smooth->setDark();
+    delay->setDark();
+    delaySync->setDark();
+    rise->setDark();
+    riseSync->setDark();
+
     addAndMakeVisible(rate.get());
     addAndMakeVisible(rateSync.get());
     addAndMakeVisible(smooth.get());

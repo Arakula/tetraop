@@ -99,7 +99,7 @@ void UIUtils::drawTriangle(Graphics& g, Rectangle<float> bounds, int direction, 
     g.fillPath(p);
 }
 
-void UIUtils::drawPanel(Graphics& g, Rectangle<float> bounds, bool drawHeader, bool darker)
+void UIUtils::drawPanel(Graphics& g, Rectangle<float> bounds, bool drawHeader, bool darker, Colour headerc)
 {
     bounds = bounds.translated(0.f, 0.f);
 	g.setColour(COLOR_PANEL().darker(darker ? 0.6f : 0.f));
@@ -115,11 +115,11 @@ void UIUtils::drawPanel(Graphics& g, Rectangle<float> bounds, bool drawHeader, b
             PANEL_CORNER, PANEL_CORNER,
             true, true, false, false
         );
-        g.setColour(COLOR_PANEL_HEADER());
+        g.setColour(headerc == Colours::transparentBlack ? COLOR_PANEL_HEADER() : headerc);
         g.fillPath(p);
 
-        g.setColour(Colours::white.withAlpha(0.6f));
-        g.strokePath(p, PathStrokeType(1.f));
+        //g.setColour(Colours::white.withAlpha(0.6f));
+        //g.strokePath(p, PathStrokeType(1.f));
 
         // draw header stroke
         g.setColour(Colours::black.withAlpha(0.35f));

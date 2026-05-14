@@ -16,8 +16,8 @@ PresetManager::PresetManager(TetraOPAudioProcessor& audioProcessor, String dir)
     if (!factoryDir.exists()) factoryDir.createDirectory();
 
     setSelected({});
-	loadCache();
-    scan();
+	//loadCache();
+    //scan();
 }
 
 PresetManager::~PresetManager()
@@ -559,4 +559,59 @@ void PresetManager::importBank(File file)
 
     ZipFile zip(file);
     zip.uncompressTo(File(dir), true);
+}
+
+PresetManager::FileTree::Folder PresetManager::buildFileTree(const juce::File& directory,
+    const juce::String& extension,
+    int& nextId)
+{
+    FileTree::Folder folder;
+    folder.name = directory.getFileName();
+
+    // Child folders
+
+    juce::Array<juce::File> childFolders;
+
+    directory.findChildFiles(childFolders,
+        juce::File::findDirectories,
+        false);
+
+    childFolders.sort();
+
+    for (const auto& childDir : childFolders)
+    {
+        auto childTree = buildFileTree(childDir,
+            extension,
+            nextId);
+
+        if (!childTree.children.empty()
+            || !childTree.files.empty())
+        {
+            folder.children.push_back(std::move(childTree));
+        }
+    }
+
+    // files
+
+    juce::Array<juce::File> files;
+
+    directory.findChildFiles(files,
+        juce::File::findFiles,
+        false,
+        "*" + extension);
+
+    files.sort();
+
+    for (const auto& file : files)
+    {
+        FileTree::FileEntry entry;
+
+        entry.id = nextId++;
+        entry.name = file.getFileNameWithoutExtension();
+        entry.file = file;
+
+        folder.files.push_back(std::move(entry));
+    }
+
+    return folder;
 }

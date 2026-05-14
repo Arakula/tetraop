@@ -118,8 +118,8 @@ void FilterPanel::paint(Graphics& g)
 	auto b = getLocalBounds().toFloat();
 	UIUtils::drawPanel(g, b, true);
 
-	UIUtils::drawBevel(g, typeBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f, COLOR_BEVEL());
-	UIUtils::drawBevel(g, modeBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f, COLOR_BEVEL());
+	//UIUtils::drawBevel(g, typeBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f, COLOR_BEVEL());
+	//UIUtils::drawBevel(g, modeBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f, COLOR_BEVEL());
 
 	auto type = (Filter::Type)editor.audioProcessor.params.getRawParameterValue(prefix + "type")->load();
 	auto mode = (Filter::Mode)editor.audioProcessor.params.getRawParameterValue(prefix + "mode")->load();
@@ -129,6 +129,23 @@ void FilterPanel::paint(Graphics& g)
 	bool inc = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "inC")->load();
 	bool ind = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "inD")->load();
 
+	// draw buttons background
+	g.setFont(FontOptions(16.f));
+	g.setColour(Colours::black.withAlpha(0.15f));
+	g.fillRoundedRectangle(typeBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f);
+	//g.setColour(COLOR_ACTIVE().withAlpha(0.5f));
+	//g.fillRoundedRectangle(typeBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f);
+	g.setColour(Colours::black.withAlpha(0.35f));
+	g.drawRoundedRectangle(typeBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f, 1.f);
+
+	g.setColour(Colours::black.withAlpha(0.15f));
+	g.fillRoundedRectangle(modeBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f);
+	//g.setColour(COLOR_ACTIVE().withAlpha(0.5f));
+	//g.fillRoundedRectangle(modeBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f);
+	g.setColour(Colours::black.withAlpha(0.35f));
+	g.drawRoundedRectangle(modeBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f, 1.f);
+
+	// draw header
 	auto headerb = b.withHeight(PANEL_HEADER_HEIGHT);
 	UIUtils::drawCheckmark(g, onBtn.getBounds().toFloat(), COLOR_CHECKMARK_BG_LIGHT(), COLOR_ACTIVE(), on);
 	UIUtils::drawCheckmark(g, inaBtn.getBounds().toFloat(), Colours::black.withAlpha(0.5f), COLOR_ACTIVE(), ina && on);
@@ -170,7 +187,7 @@ void FilterPanel::paint(Graphics& g)
 	}
 
 	g.setFont(FontOptions(16.f));
-	g.setColour(COLOR_ACTIVE());
+	g.setColour(COLOR_KNOB_LABEL());
 	g.drawText(text, typeBtn.getBounds(), Justification::centred);
 
 	text = "";
@@ -189,7 +206,7 @@ void FilterPanel::paint(Graphics& g)
 	if (type == Filter::kPhaserNeg || type == Filter::kPhaserPos)
 		text = "---";
 
-	g.setColour(COLOR_ACTIVE());
+	g.setColour(COLOR_KNOB_LABEL());
 	g.drawText(text, modeBtn.getBounds(), Justification::centred);
 }
 

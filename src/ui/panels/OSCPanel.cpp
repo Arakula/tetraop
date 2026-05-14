@@ -7,6 +7,7 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 	, prefix(_oscId == 0 ? "a_" : _oscId == 1 ? "b_" : _oscId == 2 ? "c_" : "d_")
 {
 	startTimerHz(10);
+
 	editor.audioProcessor.params.addParameterListener(prefix + "on", this);
 	editor.audioProcessor.params.addParameterListener(prefix + "phase_dist_mode", this);
 	editor.audioProcessor.params.addParameterListener(prefix + "morph_snap", this);
@@ -15,6 +16,7 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 	onBtn.setAlpha(0.f);
 	onBtn.onClick = [this]
 		{
+			editor.audioProcessor.undomgr->createUndo();
 			auto param = editor.audioProcessor.params.getParameter(prefix + "on");
 			param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
 		};
@@ -147,7 +149,10 @@ void OSCPanel::timerCallback()
 void OSCPanel::paint(Graphics& g)
 {
 	auto b = getLocalBounds().toFloat();
-	UIUtils::drawPanel(g, b, true);
+	auto c = oscId == 0 ? COLOR_A() : oscId == 1 ? COLOR_B() : oscId == 2 ? COLOR_C() : COLOR_D();
+	bool on = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "on")->load();
+
+	UIUtils::drawPanel(g, b, true, false, on ? c.brighter(0.5f) : COLOR_PANEL_HEADER());
 	UIUtils::drawBevel(g, viewport, 5.f, Colours::black);
 
 	g.setColour(COLOR_BACKGROUND());
@@ -161,8 +166,6 @@ void OSCPanel::paint(Graphics& g)
 	UIUtils::drawTriangle(g, prevBtn.getBounds().toFloat().reduced(7.f), 3, COLOR_PANEL_HEADER_TEXT());
 	UIUtils::drawTriangle(g, nextBtn.getBounds().toFloat().reduced(7.f), 1, COLOR_PANEL_HEADER_TEXT());
 
-	bool on = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "on")->load();
-	auto c = oscId == 0 ? COLOR_A() : oscId == 1 ? COLOR_B() : oscId == 2 ? COLOR_C() : COLOR_D();
 	UIUtils::drawCheckmark(g, onBtn.getBounds().toFloat(), COLOR_CHECKMARK_BG_LIGHT(), c, on);
 	g.setColour(COLOR_PANEL_HEADER_TEXT());
 	g.saveState();
@@ -372,12 +375,23 @@ void OSCPanel::showWavetablesMenu()
 
 	buildWavetablesMenu(menu, roots, table.fileId);
 
+	menu.addSeparator();
+	menu.addItem(99999, "Open Folder");
+
 	auto menuPos = localPointToGlobal(tableBtn.getBounds().getBottomLeft());
 	menu.showMenuAsync(PopupMenu::Options()
 		.withTargetComponent(*this)
 		.withTargetScreenArea({ menuPos.getX(), menuPos.getY(), 1, 1 }),
 		[this](int result) {
 			if (result == 0) return;
+
+			if (result == 99999)
+			{
+				auto dir = File(editor.audioProcessor.tablesMgr->dir);
+				dir.startAsProcess();
+				return;
+			}
+
 			editor.audioProcessor.tablesMgr->loadFromId(oscId, result - 4);
 		});
 }

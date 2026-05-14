@@ -24,6 +24,11 @@ GlobalsPanel::GlobalsPanel(TetraOPAudioProcessorEditor& e)
 	glide = std::make_unique<Rotary>(editor, "glide", "Glide", Rotary::millis);
 	addAndMakeVisible(glide.get());
 
+	time->setDark();
+	pitch->setDark();
+	vel->setDark();
+	glide->setDark();
+
 	glideTension = std::make_unique<PowerCurve>(editor, "glide_tension", false);
 	addAndMakeVisible(glideTension.get());
 

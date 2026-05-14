@@ -65,8 +65,11 @@ public:
     Colour colorValue = COLOR_ACTIVE();
     Colour colorModValue = COLOR_ACTIVE();
     bool disabled = false;
+    bool isMatrixBtn = false;
     bool isDark = false;
     juce::String name;
+    juce::Colour baseColor = juce::Colours::transparentBlack; // overrides base color when other than transparent black
+    juce::Colour labelColor = juce::Colours::transparentBlack;
 
     Rotary(TetraOPAudioProcessorEditor& e, juce::String paramId, juce::String name, Format format, bool isSymmetric = false);
     ~Rotary() override;
@@ -74,7 +77,8 @@ public:
     void setParamId(String pid);
     void setModId(String mid) override;
     void setSmall();
-    void setDarkSmall();
+    void setDark();
+    void setMatrixBtn();
 
     void paint(juce::Graphics& g) override;
     void mouseDown(const juce::MouseEvent& e) override;

@@ -12,6 +12,24 @@ public:
 	std::atomic<bool> nameDirty = false; // flags the header label needs a refresh
 	std::atomic<bool> selectedDirty = false; // flags the UI selected patch changed
 
+	struct FileTree
+	{
+		struct FileEntry
+		{
+			int id = 0;
+			juce::String name;
+			juce::File file;
+		};
+
+		struct Folder
+		{
+			juce::String name;
+
+			std::vector<Folder> children;
+			std::vector<FileEntry> files;
+		};
+	};
+
 	struct Preset {
 		String version;
 		String id;
@@ -67,6 +85,9 @@ public:
 	std::vector<Preset> getUserPresets();
 	void exportBank(std::vector<Preset> presets, String bankname, String path);
 	void importBank(File file);
+
+	FileTree::Folder buildFileTree(const juce::File& directory, const juce::String& extension, int& nextId);
+
 
 private:
 	TetraOPAudioProcessor& audioProcessor;

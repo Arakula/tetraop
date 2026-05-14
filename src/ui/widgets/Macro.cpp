@@ -9,6 +9,7 @@ Macro::Macro(TetraOPAudioProcessorEditor& e, int index)
 {
 	rotary = std::make_unique<Rotary>(editor, macroId, "Macro" + juce::String(index + 1), Rotary::Percent);
 	rotary->setSmall();
+	rotary->setDark();
 	rotary->drawTextLabel = false;
 	addAndMakeVisible(rotary.get());
 

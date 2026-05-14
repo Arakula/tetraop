@@ -84,12 +84,19 @@ void Rotary::setSmall()
     isSmall = true;
 }
 
-void Rotary::setDarkSmall()
+void Rotary::setMatrixBtn()
 {
     radius = KNOB_RADIUS_SM;
     yoffset = KNOB_YOFFSET_SM;
     value_offset = KNOB_VALUE_OFFSET_SM;
     isSmall = true;
+    isMatrixBtn = true;
+}
+
+void Rotary::setDark()
+{
+    baseColor = COLOR_KNOB().darker(0.5f);
+    //labelColor = COLOR_KNOB_LABEL().darker(0.5f);
     isDark = true;
 }
 
@@ -245,11 +252,14 @@ void Rotary::drawRotary(juce::Graphics& g, float slider_pos) {
 
     // draw knob base
     auto circle = Rectangle<float>({ center.x - radius, center.y - radius, radius * 2, radius * 2 });
-    if (!isDark)
+    if (!isMatrixBtn)
     {
         g.setColour(COLOR_BEVEL());
         g.fillEllipse(circle.expanded(2));
         g.setColour(COLOR_KNOB());
+        if (baseColor != Colours::transparentBlack)
+            g.setColour(baseColor);
+
         g.fillEllipse(circle);
         juce::ColourGradient grad1(
             Colours::white.withAlpha(.17f),
@@ -262,6 +272,9 @@ void Rotary::drawRotary(juce::Graphics& g, float slider_pos) {
         g.setGradientFill(grad1);
         g.fillEllipse(circle);
         g.setColour(COLOR_KNOB());
+        if (baseColor != Colours::transparentBlack)
+            g.setColour(baseColor);
+
         auto innerc = circle.reduced(2);
         g.fillEllipse(innerc);
         juce::ColourGradient grad2(
@@ -280,7 +293,7 @@ void Rotary::drawRotary(juce::Graphics& g, float slider_pos) {
     if (drawArc) {
         juce::Path arc;
         arc.addCentredArc(center.x, center.y, radius + value_offset, radius + value_offset, 0, -DEG130, DEG130, true);
-        g.setColour(COLOR_KNOB_ARC().darker(isDark ? 0.5f : 0.f));
+        g.setColour(COLOR_KNOB_ARC().darker(isMatrixBtn || isDark ? 0.5f : 0.f));
         g.strokePath(arc, PathStrokeType(value_thickness));
     }
 
