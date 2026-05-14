@@ -168,7 +168,7 @@ void OSC::startBlock(int startSample, int numSamples)
 		unison_stereo = unison_st;
 		unison_spread = unison_sprd;
 		unison_blend = unison_bld;
-		recalcUnison(unison);
+		recalcUnison(unison, unison_mod);
 	}
 	unison.voices = unison_v;
 
@@ -177,7 +177,7 @@ void OSC::startBlock(int startSample, int numSamples)
 		unison.voices = 1; // TODO remove this?
 }
 
-void OSC::recalcUnison(SIMDUnison& unison) const
+void OSC::recalcUnison(SIMDUnison& unison, int unison_mod) const
 {
 	alignas(sizeof(SIMDF)) std::array<float, MAX_UNISON> unison_mask;
 	for (int i = 0; i < unison.voices; ++i)
@@ -191,7 +191,7 @@ void OSC::recalcUnison(SIMDUnison& unison) const
 	}
 
 	auto panarr = Unison::generateVoicesPan(unison.voices, unison_stereo);
-	auto gainarr = Unison::generateVoicesGain(unison.voices, unison_blend);
+	auto gainarr = Unison::generateVoicesGain(unison.voices, unison_blend, true, (Unison::Mode)unison_mod);
 	for (int i = 0; i < unison.voices; i += SIMDSZ)
 	{
 		SIMDF p = mipp::load(&panarr[i]);

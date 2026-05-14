@@ -75,7 +75,7 @@ public:
     void trigger(int note, float srate);
     void retrigger(int note, float srate);
     void startBlock(int startSample, int numSamples);
-    void recalcUnison(SIMDUnison& unison) const;
+    void recalcUnison(SIMDUnison& unison, int mod) const;
 
 private:
     TetraOPAudioProcessor& audioProcessor;

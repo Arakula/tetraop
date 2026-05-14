@@ -178,13 +178,14 @@ void UnisonWidget::paint(Graphics& g)
 
 void UnisonWidget::drawUnisonVoices(Graphics& g)
 {
+    auto mode = (Unison::Mode)editor.audioProcessor.params.getRawParameterValue(prefix + "unison_mode")->load();
     int voices = (int)editor.audioProcessor.params.getRawParameterValue(prefix + "unison_voices")->load();
     float detune = editor.audioProcessor.params.getRawParameterValue(prefix + "unison_detune")->load();
     float blend = editor.audioProcessor.params.getRawParameterValue(prefix + "unison_blend")->load();
     float spread = editor.audioProcessor.params.getRawParameterValue(prefix + "unison_spread")->load();
     auto b = spreadBounds.reduced(2.f);
     auto uni = Unison::generateDetuneRatios(voices, detune, spread);
-    auto gain = Unison::generateVoicesGain(voices, blend, false);
+    auto gain = Unison::generateVoicesGain(voices, blend, false, mode);
 
     auto ratioToNormal = [this](float ratio)
         {

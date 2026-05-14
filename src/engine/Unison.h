@@ -82,14 +82,54 @@ public:
         return out;
     }
 
-    static Arr16f generateVoicesGain(int nvoices, float blend, bool normalizeRMS = true)
+    static Arr16f generateGainGauss(int nvoices, float blend, bool normalizeRMS = true)
     {
         alignas(sizeof(SIMDF)) Arr16f out {};
-        if (nvoices <= 1) {
+
+        const float center = (nvoices - 1) * 0.5f;
+
+        const float minSigma = 0.35f;
+        const float maxSigma = nvoices * 0.6f;
+        const float sigma = minSigma * std::pow(maxSigma / minSigma, blend);
+
+        float sumSq = 0.f;
+
+        for (int i = 0; i < nvoices; ++i)
+        {
+            const float d = i - center;
+            const float g = std::exp(-(d * d) / (2.f * sigma * sigma));
+
+            out[i] = g;
+            sumSq += g * g;
+        }
+
+        if (normalizeRMS)
+        {
+            const float norm = 1.f / std::sqrt(sumSq);
+
+            for (int i = 0; i < nvoices; ++i)
+                out[i] *= norm;
+        }
+
+        return out;
+    }
+
+    static Arr16f generateVoicesGain(int nvoices, float blend, bool normalizeRMS = true, Mode mode = Mode::kUnison)
+    {
+        alignas(sizeof(SIMDF)) Arr16f out {};
+        if (nvoices <= 1) 
+        {
             out[0] = 1.f;
             return out;
         }
-        if (nvoices == 2) {
+
+        if (mode == Mode::kGaussian)
+        {
+            return generateGainGauss(nvoices, blend, normalizeRMS);
+        }
+
+        if (nvoices == 2) 
+        {
             out[0] = normalizeRMS ? 1.f / std::sqrt(2.f) : 1.f;
             out[1] = normalizeRMS ? 1.f / std::sqrt(2.f) : 1.f;
             return out;
@@ -105,10 +145,7 @@ public:
         float side_amp = blend;
 
         float sum_sq = n_center * center_amp * center_amp + side_pairs * side_amp * side_amp;
-        float adjustment = 1.0f / std::sqrt(sum_sq);
-
-        if (!normalizeRMS)
-            adjustment = 1.f;
+        float adjustment = normalizeRMS ? 1.0f / std::sqrt(sum_sq) : 1.f;
 
         for (int i = 0; i < nvoices; ++i)
         {
