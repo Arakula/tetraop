@@ -39,8 +39,8 @@ public:
     enum Layout {
         A_B_C_D,
         DCBA,
-        DC_BA,
-        DC_B_A,
+        CA_DB,
+        DB_C_A,
         DA_DB_DC,
         BA_CA_DA,
         A_CB_DC,

@@ -25,10 +25,10 @@ FmMatrix::FmMatrix(TetraOPAudioProcessor& p) : audioProcessor(p)
     layouts[int(DCBA)][2][1] = 1.f; // CB
     layouts[int(DCBA)][1][0] = 1.f; // BA
 
-    layouts[int(DC_BA)][3][2] = 1.f; // DC
-    layouts[int(DC_BA)][1][0] = 1.f; // BA
+    layouts[int(CA_DB)][2][0] = 1.f; // CA
+    layouts[int(CA_DB)][3][1] = 1.f; // DB
 
-    layouts[int(DC_B_A)][3][2] = 1.f; // DC
+    layouts[int(DB_C_A)][3][1] = 1.f; // DB
 
     layouts[int(DA_DB_DC)][3][0] = 1.f; // DA
     layouts[int(DA_DB_DC)][3][1] = 1.f; // DB

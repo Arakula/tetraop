@@ -1,260 +1,125 @@
 #include "LayoutPicker.h"
 #include "../../PluginEditor.h"
 
-static void drawA_B_C_D(Graphics& g, Rectangle<float> bounds, float scale)
+static void drawSquares(Graphics& g, Rectangle<float> bounds, float scale, int enabledMask)
 {
-    float r = 10 * scale;
-    float cx = bounds.getCentreX();
-    float cy = bounds.getCentreY();
-    Point<float> a = { cx - r * 3, cy };
-    Point<float> b = { cx - r, cy };
-    Point<float> c = { cx + r, cy };
-    Point<float> d = { cx + r * 3, cy };
+    float h = 10 * std::sqrt(scale);
+    float pad = 10 * scale;
+
+    auto a = Rectangle<float>(bounds.getX() + pad, bounds.getY() + pad, h, h);
+    auto b = Rectangle<float>(bounds.getRight() - pad - h, bounds.getY() + pad, h, h);
+    auto c = Rectangle<float>(bounds.getX() + pad, bounds.getBottom() - pad - h, h, h);
+    auto d = Rectangle<float>(bounds.getRight() - pad - h, bounds.getBottom() - pad - h, h, h);
+
+    bool aon = (enabledMask & (1 << 3)) != 0;
+    bool bon = (enabledMask & (1 << 2)) != 0;
+    bool con = (enabledMask & (1 << 1)) != 0;
+    bool don = (enabledMask & (1 << 0)) != 0;
+
+    g.setColour(COLOR_BACKGROUND().darker(0.5f));
+    g.fillRect(a.expanded(4.f));
+    g.fillRect(b.expanded(4.f));
+    g.fillRect(c.expanded(4.f));
+    g.fillRect(d.expanded(4.f));
 
     g.setColour(COLOR_A());
-    g.fillRect(a.getX() - r / 2, a.getY() - r / 2, r, r);
+    if (aon) g.fillRect(a); else g.drawRect(a, 1.4f);
     g.setColour(COLOR_B());
-    g.fillRect(b.getX() - r / 2, b.getY() - r / 2, r, r);
+    if (bon) g.fillRect(b); else g.drawRect(b, 1.4f);
     g.setColour(COLOR_C());
-    g.fillRect(c.getX() - r / 2, c.getY() - r / 2, r, r);
+    if (con) g.fillRect(c); else g.drawRect(c, 1.4f);
     g.setColour(COLOR_D());
-    g.fillRect(d.getX() - r / 2, d.getY() - r / 2, r, r);
+    if (don) g.fillRect(d); else g.drawRect(d, 1.4f);
+
+}
+
+static void drawConnection(Graphics& g, Rectangle<float> bounds, float scale, int start, int end)
+{
+    float h = 10 * std::sqrt(scale);
+    float pad = 10 * scale;
+
+    auto a = Rectangle<float>(bounds.getX() + pad, bounds.getY() + pad, h, h);
+    auto b = Rectangle<float>(bounds.getRight() - pad - h, bounds.getY() + pad, h, h);
+    auto c = Rectangle<float>(bounds.getX() + pad, bounds.getBottom() - pad - h, h, h);
+    auto d = Rectangle<float>(bounds.getRight() - pad - h, bounds.getBottom() - pad - h, h, h);
+
+    Rectangle<float> sqrs[] = { a, b, c, d};
+    g.setColour(start == 0 ? COLOR_A() : start == 1 ? COLOR_B() : start == 2 ? COLOR_C() : COLOR_D());
+    g.drawLine({ sqrs[start].getCentre(), sqrs[end].getCentre() }, 1.4f);
+}
+
+static void drawA_B_C_D(Graphics& g, Rectangle<float> bounds, float scale)
+{
+    drawSquares(g, bounds, scale, 0b1111);
 }
 
 static void drawDCBA(Graphics& g, Rectangle<float> bounds, float scale)
 {
-    float r = 10 * scale;
-    float cx = bounds.getCentreX();
-    float cy = bounds.getCentreY();
-    Point<float> a = { cx, cy + r * 3 };
-    Point<float> b = { cx, cy + r };
-    Point<float> c = { cx, cy - r };
-    Point<float> d = { cx, cy - r * 3 };
-
-    g.setColour(COLOR_D());
-    g.drawLine(Line<float>(d, c));
-    g.setColour(COLOR_C());
-    g.drawLine(Line<float>(c, b));
-    g.setColour(COLOR_B());
-    g.drawLine(Line<float>(b, a));
-
-    g.setColour(COLOR_A());
-    g.fillRect(a.getX() - r / 2, a.getY() - r / 2, r, r);
-    g.setColour(COLOR_B());
-    g.fillRect(b.getX() - r / 2, b.getY() - r / 2, r, r);
-    g.setColour(COLOR_C());
-    g.fillRect(c.getX() - r / 2, c.getY() - r / 2, r, r);
-    g.setColour(COLOR_D());
-    g.fillRect(d.getX() - r / 2, d.getY() - r / 2, r, r);
+    drawConnection(g, bounds, scale, 3, 2);
+    drawConnection(g, bounds, scale, 2, 1);
+    drawConnection(g, bounds, scale, 1, 0);
+    drawSquares(g, bounds, scale, 0b1000);
 }
 
-static void drawDC_BA(Graphics& g, Rectangle<float> bounds, float scale)
+static void drawCA_DB(Graphics& g, Rectangle<float> bounds, float scale)
 {
-    float r = 10 * scale;
-    float cx = bounds.getCentreX();
-    float cy = bounds.getCentreY();
-    Point<float> a = { cx - r, cy + r };
-    Point<float> b = { cx - r, cy - r };
-    Point<float> c = { cx + r, cy + r };
-    Point<float> d = { cx + r, cy - r };
-
-    g.setColour(COLOR_D());
-    g.drawLine(Line<float>(d, c));
-    g.setColour(COLOR_B());
-    g.drawLine(Line<float>(b, a));
-
-    g.setColour(COLOR_A());
-    g.fillRect(a.getX() - r / 2, a.getY() - r / 2, r, r);
-    g.setColour(COLOR_B());
-    g.fillRect(b.getX() - r / 2, b.getY() - r / 2, r, r);
-    g.setColour(COLOR_C());
-    g.fillRect(c.getX() - r / 2, c.getY() - r / 2, r, r);
-    g.setColour(COLOR_D());
-    g.fillRect(d.getX() - r / 2, d.getY() - r / 2, r, r);
+    drawConnection(g, bounds, scale, 2, 0);
+    drawConnection(g, bounds, scale, 3, 1);
+    drawSquares(g, bounds, scale, 0b1100);
 }
 
-static void drawDC_B_A(Graphics& g, Rectangle<float> bounds, float scale)
+static void drawDB_C_A(Graphics& g, Rectangle<float> bounds, float scale)
 {
-    float r = 10 * scale;
-    float cx = bounds.getCentreX();
-    float cy = bounds.getCentreY();
-    Point<float> a = { cx - r * 2, cy + r };
-    Point<float> b = { cx, cy + r };
-    Point<float> c = { cx + r * 2, cy + r };
-    Point<float> d = { cx + r * 2, cy - r };
-
-    g.setColour(COLOR_D());
-    g.drawLine(Line<float>(d, c));
-
-    g.setColour(COLOR_A());
-    g.fillRect(a.getX() - r / 2, a.getY() - r / 2, r, r);
-    g.setColour(COLOR_B());
-    g.fillRect(b.getX() - r / 2, b.getY() - r / 2, r, r);
-    g.setColour(COLOR_C());
-    g.fillRect(c.getX() - r / 2, c.getY() - r / 2, r, r);
-    g.setColour(COLOR_D());
-    g.fillRect(d.getX() - r / 2, d.getY() - r / 2, r, r);
+    drawConnection(g, bounds, scale, 3, 1);
+    drawSquares(g, bounds, scale, 0b1110);
 }
 
 static void drawDA_DB_DC(Graphics& g, Rectangle<float> bounds, float scale)
 {
-    float r = 10 * scale;
-    float cx = bounds.getCentreX();
-    float cy = bounds.getCentreY();
-    Point<float> a = { cx - r * 2, cy + r };
-    Point<float> b = { cx, cy + r };
-    Point<float> c = { cx + r * 2, cy + r };
-    Point<float> d = { cx, cy - r };
-
-    g.setColour(COLOR_D());
-    g.drawLine(Line<float>(d, b));
-    g.drawLine(a.getX(), a.getY(), a.getX(), a.getY() - r);
-    g.drawLine(c.getX(), c.getY(), c.getX(), c.getY() - r);
-    g.drawLine(a.getX(), a.getY() - r, c.getX(), c.getY() - r);
-
-    g.setColour(COLOR_A());
-    g.fillRect(a.getX() - r / 2, a.getY() - r / 2, r, r);
-    g.setColour(COLOR_B());
-    g.fillRect(b.getX() - r / 2, b.getY() - r / 2, r, r);
-    g.setColour(COLOR_C());
-    g.fillRect(c.getX() - r / 2, c.getY() - r / 2, r, r);
-    g.setColour(COLOR_D());
-    g.fillRect(d.getX() - r / 2, d.getY() - r / 2, r, r);
+    drawConnection(g, bounds, scale, 3, 0);
+    drawConnection(g, bounds, scale, 3, 1);
+    drawConnection(g, bounds, scale, 3, 2);
+    drawSquares(g, bounds, scale, 0b1110);
 }
 
 static void drawBA_CA_DA(Graphics& g, Rectangle<float> bounds, float scale)
 {
-    float r = 10 * scale;
-    float cx = bounds.getCentreX();
-    float cy = bounds.getCentreY();
-    Point<float> a = { cx, cy + r };
-    Point<float> b = { cx - r * 2, cy - r };
-    Point<float> c = { cx, cy - r };
-    Point<float> d = { cx + r * 2, cy - r };
-
-    g.setColour(COLOR_C());
-    g.drawLine(Line<float>(c, a));
-    g.setColour(COLOR_B());
-    g.drawLine(b.getX(), b.getY(), b.getX(), b.getY() + r);
-    g.drawLine(b.getX() + r * 2, b.getY() + r, b.getX(), b.getY() + r);
-    g.setColour(COLOR_D());
-    g.drawLine(d.getX(), d.getY(), d.getX(), d.getY() + r);
-    g.drawLine(d.getX() - r * 2, d.getY() + r, d.getX(), d.getY() + r);
-
-    g.setColour(COLOR_A());
-    g.fillRect(a.getX() - r / 2, a.getY() - r / 2, r, r);
-    g.setColour(COLOR_B());
-    g.fillRect(b.getX() - r / 2, b.getY() - r / 2, r, r);
-    g.setColour(COLOR_C());
-    g.fillRect(c.getX() - r / 2, c.getY() - r / 2, r, r);
-    g.setColour(COLOR_D());
-    g.fillRect(d.getX() - r / 2, d.getY() - r / 2, r, r);
+    drawConnection(g, bounds, scale, 1, 0);
+    drawConnection(g, bounds, scale, 2, 0);
+    drawConnection(g, bounds, scale, 3, 0);
+    drawSquares(g, bounds, scale, 0b1000);
 }
 
 static void drawA_CB_DC(Graphics& g, Rectangle<float> bounds, float scale)
 {
-    float r = 10 * scale;
-    float cx = bounds.getCentreX();
-    float cy = bounds.getCentreY();
-    Point<float> a = { cx - r, cy + r * 2 };
-    Point<float> b = { cx + r, cy + r * 2 };
-    Point<float> c = { cx + r, cy };
-    Point<float> d = { cx + r, cy - r * 2 };
-
-    g.setColour(COLOR_D());
-    g.drawLine(Line<float>(d, c));
-    g.setColour(COLOR_C());
-    g.drawLine(Line<float>(c, b));
-
-    g.setColour(COLOR_A());
-    g.fillRect(a.getX() - r / 2, a.getY() - r / 2, r, r);
-    g.setColour(COLOR_B());
-    g.fillRect(b.getX() - r / 2, b.getY() - r / 2, r, r);
-    g.setColour(COLOR_C());
-    g.fillRect(c.getX() - r / 2, c.getY() - r / 2, r, r);
-    g.setColour(COLOR_D());
-    g.fillRect(d.getX() - r / 2, d.getY() - r / 2, r, r);
+    drawConnection(g, bounds, scale, 2, 1);
+    drawConnection(g, bounds, scale, 3, 2);
+    drawSquares(g, bounds, scale, 0b1100);
 }
 
 static void drawDC_CA_CB(Graphics& g, Rectangle<float> bounds, float scale)
 {
-    float r = 10 * scale;
-    float cx = bounds.getCentreX();
-    float cy = bounds.getCentreY();
-    Point<float> a = { cx - r, cy + r * 2 };
-    Point<float> b = { cx + r, cy + r * 2 };
-    Point<float> c = { cx, cy };
-    Point<float> d = { cx, cy - r * 2 };
-
-    g.setColour(COLOR_D());
-    g.drawLine(Line<float>(d, c));
-    g.setColour(COLOR_C());
-    g.drawLine(Line<float>(c, a));
-    g.drawLine(Line<float>(c, b));
-
-    g.setColour(COLOR_A());
-    g.fillRect(a.getX() - r / 2, a.getY() - r / 2, r, r);
-    g.setColour(COLOR_B());
-    g.fillRect(b.getX() - r / 2, b.getY() - r / 2, r, r);
-    g.setColour(COLOR_C());
-    g.fillRect(c.getX() - r / 2, c.getY() - r / 2, r, r);
-    g.setColour(COLOR_D());
-    g.fillRect(d.getX() - r / 2, d.getY() - r / 2, r, r);
+    drawConnection(g, bounds, scale, 3, 2);
+    drawConnection(g, bounds, scale, 2, 0);
+    drawConnection(g, bounds, scale, 2, 1);
+    drawSquares(g, bounds, scale, 0b1100);
 }
 
 static void drawDC_DB_BA_CA(Graphics& g, Rectangle<float> bounds, float scale)
 {
-    float r = 10 * scale;
-    float cx = bounds.getCentreX();
-    float cy = bounds.getCentreY();
-    Point<float> a = { cx, cy + r * 2 };
-    Point<float> b = { cx - r, cy };
-    Point<float> c = { cx + r, cy };
-    Point<float> d = { cx, cy - r * 2 };
-
-    g.setColour(COLOR_D());
-    g.drawLine(Line<float>(d, c));
-    g.drawLine(Line<float>(d, b));
-    g.setColour(COLOR_C());
-    g.drawLine(Line<float>(c, a));
-    g.setColour(COLOR_B());
-    g.drawLine(Line<float>(b, a));
-
-    g.setColour(COLOR_A());
-    g.fillRect(a.getX() - r / 2, a.getY() - r / 2, r, r);
-    g.setColour(COLOR_B());
-    g.fillRect(b.getX() - r / 2, b.getY() - r / 2, r, r);
-    g.setColour(COLOR_C());
-    g.fillRect(c.getX() - r / 2, c.getY() - r / 2, r, r);
-    g.setColour(COLOR_D());
-    g.fillRect(d.getX() - r / 2, d.getY() - r / 2, r, r);
+    drawConnection(g, bounds, scale, 3, 2);
+    drawConnection(g, bounds, scale, 3, 1);
+    drawConnection(g, bounds, scale, 1, 0);
+    drawConnection(g, bounds, scale, 2, 0);
+    drawSquares(g, bounds, scale, 0b1000);
 }
 
 static void drawDB_CB_BA(Graphics& g, Rectangle<float> bounds, float scale)
 {
-    float r = 10 * scale;
-    float cx = bounds.getCentreX();
-    float cy = bounds.getCentreY();
-    Point<float> a = { cx, cy + r * 2 };
-    Point<float> b = { cx, cy };
-    Point<float> c = { cx + r, cy - r * 2 };
-    Point<float> d = { cx - r, cy - r * 2 };
-
-    g.setColour(COLOR_D());
-    g.drawLine(Line<float>(d, b));
-    g.setColour(COLOR_C());
-    g.drawLine(Line<float>(c, b));
-    g.setColour(COLOR_B());
-    g.drawLine(Line<float>(b, a));
-
-    g.setColour(COLOR_A());
-    g.fillRect(a.getX() - r / 2, a.getY() - r / 2, r, r);
-    g.setColour(COLOR_B());
-    g.fillRect(b.getX() - r / 2, b.getY() - r / 2, r, r);
-    g.setColour(COLOR_C());
-    g.fillRect(c.getX() - r / 2, c.getY() - r / 2, r, r);
-    g.setColour(COLOR_D());
-    g.fillRect(d.getX() - r / 2, d.getY() - r / 2, r, r);
+    drawConnection(g, bounds, scale, 3, 1);
+    drawConnection(g, bounds, scale, 2, 1);
+    drawConnection(g, bounds, scale, 1, 0);
+    drawSquares(g, bounds, scale, 0b1000);
 }
 
 void LayoutPickerWidget::paint(Graphics& g)
@@ -276,8 +141,8 @@ void LayoutPickerWidget::paint(Graphics& g)
     auto b = getLocalBounds().toFloat().withWidth(r).withHeight(r);
     drawA_B_C_D(g, b, 0.5f);
     drawDCBA(g, b.translated(r, 0), 0.5f);
-    drawDC_BA(g, b.translated(r * 2, 0), 0.5f);
-    drawDC_B_A(g, b.translated(r * 3, 0), 0.5f);
+    drawCA_DB(g, b.translated(r * 2, 0), 0.5f);
+    drawDB_C_A(g, b.translated(r * 3, 0), 0.5f);
     drawDA_DB_DC(g, b.translated(r * 4, 0), 0.5f);
     drawBA_CA_DA(g, b.translated(0, r), 0.5f);
     drawA_CB_DC(g, b.translated(r, r), 0.5f);
@@ -439,11 +304,11 @@ void LayoutPicker::paint(Graphics& g)
         case FmMatrix::DCBA: 
             drawDCBA(g, b, 0.75f);
             break; 
-        case FmMatrix::DC_BA: 
-            drawDC_BA(g, b, 0.75f);
+        case FmMatrix::CA_DB: 
+            drawCA_DB(g, b, 0.75f);
             break; 
-        case FmMatrix::DC_B_A: 
-            drawDC_B_A(g, b, 0.75f);
+        case FmMatrix::DB_C_A: 
+            drawDB_C_A(g, b, 0.75f);
             break;
         case FmMatrix::DA_DB_DC: 
             drawDA_DB_DC(g, b, 0.75f);
