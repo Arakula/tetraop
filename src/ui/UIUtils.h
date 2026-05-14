@@ -29,6 +29,10 @@ public:
 	                         float& accum,
 	                         float speed);
 
+	static juce::String capitalize(juce::String str);
+	static juce::String aliasModulator(const juce::String& input);
+    static juce::String aliasParameter(const juce::String& pid);
+
 	static void drawBevel(Graphics& g, Rectangle<float> bounds, float corner, Colour bg);
 	static void drawTriangle(Graphics& g, Rectangle<float> bounds, int direction, Colour c);
 	static void drawPanel(Graphics& g, Rectangle<float> bounds, bool drawHeader, bool darker = false, Colour headerc = Colours::transparentBlack);

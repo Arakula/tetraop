@@ -56,6 +56,53 @@ float UIUtils::wheelChange(const juce::MouseWheelDetails& wheel,
     return (float)steps * normInterval;
 }
 
+juce::String UIUtils::capitalize(juce::String str)
+{
+    if (str.isEmpty())
+        return "";
+
+    juce::StringArray parts;
+    parts.addTokens(str, "_", "");
+
+    for (auto& part : parts) {
+        if (part.isNotEmpty()) {
+            part = part.substring(0, 1).toUpperCase() + part.substring(1);
+        }
+    }
+
+    return parts.joinIntoString(" ");
+}
+
+juce::String UIUtils::aliasModulator(const juce::String& input)
+{
+    static const std::map<juce::String, juce::String> aliasMap = {
+        {"key", "Key Track"},
+        {"vel", "Velocity"},
+        {"mod", "Mod Wheel"},
+        {"rand", "Random"},
+        {"at", "After Touch"},
+        {"bend", "Pitch Bend"},
+        {"sus", "Sust. Pedal"},
+        {"soft", "Soft Pedal"},
+        {"exp", "Exp. Pedal"},
+    };
+
+    auto it = aliasMap.find(input);
+    if (it != aliasMap.end())
+        return it->second;
+
+    return capitalize(input);
+}
+
+juce::String UIUtils::aliasParameter(const juce::String& pid)
+{
+    juce::String txt = pid;
+    if (pid.contains("_sub_"))
+        txt = pid.replace("_sub_", "_osc_");
+
+    return capitalize(txt);
+}
+
 void UIUtils::drawBevel(Graphics& g, Rectangle<float> bounds, float corner, Colour bg)
 {
     bounds = bounds.translated(0.5f, 0.5f);

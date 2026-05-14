@@ -115,6 +115,14 @@ void TetraOPAudioProcessorEditor::buildUI()
     fmMatrix->setVisible(audioProcessor.fmMatrixVisible);
     fmMatrix->setBounds(globals->getBounds());
 
+    matrixPanel = std::make_unique<MatrixPanel>(*this);
+    addChildComponent(matrixPanel.get());
+    matrixPanel->setBounds(Rectangle<int>(1,1)
+        .withX(oscA->getX())
+        .withY(oscA->getY())
+        .withRight(filter2->getRight())
+        .withBottom(filter2->getBottom()));
+
     dragDropOverlay = std::make_unique<DragDropOverlay>();
     addChildComponent (dragDropOverlay.get());
     dragDropOverlay->setInterceptsMouseClicks(false, false);
@@ -193,9 +201,9 @@ void TetraOPAudioProcessorEditor::timerCallback()
     // handle new modulation connects or disconnects
     // also handle selected modulator change
     if (audioProcessor.modulation->UIDirty.exchange(false)) {
-        //if (matrixPanel->isVisible()) {
-        //    matrixPanel->setConnections(connections);
-        //}
+        if (matrixPanel->isVisible()) {
+            matrixPanel->setConnections(connections);
+        }
 
         std::unordered_set<juce::String> modulated;
         for (auto& conn : connections) {
@@ -359,30 +367,13 @@ void TetraOPAudioProcessorEditor::unregisterModParam(ModulatedParam* param)
 
 void TetraOPAudioProcessorEditor::selectTab(int tab)
 {
-    /*
-    effectsPanel->setVisible(tab == 1);
     matrixPanel->setVisible(tab == 2);
-    configsPanel->setVisible(tab == 3);
-    browserPanel->setVisible(tab == 4);
-
-    resAPanelL1->setVisible(tab == 0);
-    resBPanelL1->setVisible(tab == 0);
-    malletPanelL1->setVisible(tab == 0);
-    noisePanelL1->setVisible(tab == 0);
-    */
     audioProcessor.selectedTab = tab;
-
-    /*
     header->repaint();
 
     if (matrixPanel->isVisible()) {
         audioProcessor.modulation->UIDirty.store(true); // trigger a connection refresh
     }
-
-    // on browser tab move the modulators panel down so that the macros are visible
-    modulatorsPanel->setBounds(modulatorsPanel->getBounds()
-        .withY(couplePanelL1->getBottom() + PANEL_MARGIN + (tab == 4 ? 70 : 0)));
-    */
 
     repaint();
 }

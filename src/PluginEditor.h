@@ -23,6 +23,7 @@
 #include "ui/panels/MacrosPanel.h"
 #include "ui/panels/ModulatorsPanel.h"
 #include "ui/panels/DragDropOverlay.h"
+#include "ui/panels/MatrixPanel.h"
 #include "ui/panels/Header.h"
 #include "ui/CustomLookAndFeel.h"
 #include "ui/widgets/Macro.h"
@@ -142,6 +143,7 @@ public:
     std::unique_ptr<MacrosPanel> macros;
     std::unique_ptr<ModulatorsPanel> mods;
     std::unique_ptr<Header> header;
+    std::unique_ptr<MatrixPanel> matrixPanel;
     std::unique_ptr<AboutDialog> aboutDialog;
 
     std::unique_ptr<CustomLookAndFeel> customLookAndFeel;
