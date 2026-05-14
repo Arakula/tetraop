@@ -69,11 +69,10 @@ public:
 	static void drawCPU(juce::Graphics& g, Rectangle<float> bounds, Colour color);
 	static void drawVoices(juce::Graphics& g, Rectangle<float> bounds, Colour color);
 
-    static bool startUnboundedMouse(juce::Component& c, const juce::MouseEvent& e)
+    static bool startUnboundedMouse(juce::Component& c, const juce::MouseEvent& e, bool unbounded)
     {
-        //juce::SharedResourcePointer<Preferences> prefs;
-        //if (!prefs->unboundedMouse)
-        //    return false;
+        if (!unbounded)
+            return false;
 
         c.setMouseCursor(juce::MouseCursor::NoCursor);
         e.source.enableUnboundedMouseMovement(true);
@@ -81,11 +80,10 @@ public:
         return true;
     }
 
-    static bool stopUnboundedMouse(juce::Component& c, const juce::MouseEvent& e)
+    static bool stopUnboundedMouse(juce::Component& c, const juce::MouseEvent& e, bool unbounded)
     {
-        //juce::SharedResourcePointer<Preferences> prefs;
-        //if (!prefs->unboundedMouse)
-        //    return false;
+        if (!unbounded)
+            return false;
 
         c.setMouseCursor(juce::MouseCursor::NormalCursor);
         e.source.enableUnboundedMouseMovement(false);

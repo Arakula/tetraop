@@ -260,11 +260,8 @@ void TetraOPAudioProcessor::parameterChanged(const juce::String& paramId, float 
 void TetraOPAudioProcessor::loadSettings ()
 {
     if (auto* file = settings.getUserSettings()) {
-        //scale = (float)file->getDoubleValue("scale", 1.f);
-        tuningFileName = file->getValue("tuningFileName", "");
-        tuningFileFormat = file->getValue("tuningFileFormat", "");
-        tuningFileString = file->getValue("tuningFileString", "");
-        tuningFileDir = file->getValue("tuningFileDir", "");
+        scale = (float)file->getDoubleValue("scale", 1.f);
+        unboundedMouse = (bool)file->getBoolValue("unboundedMouse", true);
     }
 }
 
@@ -273,10 +270,7 @@ void TetraOPAudioProcessor::saveSettings ()
     if (auto* file = settings.getUserSettings()) {
         file->setValue("version", PROJECT_VERSION);
         file->setValue("scale", scale);
-        file->setValue("tuningFileName", tuningFileName);
-        file->setValue("tuningFileFormat", tuningFileFormat);
-        file->setValue("tuningFileString", tuningFileString);
-        file->setValue("tuningFileDir", tuningFileDir);
+        file->setValue("unboundedMouse", unboundedMouse);
     }
     settings.saveIfNeeded();
 }
@@ -547,7 +541,7 @@ bool TetraOPAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* TetraOPAudioProcessor::createEditor()
 {
-    return new TetraOPAudioProcessorEditor (*this);
+    return new ScaledPluginEditor (new TetraOPAudioProcessorEditor (*this));
 }
 
 //==============================================================================

@@ -80,7 +80,7 @@ void CurveEditor::mouseDown(const juce::MouseEvent& e)
 
     if (e.mods.isLeftButtonDown()) {
         if (usemultisel && multisel.mouseHover > -1) {
-            UIUtils::startUnboundedMouse(*this, e);
+            UIUtils::startUnboundedMouse(*this, e, editor.audioProcessor.unboundedMouse);
             multisel.mouseDown(e);
             repaint();
             return;
@@ -99,12 +99,12 @@ void CurveEditor::mouseDown(const juce::MouseEvent& e)
             editor.audioProcessor.undomgr->createUndo();
 
             if (selectedPoint > 0) {
-                UIUtils::startUnboundedMouse(*this, e);
+                UIUtils::startUnboundedMouse(*this, e, editor.audioProcessor.unboundedMouse);
             }
             if (selectedMidpoint > 0) {
                 origTension = getPoint(selectedMidpoint).tension;
                 dragStartY = y;
-                UIUtils::startUnboundedMouse(*this, e);
+                UIUtils::startUnboundedMouse(*this, e, editor.audioProcessor.unboundedMouse);
             }
         }
 
@@ -114,7 +114,7 @@ void CurveEditor::mouseDown(const juce::MouseEvent& e)
 
 void CurveEditor::mouseUp(const juce::MouseEvent& e)
 {
-    auto unbounded = UIUtils::stopUnboundedMouse(*this, e);
+    auto unbounded = UIUtils::stopUnboundedMouse(*this, e, editor.audioProcessor.unboundedMouse);
 
     if (selectedPoint > 0) { // finished dragging point
         // ----

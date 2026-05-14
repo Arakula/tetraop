@@ -86,7 +86,7 @@ void PowerCurve::paint(juce::Graphics& g)
 void PowerCurve::mouseDown(const juce::MouseEvent& e)
 {
     editor.audioProcessor.undomgr->createUndo();
-	UIUtils::startUnboundedMouse(*this, e);
+	UIUtils::startUnboundedMouse(*this, e, editor.audioProcessor.unboundedMouse);
 	mouse_down = true;
 	auto param = editor.audioProcessor.params.getParameter(paramId);
 	auto cur_val = param->getValue();
@@ -118,7 +118,7 @@ void PowerCurve::mouseUp(const juce::MouseEvent& e)
 	if (!mouse_down) return;
 
 	mouse_down = false;
-	if (UIUtils::stopUnboundedMouse(*this, e))
+	if (UIUtils::stopUnboundedMouse(*this, e, editor.audioProcessor.unboundedMouse))
         juce::Desktop::getInstance().setMousePosition(start_mouse_pos);
 	repaint();
 

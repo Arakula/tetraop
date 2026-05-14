@@ -29,6 +29,7 @@ void Voice::noteStarted()
 
     auto note = getCurrentlyPlayingNote();
     vel = audioProcessor.modulation->velCurve.get_y_at(note.noteOnVelocity.asUnsignedFloat());
+    audioProcessor.modulation->lastVel = vel;
     vel_targ = vel;
     vel_step = 0.f;
     key = note.initialNote / 127.f;
@@ -109,6 +110,7 @@ void Voice::noteRetriggered()
     if (isHammerOn)
     {
         vel_targ = audioProcessor.modulation->velCurve.get_y_at(note.noteOnVelocity.asUnsignedFloat());
+        audioProcessor.modulation->lastVel = vel_targ;
     }
 
     key = note.initialNote / 127.f;

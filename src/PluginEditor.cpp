@@ -8,14 +8,13 @@ TetraOPAudioProcessorEditor::TetraOPAudioProcessorEditor(TetraOPAudioProcessor& 
     : AudioProcessorEditor(p)
     , audioProcessor(p)
 {
-    setSize(KNOB_WIDTH * (2+2+2+2 + 3) +KNOB_WIDTH_SM * 6 + PANEL_PAD * 4 + int(FILTER_PANEL_HMARGIN * 2.5), 620 + HEADER_HEIGHT + PANEL_PAD);
-    Desktop::getInstance().setGlobalScaleFactor(audioProcessor.scale);
     startTimerHz(60);
 
     if (!globals::themeLoaded) {
         loadTheme();
     }
 
+    setSize(KNOB_WIDTH * (2+2+2+2 + 3) +KNOB_WIDTH_SM * 6 + PANEL_PAD * 4 + int(FILTER_PANEL_HMARGIN * 2.5), 620 + HEADER_HEIGHT + PANEL_PAD);
     buildUI();
     selectTab(audioProcessor.selectedTab);
 }
@@ -33,30 +32,8 @@ void TetraOPAudioProcessorEditor::buildUI()
     customLookAndFeel->scale = audioProcessor.scale;
     setLookAndFeel(customLookAndFeel.get());
 
-    resizeCorner = std::make_unique<ResizeCorner>();
-    addAndMakeVisible(resizeCorner.get());
-    resizeCorner->setBounds(getWidth() - 15, getHeight() - 15, 15, 15);
-    resizeCorner->onDrag = ([this](int distX, int distY)
-        {
-            if (!resizing) {
-                resizing = true;
-                resizeStart = audioProcessor.scale;
-            }
-            auto w = getWidth() * resizeStart;
-            auto h = getHeight() * resizeStart;
-            auto ratioW = resizeStart + distX / w;
-            auto ratioH = resizeStart + distY / h;
-
-            resizeRatio = std::max(std::max(ratioW, ratioH), 0.75f);
-            Desktop::getInstance().setGlobalScaleFactor(resizeRatio);
-            customLookAndFeel->scale = resizeRatio;
-        });
-    resizeCorner->onFinish = [this]()
-        {
-            resizing = false;
-            audioProcessor.scale = resizeRatio;
-            audioProcessor.saveSettings();
-        };
+    if (auto* wrapper = dynamic_cast<ScaledPluginEditor*>(audioProcessor.getActiveEditor()))
+        wrapper->setLookAndFeel(customLookAndFeel.get());
 
     header = std::make_unique<Header>(*this);
     addAndMakeVisible(header.get());
@@ -123,6 +100,10 @@ void TetraOPAudioProcessorEditor::buildUI()
         .withRight(filter2->getRight())
         .withBottom(filter2->getBottom()));
 
+    configsPanel = std::make_unique<ConfigsPanel>(*this);
+    addChildComponent(configsPanel.get());
+    configsPanel->setBounds(matrixPanel->getBounds());
+
     dragDropOverlay = std::make_unique<DragDropOverlay>();
     addChildComponent (dragDropOverlay.get());
     dragDropOverlay->setInterceptsMouseClicks(false, false);
@@ -155,6 +136,9 @@ void TetraOPAudioProcessorEditor::rebuild()
     juce::Desktop::getInstance().removeGlobalMouseListener(this);
 
     removeAllChildren();
+
+    if (auto* wrapper = dynamic_cast<ScaledPluginEditor*>(audioProcessor.getActiveEditor()))
+        wrapper->setLookAndFeel(nullptr);
 
     buildUI();
     selectTab(audioProcessor.selectedTab);
@@ -368,6 +352,7 @@ void TetraOPAudioProcessorEditor::unregisterModParam(ModulatedParam* param)
 void TetraOPAudioProcessorEditor::selectTab(int tab)
 {
     matrixPanel->setVisible(tab == 2);
+    configsPanel->setVisible(tab == 3);
     audioProcessor.selectedTab = tab;
     header->repaint();
 

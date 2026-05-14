@@ -269,7 +269,7 @@ void HSlider::mouseDown(const juce::MouseEvent& e)
         cur_normed_value = norm;
     }
 
-    UIUtils::startUnboundedMouse(*this, e);
+    UIUtils::startUnboundedMouse(*this, e, editor.audioProcessor.unboundedMouse);
     mouse_down = true;
     auto param = editor.audioProcessor.params.getParameter(editingMod ? modId : paramId);
     if (editingMod)
@@ -336,7 +336,7 @@ void HSlider::mouseUp(const juce::MouseEvent& e)
     if (!mouse_down) return;
     valuePopup.reset();
     mouse_down = false;
-    if (UIUtils::stopUnboundedMouse(*this, e))
+    if (UIUtils::stopUnboundedMouse(*this, e, editor.audioProcessor.unboundedMouse))
     {
         if (editingMod)
             juce::Desktop::getInstance().setMousePosition(start_mouse_pos);

@@ -21,7 +21,9 @@ Typeface::Ptr CustomLookAndFeel::getTypefaceForFont(const Font& font)
 
 juce::Font CustomLookAndFeel::getBoldFont(float size)
 {
-    return juce::Font(FontOptions(defaultFontBold)).withHeight(size);
+    if (defaultFontBold != nullptr)
+        return juce::Font(defaultFontBold).withHeight(size);
+    return juce::Font(juce::FontOptions().withHeight(size).withStyle("Bold"));
 }
 
 void CustomLookAndFeel::drawTooltip(juce::Graphics& g, const juce::String& text, int width, int height)

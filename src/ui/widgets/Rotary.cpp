@@ -120,7 +120,7 @@ void Rotary::mouseDown(const juce::MouseEvent& e)
     float dy = (float)(e.y - getHeight() * 0.5f - yoffset);
     float dist_center = std::sqrt(dx * dx + dy * dy);
 
-    e.source.enableUnboundedMouseMovement(true);
+    UIUtils::startUnboundedMouse(*this, e, editor.audioProcessor.unboundedMouse);
     mouse_down = true;
 
     editingMod = (e.mods.isCommandDown() || dist_center >= radius + mod_offset) && modId.isNotEmpty();
@@ -169,9 +169,8 @@ void Rotary::mouseUp(const juce::MouseEvent& e) {
         onMouseUp();
 
     mouse_down = false;
-    setMouseCursor(MouseCursor::NormalCursor);
-    e.source.enableUnboundedMouseMovement(false);
-    Desktop::getInstance().setMousePosition(start_mouse_pos);
+    if (UIUtils::stopUnboundedMouse(*this, e, editor.audioProcessor.unboundedMouse))
+        juce::Desktop::getInstance().setMousePosition(start_mouse_pos);
     repaint();
 
     auto param = editor.audioProcessor.params.getParameter(editingMod ? modId : paramId);

@@ -172,7 +172,7 @@ void EnvDisplay::mouseDown(const juce::MouseEvent& e)
     editor.audioProcessor.undomgr->createUndo();
 
     paramId = envid + (section == 1 ? "_tenatt" : section == 3 ? "_tendec" : "_tenrel");
-    UIUtils::startUnboundedMouse(*this, e);
+    UIUtils::startUnboundedMouse(*this, e, editor.audioProcessor.unboundedMouse);
     mouse_down = true;
     mouse_down_shift = e.mods.isShiftDown();
     auto param = editor.audioProcessor.params.getParameter(paramId);
@@ -188,7 +188,7 @@ void EnvDisplay::mouseUp(const juce::MouseEvent& e)
     if (!mouse_down) return;
     auto h = highlighted;
     mouse_down = false;
-    if (UIUtils::stopUnboundedMouse(*this, e))
+    if (UIUtils::stopUnboundedMouse(*this, e, editor.audioProcessor.unboundedMouse))
         juce::Desktop::getInstance().setMousePosition(start_mouse_pos);
     auto param = editor.audioProcessor.params.getParameter(paramId);
     param->endChangeGesture();

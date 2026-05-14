@@ -30,6 +30,7 @@
 #include "engine/TablesManager.h"
 #include "engine/UndoMgr.h"
 #include "engine/PresetManager.h"
+#include "ui/ScaledPluginEditor.h"
 
 
 class TetraOPAudioProcessor
@@ -52,9 +53,10 @@ public:
     // Presets
     std::unique_ptr<PresetManager> presetmgr;
 
-    // instance
+    // preferences
     String importExportDir = ""; // default dir for import export
     float scale = 1.f;
+    bool unboundedMouse = true;
 
     //
     int polyphony = 32;
