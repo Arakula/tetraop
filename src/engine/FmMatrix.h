@@ -192,6 +192,18 @@ public:
         return c1.fmadd(t3, c2.fmadd(t2, c3.fmadd(t, y1)));
     }
 
+    inline void interpolateOSC(OSC::SIMDOSC& osc)
+    {
+        osc.level += osc.level_step;
+        osc.phase = osc.phase_inc.fmadd(osc.pitch_ratio, osc.phase);
+        osc.pitch_ratio += osc.pitch_ratio_step;
+        osc.gain_l += osc.gain_l_step;
+        osc.gain_r += osc.gain_r_step;
+        osc.phase_offset = (osc.phase_offset + osc.phase_offset_step).sat(0.f, 1.f);
+        osc.dist_amt = (osc.dist_amt + osc.dist_amt_step).sat(-.1f, 1.f);
+        Utils::wrapPhase(osc.phase);
+    }
+
     inline void sampleOscilloscope(OSC::SIMDOSC& osc, SIMDF& out_l, SIMDF& out_r, int oscIdx, int voice)
     {
         int idx = (int)(osc.phase.get(voice) * SCOPE_BUFLEN);

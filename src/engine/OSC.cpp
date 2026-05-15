@@ -85,6 +85,7 @@ void OSC::retrigger(int note, float _srate)
 
 void OSC::startBlock(int startSample, int numSamples)
 {
+	float isamps = 1.0f / numSamples;
 	auto voice = (Voice*)audioProcessor.synth->getVoice(voiceId);
 	auto& vox = audioProcessor.synth->vox[batch];
 	auto& osc = vox.osc[id];
@@ -109,24 +110,41 @@ void OSC::startBlock(int startSample, int numSamples)
 	if (osc.level.get(lane) < 1e-4f && osc.level_targ.get(lane) < 1e-4f) 
 		return; // oscillator is off
 
-	Utils::setMasked(osc.phase_offset, mod->getPolyValue(prefix + "phase_offset", voiceId, blkoffset), mask);
+	// phase_offset
+	float phase_offset_targ = mod->getPolyValue(prefix + "phase_offset", voiceId, blkoffset);
+	float phase_offset_step = (phase_offset_targ - osc.phase_offset.get(lane)) * isamps;
+	Utils::setMasked(osc.phase_offset_step, phase_offset_step, mask);
+	if (triggered)
+	{
+		Utils::setMasked(osc.phase_offset, phase_offset_targ, mask);
+		Utils::setMasked(osc.phase_offset_step, 0.f, mask);
+	}
+	
+	// pan gain
 	auto pan_targ = mod->getPolyValue(prefix + "pan", voiceId, blkoffset);
 	if (pan != pan_targ)
 	{
 		pan = pan_targ;
 		float targ_l = std::cos(MathConstants<float>::halfPi * pan);
 		float targ_r = std::sin(MathConstants<float>::halfPi * pan);
-		float gain_l_step = (targ_l - osc.gain_l.get(lane)) / numSamples;
-		float gain_r_step = (targ_r - osc.gain_r.get(lane)) / numSamples;
+		float gain_l_step = (targ_l - osc.gain_l.get(lane)) * isamps;
+		float gain_r_step = (targ_r - osc.gain_r.get(lane)) * isamps;
 		Utils::setMasked(osc.gain_l_step, gain_l_step, mask);
 		Utils::setMasked(osc.gain_r_step, gain_r_step, mask);
-
-		if (triggered) {
+		if (triggered) 
+		{
 			Utils::setMasked(osc.gain_l, targ_l, mask);
 			Utils::setMasked(osc.gain_r, targ_r, mask);
 			Utils::setMasked(osc.gain_l_step, 0.f, mask);
 			Utils::setMasked(osc.gain_r_step, 0.f, mask);
 		}
+	}
+	else
+	{
+		// FIX - pan gain recalc is only triggered when pan changes
+		// this ensures pan gain doesnt drift
+		Utils::setMasked(osc.gain_l_step, 0.f, mask);
+		Utils::setMasked(osc.gain_r_step, 0.f, mask);
 	}
 
 	bool morph_snap = (bool)audioProcessor.params.getRawParameterValue(prefix + "morph_snap")->load();
@@ -159,7 +177,13 @@ void OSC::startBlock(int startSample, int numSamples)
 	auto total_cents = pitch_cents + (pitch_semis * 100.0f) + (pitch_global * 100.f) + (pitch_oct * 1200.0f) + (pitch_bend * 100.f);
 
 	Utils::setMasked(osc.pitch_ratio_targ, Utils::centsToRatio(total_cents), mask);
-	Utils::setMasked(osc.dist_amt, mod->getPolyValue(prefix + "phase_dist_amt", voiceId, blkoffset), mask);
+
+	float dist_amt_targ = mod->getPolyValue(prefix + "phase_dist_amt", voiceId, blkoffset);
+	Utils::setMasked(osc.dist_amt_targ, dist_amt_targ, mask);
+	if (triggered)
+	{
+		Utils::setMasked(osc.dist_amt, dist_amt_targ, mask);
+	}
 
 	auto unison_v = (int)mod->getValue(prefix + "unison_voices", true);
 	auto unison_mod = (int)mod->getValue(prefix + "unison_mode", true);

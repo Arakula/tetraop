@@ -194,8 +194,8 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
         auto sync = (LFO::SyncMode)getValue(handles.sync, true);
 
         auto rate = sync == LFO::SyncMode::Rate
-            ? 1.f / getValue(handles.rate)
-            : getRateBeats((int)getValue(handles.rateSync), sync);
+            ? 1.f / getValue(handles.rate, false, 0, 0.0f, false)
+            : getRateBeats((int)getValue(handles.rateSync, false, 0, 0.0f, false), sync);
         if (sync != LFO::Rate)
             rate *= secondsPerBeat;
 

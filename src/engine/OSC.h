@@ -29,6 +29,7 @@ public:
         SIMDF phase;
         SIMDF phase_inc;
         SIMDF phase_offset;
+        SIMDF phase_offset_step;
         SIMDF pitch_ratio;
         SIMDF pitch_ratio_targ;
         SIMDF pitch_ratio_step;
@@ -45,6 +46,8 @@ public:
         SIMDF morph;
         SIMDF morph_targ;
         SIMDF dist_amt;
+        SIMDF dist_amt_targ;
+        SIMDF dist_amt_step;
         SIMDUnison unison[4]; // four lanes of voices
         WhiteNoiseGen whiteNoiseGen[4];
         PinkNoiseGen pinkNoiseGen[4];

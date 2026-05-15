@@ -146,27 +146,39 @@ void FmMatrix::prepareDistortions(SIMDVox& vox)
     auto cdist = (PhaseDist::Mode)audioProcessor.params.getRawParameterValue("c_phase_dist_mode")->load();
     auto ddist = (PhaseDist::Mode)audioProcessor.params.getRawParameterValue("d_phase_dist_mode")->load();
 
-    Adist = Utils::allLanesZero(vox.osc[0].dist_amt) ? dists[0] : dists[adist];
-    Bdist = Utils::allLanesZero(vox.osc[1].dist_amt) ? dists[0] : dists[bdist];
-    Cdist = Utils::allLanesZero(vox.osc[2].dist_amt) ? dists[0] : dists[cdist];
-    Ddist = Utils::allLanesZero(vox.osc[3].dist_amt) ? dists[0] : dists[ddist];
+    Adist = Utils::allLanesZero(vox.osc[0].dist_amt) && Utils::allLanesZero(vox.osc[0].dist_amt_targ) ? dists[0] : dists[adist];
+    Bdist = Utils::allLanesZero(vox.osc[1].dist_amt) && Utils::allLanesZero(vox.osc[1].dist_amt_targ) ? dists[0] : dists[bdist];
+    Cdist = Utils::allLanesZero(vox.osc[2].dist_amt) && Utils::allLanesZero(vox.osc[2].dist_amt_targ) ? dists[0] : dists[cdist];
+    Ddist = Utils::allLanesZero(vox.osc[3].dist_amt) && Utils::allLanesZero(vox.osc[3].dist_amt_targ) ? dists[0] : dists[ddist];
+
+    auto isPositiveBend = [&](int oscId)
+        {
+            return Utils::allLanesPositiveOrZero(vox.osc[oscId].dist_amt) &&
+                Utils::allLanesPositiveOrZero(vox.osc[oscId].dist_amt_targ);
+        };
+
+    auto isNegativeBend = [&](int oscId)
+        {
+            return Utils::allLanesNegativeOrZero(vox.osc[oscId].dist_amt) &&
+                Utils::allLanesNegativeOrZero(vox.osc[oscId].dist_amt_targ);
+        };
 
     // optimize bend distortion (heavy) by selecting only positive or negative paths
     if (Adist == dists[1])
-        if (Utils::allLanesPositiveOrZero(vox.osc[0].dist_amt)) Adist = PhaseDist::bendPos;
-        else if (Utils::allLanesNegativeOrZero(vox.osc[0].dist_amt)) Adist = PhaseDist::bendNeg;
+        if (isPositiveBend(0)) Adist = PhaseDist::bendPos;
+        else if (isNegativeBend(0)) Adist = PhaseDist::bendNeg;
 
     if (Bdist == dists[1])
-        if (Utils::allLanesPositiveOrZero(vox.osc[1].dist_amt)) Bdist = PhaseDist::bendPos;
-        else if (Utils::allLanesNegativeOrZero(vox.osc[1].dist_amt)) Bdist = PhaseDist::bendNeg;
+        if (isPositiveBend(1)) Bdist = PhaseDist::bendPos;
+        else if (isNegativeBend(1)) Bdist = PhaseDist::bendNeg;
 
     if (Cdist == dists[1])
-        if (Utils::allLanesPositiveOrZero(vox.osc[2].dist_amt)) Cdist = PhaseDist::bendPos;
-        else if (Utils::allLanesNegativeOrZero(vox.osc[2].dist_amt)) Cdist = PhaseDist::bendNeg;
+        if (isPositiveBend(2)) Cdist = PhaseDist::bendPos;
+        else if (isNegativeBend(2)) Cdist = PhaseDist::bendNeg;
 
     if (Ddist == dists[1])
-        if (Utils::allLanesPositiveOrZero(vox.osc[3].dist_amt)) Ddist = PhaseDist::bendPos;
-        else if (Utils::allLanesNegativeOrZero(vox.osc[3].dist_amt)) Ddist = PhaseDist::bendNeg;
+        if (isPositiveBend(3)) Ddist = PhaseDist::bendPos;
+        else if (isNegativeBend(3)) Ddist = PhaseDist::bendNeg;
 
     Awindow = adist == 6 ? PhaseDist::windowHalfSine : PhaseDist::windowBypass;
     Bwindow = bdist == 6 ? PhaseDist::windowHalfSine : PhaseDist::windowBypass;
@@ -403,6 +415,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
         a_tables = getTables(vox, 0, AisMorphing, AisOut);
         A.level_step = (A.level_targ - A.level) * isamps;
         A.pitch_ratio_step = (A.pitch_ratio_targ - A.pitch_ratio) * isamps;
+        A.dist_amt_step = (A.dist_amt_targ - A.dist_amt) * isamps;
     }
 
     if constexpr (BOn)
@@ -410,6 +423,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
         b_tables = getTables(vox, 1, BisMorphing, BisOut);
         B.level_step = (B.level_targ - B.level) * isamps;
         B.pitch_ratio_step = (B.pitch_ratio_targ - B.pitch_ratio) * isamps;
+        B.dist_amt_step = (B.dist_amt_targ - B.dist_amt) * isamps;
     }
 
     if constexpr (COn)
@@ -417,6 +431,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
         c_tables = getTables(vox, 2, CisMorphing, CisOut);
         C.level_step = (C.level_targ - C.level) * isamps;
         C.pitch_ratio_step = (C.pitch_ratio_targ - C.pitch_ratio) * isamps;
+        C.dist_amt_step = (C.dist_amt_targ - C.dist_amt) * isamps;
     }
 
     if constexpr (DOn)
@@ -424,6 +439,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
         d_tables = getTables(vox, 3, DisMorphing, DisOut);
         D.level_step = (D.level_targ - D.level) * isamps;
         D.pitch_ratio_step = (D.pitch_ratio_targ - D.pitch_ratio) * isamps;
+        D.dist_amt_step = (D.dist_amt_targ - D.dist_amt) * isamps;
     }
 
     const bool AisNoise = AOn && (a_tables.isWhiteNoise || a_tables.isPinkNoise);
@@ -595,12 +611,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
                 if (hasCurrTableChanged(A, a_tables))
                     a_tables = getTables(vox, 0, AisMorphing, AisOut);
             }
-            A.level += A.level_step;
-            A.phase = A.phase_inc.fmadd(A.pitch_ratio, A.phase);
-            A.pitch_ratio += A.pitch_ratio_step;
-            A.gain_l += A.gain_l_step;
-            A.gain_r += A.gain_r_step;
-            Utils::wrapPhase(A.phase); 
+            interpolateOSC(A);
         }
         if constexpr (BOn) 
         { 
@@ -611,12 +622,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
                 if (hasCurrTableChanged(B, b_tables))
                     b_tables = getTables(vox, 1, BisMorphing, BisOut);
             }
-            B.level += B.level_step;
-            B.phase = B.phase_inc.fmadd(B.pitch_ratio, B.phase);
-            B.pitch_ratio += B.pitch_ratio_step;
-            B.gain_l += B.gain_l_step;
-            B.gain_r += B.gain_r_step;
-            Utils::wrapPhase(B.phase); 
+            interpolateOSC(B);
         }
         if constexpr (COn) 
         { 
@@ -627,12 +633,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
                 if (hasCurrTableChanged(C, c_tables))
                     c_tables = getTables(vox, 2, CisMorphing, CisOut);
             }
-            C.level += C.level_step;
-            C.phase = C.phase_inc.fmadd(C.pitch_ratio, C.phase);
-            C.pitch_ratio += C.pitch_ratio_step;
-            C.gain_l += C.gain_l_step;
-            C.gain_r += C.gain_r_step;
-            Utils::wrapPhase(C.phase); 
+            interpolateOSC(C);
         }
         if constexpr (DOn) 
         {
@@ -643,12 +644,7 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
                 if (hasCurrTableChanged(D, d_tables))
                     d_tables = getTables(vox, 3, DisMorphing, DisOut);
             }
-            D.level += D.level_step;
-            D.phase = D.phase_inc.fmadd(D.pitch_ratio, D.phase);
-            D.pitch_ratio += D.pitch_ratio_step;
-            D.gain_l += D.gain_l_step;
-            D.gain_r += D.gain_r_step;
-            Utils::wrapPhase(D.phase); 
+            interpolateOSC(D);
         }
 
         // sample outputs for UI oscilloscopes
