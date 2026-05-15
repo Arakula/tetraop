@@ -18,9 +18,11 @@ void Voice::noteStarted()
 {
     audioProcessor.modulation->lastUsedVoice = id;
     fastKill = false;
+    fastKillGain = 1.f;
 
     pressed = true;
     released = false;
+    fading = false;
     attack_elapsed = 0.f;
     release_elapsed = 0.f;
 
@@ -84,7 +86,9 @@ void Voice::noteRetriggered()
     audioProcessor.modulation->lastUsedVoice = id;
     auto& envmod = audioProcessor.modulation->envs[0];
 
+    fastKillGain = 1.f;
     pressed = true;
+    fading = false;
     pressed_ts = pressed_ts_counter;
     pressed_ts_counter += 1;
 
@@ -190,9 +194,23 @@ void Voice::startBlock(int startSample, int numSamples)
 
     int blkoffset = startSample - audioProcessor.currBlockPos + numSamples;
 
-    auto env_targ = audioProcessor.modulation->getEnvelopeValue(0, id, blkoffset);
+    float env_targ = audioProcessor.modulation->getEnvelopeValue(0, id, blkoffset);
     if (fastKill)
-        env_targ *= 0.01f; // TODO use a proper fadeout
+    {
+        if (!fading)
+        {
+            fading = true;
+            fastKillStep = 1.0f / (0.010f * srate);
+        }
+
+        fastKillGain -= numSamples * fastKillStep;
+
+        if (fastKillGain <= 0.0f)
+            fastKillGain = 0.0f;
+
+        env_targ *= fastKillGain;
+    }
+
     Utils::setMasked(voice.env_step, (env_targ - voice.env.get(lane)) / numSamples, mask);
 
     if (vel != vel_targ)
@@ -253,6 +271,11 @@ void Voice::endBlock(int, int numSamples)
 
         vel = vel_targ;
         Utils::setMasked(voice.vel_step, 0.f, mask);
+    }
+
+    if (fastKill && fastKillGain <= 0.f)
+    {
+        clearCurrentNote();
     }
 
     // check if envelope has finished

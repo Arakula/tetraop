@@ -69,9 +69,13 @@ public:
     float release_elapsed = 0.0f;
     bool released = false;
     bool pressed = false;
+    bool fading = false;
     float vel = 0.f; // norm velocity
     float key = 0.f; // norm note used for keytracking
     int mpe_channel = 1;
+
+    float fastKillGain = 1.f; // fastkill fadeout gain
+    float fastKillStep = 1.f; // fastkill gain increment per sample
 
     float glide_elapsed = 0;
     bool glide = false;
