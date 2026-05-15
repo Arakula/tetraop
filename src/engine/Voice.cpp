@@ -71,6 +71,8 @@ void Voice::noteStarted()
     auto velsense = audioProcessor.params.getRawParameterValue("vel_sense")->load();
     Utils::setMasked(voice.vel_mult, vel * velsense + 1.0f - velsense, mask);
     Utils::setMasked(voice.vel_step, 0.f, mask);
+
+    audioProcessor.modulation->onVoiceTriggered(id, (float)audioProcessor.timeInSeconds, audioProcessor.playing);
 }
 
 void Voice::noteRetriggered()
@@ -132,6 +134,11 @@ void Voice::noteRetriggered()
 
     auto& voice = audioProcessor.synth->vox[batch].voice;
     voice.key[lane] = note.initialNote;
+
+    if (!legato)
+    {
+        audioProcessor.modulation->onVoiceTriggered(id, (float)audioProcessor.timeInSeconds, audioProcessor.playing);
+    }
 }
 
 void Voice::noteStopped (bool allowTailOff)

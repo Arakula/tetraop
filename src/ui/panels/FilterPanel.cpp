@@ -133,15 +133,21 @@ void FilterPanel::paint(Graphics& g)
 	g.setFont(FontOptions(16.f));
 	g.setColour(Colours::black.withAlpha(0.15f));
 	g.fillRoundedRectangle(typeBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f);
-	//g.setColour(COLOR_ACTIVE().withAlpha(0.5f));
-	//g.fillRoundedRectangle(typeBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f);
+	if (on)
+	{
+		g.setColour(COLOR_ACTIVE().withAlpha(0.5f));
+		g.fillRoundedRectangle(typeBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f);
+	}
 	g.setColour(Colours::black.withAlpha(0.35f));
 	g.drawRoundedRectangle(typeBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f, 1.f);
 
 	g.setColour(Colours::black.withAlpha(0.15f));
 	g.fillRoundedRectangle(modeBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f);
-	//g.setColour(COLOR_ACTIVE().withAlpha(0.5f));
-	//g.fillRoundedRectangle(modeBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f);
+	if (on)
+	{
+		g.setColour(COLOR_ACTIVE().withAlpha(0.5f));
+		g.fillRoundedRectangle(modeBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f);
+	}
 	g.setColour(Colours::black.withAlpha(0.35f));
 	g.drawRoundedRectangle(modeBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f, 1.f);
 

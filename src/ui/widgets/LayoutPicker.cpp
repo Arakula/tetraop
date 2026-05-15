@@ -153,12 +153,12 @@ void LayoutPickerWidget::paint(Graphics& g)
     g.setFont(FontOptions(12.f));
     g.setColour(COLOR_KNOB_LABEL());
     auto bb = b.withHeight(16.f).translated(40 * 5.f, 3.f);
-    g.drawText("C", bb, Justification::centred);
-    g.drawText("U", bb.translated(0, 12.f), Justification::centred);
-    g.drawText("S", bb.translated(0, 24.f), Justification::centred);
-    g.drawText("T", bb.translated(0, 36.f), Justification::centred);
-    g.drawText("O", bb.translated(0, 48.f), Justification::centred);
-    g.drawText("M", bb.translated(0, 60.f), Justification::centred);
+    g.drawText("M", bb, Justification::centred);
+    g.drawText("A", bb.translated(0, 12.f), Justification::centred);
+    g.drawText("T", bb.translated(0, 24.f), Justification::centred);
+    g.drawText("R", bb.translated(0, 36.f), Justification::centred);
+    g.drawText("I", bb.translated(0, 48.f), Justification::centred);
+    g.drawText("X", bb.translated(0, 60.f), Justification::centred);
 }
 
 // =========================================================

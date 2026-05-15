@@ -287,6 +287,7 @@ void TetraOPAudioProcessorEditor::mouseUp(const juce::MouseEvent& e)
             return;
 
         auto id = comp->getName();
+        audioProcessor.undomgr->createUndo();
 
         // for each modulatable param turn off drag and drop
         // if the drag and drop finished on the param make a new connection
@@ -313,6 +314,8 @@ void TetraOPAudioProcessorEditor::quickConnect(String paramId)
 {
     if (!modulatedParams.count(paramId.toStdString()))
         return;
+
+    audioProcessor.undomgr->createUndo();
 
     audioProcessor.modulation->connect(
         audioProcessor.modulation->selectedMod,
