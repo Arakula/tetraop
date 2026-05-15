@@ -479,6 +479,7 @@ void TetraOPAudioProcessor::loadSettings ()
     if (auto* file = settings.getUserSettings()) {
         scale = (float)file->getDoubleValue("scale", 1.f);
         unboundedMouse = (bool)file->getBoolValue("unboundedMouse", true);
+        importExportDir = file->getValue("importExportDir", "");
     }
 }
 
@@ -488,6 +489,7 @@ void TetraOPAudioProcessor::saveSettings ()
         file->setValue("version", PROJECT_VERSION);
         file->setValue("scale", scale);
         file->setValue("unboundedMouse", unboundedMouse);
+        file->setValue("importExportDir", importExportDir);
     }
     settings.saveIfNeeded();
 }

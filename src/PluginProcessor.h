@@ -48,12 +48,7 @@ class TetraOPAudioProcessor
 {
 public:
     std::unique_ptr<TablesManager> tablesMgr;
-
-    // synth
-    std::unique_ptr<Synth> synth;
-    std::unique_ptr<Modulation> modulation;
-    std::vector<float> leftBuf;
-    std::vector<float> rightBuf;
+    juce::AudioProcessorValueTreeState params;
 
     // fxs
     using FXSlots = std::array<std::unique_ptr<FX>, FX::kFXs>;
@@ -61,6 +56,12 @@ public:
     std::vector<FX::FXType> fxOrder;
     std::vector<FX*> fxchain;
     std::unique_ptr<juce::dsp::Oversampling<float>> distoversampler;
+
+    // synth
+    std::unique_ptr<Synth> synth;
+    std::unique_ptr<Modulation> modulation;
+    std::vector<float> leftBuf;
+    std::vector<float> rightBuf;
 
 
     // Undo
@@ -112,7 +113,6 @@ public:
     std::atomic<bool> FXDirty;
     std::atomic<float> compReduction = 0.f;
 
-    juce::AudioProcessorValueTreeState params;
     juce::UndoManager undoManager;
 
     //==============================================================================
