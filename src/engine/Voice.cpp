@@ -301,6 +301,11 @@ void Voice::endBlock(int, int numSamples)
     }
 }
 
+void Voice::clear()
+{
+    clearCurrentNote();
+}
+
 void Voice::updateFilters(bool init, int blkoffset)
 {
     auto f1_on = (bool)f1OnParam->load();

@@ -253,6 +253,7 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
             return 20.f * 2.f * std::pow(10000.f / 20.f / 2.f, band / (float)(globals::EQ_BANDS - 1));
         };
 
+    layout.add(std::make_unique<juce::AudioParameterBool>("fx_eq_on", "FX EQ On", false));
     for (int i = 0; i < globals::EQ_BANDS; ++i) {
         auto paramPrefix = "fx_eq_band" + juce::String(i + 1);
         auto namePrefix = "FX EQ Band" + juce::String(i + 1);

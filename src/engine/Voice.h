@@ -88,6 +88,8 @@ public:
 
     Voice (TetraOPAudioProcessor& p, int id);
 
+    void clear();
+
     float getCurrentNote() override { return key * 127.0f; }
 
     void noteStarted() override;

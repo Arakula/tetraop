@@ -103,13 +103,15 @@ void Synth::prepare()
 
 void Synth::clear()
 {
-    clearVoices();
+    for (auto& voice : voices)
+        ((Voice*)voice)->clear();
+
     dcBlockerL.reset();
     dcBlockerR.reset();
-    for (auto& filter : f1L) filter->clear(0.f, { true, true, true, true });
-    for (auto& filter : f1R) filter->clear(0.f, { true, true, true, true });
-    for (auto& filter : f2L) filter->clear(0.f, { true, true, true, true });
-    for (auto& filter : f2R) filter->clear(0.f, { true, true, true, true });
+    for (auto& filter : f1L) if (filter) filter->clear(0.f, { true, true, true, true });
+    for (auto& filter : f1R) if (filter) filter->clear(0.f, { true, true, true, true });
+    for (auto& filter : f2L) if (filter) filter->clear(0.f, { true, true, true, true });
+    for (auto& filter : f2R) if (filter) filter->clear(0.f, { true, true, true, true });
 }
 
 static std::unique_ptr<Filter> makeFilter(Filter::Type type)
