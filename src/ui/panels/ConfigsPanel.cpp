@@ -87,7 +87,7 @@ void ConfigsPanel::paint(juce::Graphics& g)
 	g.setColour(COLOR_KNOB_LABEL());
 	g.setFont(juce::FontOptions(16.f));
 	g.drawText("UI Scale", scaleBtn.getBounds().withX(scaleBtn.getRight() + 15), Justification::centredLeft);
-	g.drawText("Velocity Map", velEditor->getBounds().translated(0, -25).withHeight(25), Justification::centredLeft);
+	g.drawText("Velocity Curve", velEditor->getBounds().translated(0, -25).withHeight(25), Justification::centredLeft);
 
 	//auto mpeEnabled = (bool)editor.audioProcessor.params.getRawParameterValue("mpe")->load();
 

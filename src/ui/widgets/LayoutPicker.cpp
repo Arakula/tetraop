@@ -202,11 +202,89 @@ LayoutPicker::LayoutPicker(TetraOPAudioProcessorEditor& p)
             editBtn.setVisible(false);
             editor.toggleFmMatrix(); 
         };
+
+    editor.audioProcessor.params.addParameterListener("a_feedback", this);
+    editor.audioProcessor.params.addParameterListener("fm_ab", this);
+    editor.audioProcessor.params.addParameterListener("fm_ac", this);
+    editor.audioProcessor.params.addParameterListener("fm_ad", this);
+    editor.audioProcessor.params.addParameterListener("fm_ba", this);
+    editor.audioProcessor.params.addParameterListener("b_feedback", this);
+    editor.audioProcessor.params.addParameterListener("fm_bc", this);
+    editor.audioProcessor.params.addParameterListener("fm_bd", this);
+    editor.audioProcessor.params.addParameterListener("fm_ca", this);
+    editor.audioProcessor.params.addParameterListener("fm_cb", this);
+    editor.audioProcessor.params.addParameterListener("c_feedback", this);
+    editor.audioProcessor.params.addParameterListener("fm_cd", this);
+    editor.audioProcessor.params.addParameterListener("fm_da", this);
+    editor.audioProcessor.params.addParameterListener("fm_db", this);
+    editor.audioProcessor.params.addParameterListener("fm_dc", this);
+    editor.audioProcessor.params.addParameterListener("d_feedback", this);
+
+    editor.audioProcessor.params.addParameterListener("fm_aout", this);
+    editor.audioProcessor.params.addParameterListener("fm_bout", this);
+    editor.audioProcessor.params.addParameterListener("fm_cout", this);
+    editor.audioProcessor.params.addParameterListener("fm_dout", this);
+
+    editor.audioProcessor.params.addParameterListener("rm_aa", this);
+    editor.audioProcessor.params.addParameterListener("rm_ab", this);
+    editor.audioProcessor.params.addParameterListener("rm_ac", this);
+    editor.audioProcessor.params.addParameterListener("rm_ad", this);
+    editor.audioProcessor.params.addParameterListener("rm_ba", this);
+    editor.audioProcessor.params.addParameterListener("rm_bb", this);
+    editor.audioProcessor.params.addParameterListener("rm_bc", this);
+    editor.audioProcessor.params.addParameterListener("rm_bd", this);
+    editor.audioProcessor.params.addParameterListener("rm_ca", this);
+    editor.audioProcessor.params.addParameterListener("rm_cb", this);
+    editor.audioProcessor.params.addParameterListener("rm_cc", this);
+    editor.audioProcessor.params.addParameterListener("rm_cd", this);
+    editor.audioProcessor.params.addParameterListener("rm_da", this);
+    editor.audioProcessor.params.addParameterListener("rm_db", this);
+    editor.audioProcessor.params.addParameterListener("rm_dc", this);
+    editor.audioProcessor.params.addParameterListener("rm_dd", this);
 }
 
 LayoutPicker::~LayoutPicker()
 {
     editor.audioProcessor.params.removeParameterListener("layout", this);
+
+    editor.audioProcessor.params.removeParameterListener("a_feedback", this);
+    editor.audioProcessor.params.removeParameterListener("fm_ab", this);
+    editor.audioProcessor.params.removeParameterListener("fm_ac", this);
+    editor.audioProcessor.params.removeParameterListener("fm_ad", this);
+    editor.audioProcessor.params.removeParameterListener("fm_ba", this);
+    editor.audioProcessor.params.removeParameterListener("b_feedback", this);
+    editor.audioProcessor.params.removeParameterListener("fm_bc", this);
+    editor.audioProcessor.params.removeParameterListener("fm_bd", this);
+    editor.audioProcessor.params.removeParameterListener("fm_ca", this);
+    editor.audioProcessor.params.removeParameterListener("fm_cb", this);
+    editor.audioProcessor.params.removeParameterListener("c_feedback", this);
+    editor.audioProcessor.params.removeParameterListener("fm_cd", this);
+    editor.audioProcessor.params.removeParameterListener("fm_da", this);
+    editor.audioProcessor.params.removeParameterListener("fm_db", this);
+    editor.audioProcessor.params.removeParameterListener("fm_dc", this);
+    editor.audioProcessor.params.removeParameterListener("d_feedback", this);
+
+    editor.audioProcessor.params.removeParameterListener("fm_aout", this);
+    editor.audioProcessor.params.removeParameterListener("fm_bout", this);
+    editor.audioProcessor.params.removeParameterListener("fm_cout", this);
+    editor.audioProcessor.params.removeParameterListener("fm_dout", this);
+
+    editor.audioProcessor.params.removeParameterListener("rm_aa", this);
+    editor.audioProcessor.params.removeParameterListener("rm_ab", this);
+    editor.audioProcessor.params.removeParameterListener("rm_ac", this);
+    editor.audioProcessor.params.removeParameterListener("rm_ad", this);
+    editor.audioProcessor.params.removeParameterListener("rm_ba", this);
+    editor.audioProcessor.params.removeParameterListener("rm_bb", this);
+    editor.audioProcessor.params.removeParameterListener("rm_bc", this);
+    editor.audioProcessor.params.removeParameterListener("rm_bd", this);
+    editor.audioProcessor.params.removeParameterListener("rm_ca", this);
+    editor.audioProcessor.params.removeParameterListener("rm_cb", this);
+    editor.audioProcessor.params.removeParameterListener("rm_cc", this);
+    editor.audioProcessor.params.removeParameterListener("rm_cd", this);
+    editor.audioProcessor.params.removeParameterListener("rm_da", this);
+    editor.audioProcessor.params.removeParameterListener("rm_db", this);
+    editor.audioProcessor.params.removeParameterListener("rm_dc", this);
+    editor.audioProcessor.params.removeParameterListener("rm_dd", this);
 }
 
 void LayoutPicker::parameterChanged(const juce::String& pid, float val)
@@ -285,15 +363,6 @@ void LayoutPicker::paint(Graphics& g)
     g.setColour(COLOR_BACKGROUND().darker(0.5f));
     g.fillRoundedRectangle(b.reduced(0.5f), 5.f);
 
-    if (editBtn.isVisible())
-    {
-        g.setColour(COLOR_KNOB_LABEL());
-        g.fillRoundedRectangle(editBtn.getBounds().toFloat(), 3.f);
-        g.setColour(COLOR_BACKGROUND());
-        g.setFont(16.f);
-        g.drawText("Edit", editBtn.getBounds().toFloat(), Justification::centred);
-    }
-
     auto layout = (FmMatrix::Layout)editor.audioProcessor.params.getRawParameterValue("layout")->load();
 
     switch (layout)
@@ -329,9 +398,150 @@ void LayoutPicker::paint(Graphics& g)
             drawDB_CB_BA(g, b, 0.75f);
             break;
         default:
-            g.setFont(FontOptions(16.f));
-            g.setColour(COLOR_KNOB_LABEL());
-            g.drawText("Custom", b, Justification::centred);
+            drawCustomLayoutPreview(g, b);
     }
+
+    if (editBtn.isVisible())
+    {
+        g.setColour(COLOR_KNOB_LABEL());
+        g.fillRoundedRectangle(editBtn.getBounds().toFloat(), 3.f);
+        g.setColour(COLOR_BACKGROUND());
+        g.setFont(16.f);
+        g.drawText("Edit", editBtn.getBounds().toFloat(), Justification::centred);
+    }
+}
+
+void LayoutPicker::drawCustomLayoutPreview(Graphics& g, Rectangle<float> bounds)
+{
+    float fm_aa = editor.audioProcessor.params.getRawParameterValue("a_feedback")->load();
+    float fm_ab = editor.audioProcessor.params.getRawParameterValue("fm_ab")->load();
+    float fm_ac = editor.audioProcessor.params.getRawParameterValue("fm_ac")->load();
+    float fm_ad = editor.audioProcessor.params.getRawParameterValue("fm_ad")->load();
+    float fm_ba = editor.audioProcessor.params.getRawParameterValue("fm_ba")->load();
+    float fm_bb = editor.audioProcessor.params.getRawParameterValue("b_feedback")->load();
+    float fm_bc = editor.audioProcessor.params.getRawParameterValue("fm_bc")->load();
+    float fm_bd = editor.audioProcessor.params.getRawParameterValue("fm_bd")->load();
+    float fm_ca = editor.audioProcessor.params.getRawParameterValue("fm_ca")->load();
+    float fm_cb = editor.audioProcessor.params.getRawParameterValue("fm_cb")->load();
+    float fm_cc = editor.audioProcessor.params.getRawParameterValue("c_feedback")->load();
+    float fm_cd = editor.audioProcessor.params.getRawParameterValue("fm_cd")->load();
+    float fm_da = editor.audioProcessor.params.getRawParameterValue("fm_da")->load();
+    float fm_db = editor.audioProcessor.params.getRawParameterValue("fm_db")->load();
+    float fm_dc = editor.audioProcessor.params.getRawParameterValue("fm_dc")->load();
+    float fm_dd = editor.audioProcessor.params.getRawParameterValue("d_feedback")->load();
+
+    float rm_aa = editor.audioProcessor.params.getRawParameterValue("rm_aa")->load(); 
+    float rm_ab = editor.audioProcessor.params.getRawParameterValue("rm_ab")->load();
+    float rm_ac = editor.audioProcessor.params.getRawParameterValue("rm_ac")->load();
+    float rm_ad = editor.audioProcessor.params.getRawParameterValue("rm_ad")->load();
+    float rm_ba = editor.audioProcessor.params.getRawParameterValue("rm_ba")->load();
+    float rm_bb = editor.audioProcessor.params.getRawParameterValue("rm_bb")->load();
+    float rm_bc = editor.audioProcessor.params.getRawParameterValue("rm_bc")->load();
+    float rm_bd = editor.audioProcessor.params.getRawParameterValue("rm_bd")->load();
+    float rm_ca = editor.audioProcessor.params.getRawParameterValue("rm_ca")->load();
+    float rm_cb = editor.audioProcessor.params.getRawParameterValue("rm_cb")->load();
+    float rm_cc = editor.audioProcessor.params.getRawParameterValue("rm_cc")->load();
+    float rm_cd = editor.audioProcessor.params.getRawParameterValue("rm_cd")->load();
+    float rm_da = editor.audioProcessor.params.getRawParameterValue("rm_da")->load();
+    float rm_db = editor.audioProcessor.params.getRawParameterValue("rm_db")->load();
+    float rm_dc = editor.audioProcessor.params.getRawParameterValue("rm_dc")->load();
+    float rm_dd = editor.audioProcessor.params.getRawParameterValue("rm_dd")->load();
+
+    float w = bounds.getWidth();
+    float h = bounds.getHeight();
+    float r = 8.f;
+
+    float gapX = (w - (4 * r)) / 5;
+    float gapY = (h - (4 * r)) / 5;
+
+    auto drawPie = [&](float norm, int x, int y, Colour c, bool isRm)
+        {
+            auto bb = Rectangle<float>(r, r)
+                .withX(gapX + x * (r + gapX))
+                .withY(gapY + y * (r + gapY));
+
+            g.setColour(c.withAlpha(isRm ? 0.4f : 0.75f));
+            Path p;
+            p.addPieSegment(bb, 0, MathConstants<float>::twoPi * norm, 0.f);
+            g.fillPath(p);
+            g.setColour(c);
+            g.drawEllipse(bb, 1.f);
+        };
+
+    drawPie(rm_aa, 0, 0, COLOR_A(), true);
+    drawPie(rm_ab, 0, 1, COLOR_A(), true);
+    drawPie(rm_ac, 0, 2, COLOR_A(), true);
+    drawPie(rm_ad, 0, 3, COLOR_A(), true);
+
+    drawPie(rm_ba, 1, 0, COLOR_B(), true);
+    drawPie(rm_bb, 1, 1, COLOR_B(), true);
+    drawPie(rm_bc, 1, 2, COLOR_B(), true);
+    drawPie(rm_bd, 1, 3, COLOR_B(), true);
+
+    drawPie(rm_ca, 2, 0, COLOR_C(), true);
+    drawPie(rm_cb, 2, 1, COLOR_C(), true);
+    drawPie(rm_cc, 2, 2, COLOR_C(), true);
+    drawPie(rm_cd, 2, 3, COLOR_C(), true);
+
+    drawPie(rm_da, 3, 0, COLOR_D(), true);
+    drawPie(rm_db, 3, 1, COLOR_D(), true);
+    drawPie(rm_dc, 3, 2, COLOR_D(), true);
+    drawPie(rm_dd, 3, 3, COLOR_D(), true);
+
+    //
+
+    drawPie(fm_aa, 0, 0, COLOR_A(), false);
+    drawPie(fm_ab, 0, 1, COLOR_A(), false);
+    drawPie(fm_ac, 0, 2, COLOR_A(), false);
+    drawPie(fm_ad, 0, 3, COLOR_A(), false);
+
+    drawPie(fm_ba, 1, 0, COLOR_B(), false);
+    drawPie(fm_bb, 1, 1, COLOR_B(), false);
+    drawPie(fm_bc, 1, 2, COLOR_B(), false);
+    drawPie(fm_bd, 1, 3, COLOR_B(), false);
+
+    drawPie(fm_ca, 2, 0, COLOR_C(), false);
+    drawPie(fm_cb, 2, 1, COLOR_C(), false);
+    drawPie(fm_cc, 2, 2, COLOR_C(), false);
+    drawPie(fm_cd, 2, 3, COLOR_C(), false);
+
+    drawPie(fm_da, 3, 0, COLOR_D(), false);
+    drawPie(fm_db, 3, 1, COLOR_D(), false);
+    drawPie(fm_dc, 3, 2, COLOR_D(), false);
+    drawPie(fm_dd, 3, 3, COLOR_D(), false);
+
+    float fm_aout = editor.audioProcessor.params.getRawParameterValue("fm_aout")->load();
+    float fm_bout = editor.audioProcessor.params.getRawParameterValue("fm_bout")->load();
+    float fm_cout = editor.audioProcessor.params.getRawParameterValue("fm_cout")->load();
+    float fm_dout = editor.audioProcessor.params.getRawParameterValue("fm_dout")->load();
+
+    if (fm_aout > 0.f)
+    {
+        g.setColour(COLOR_A());
+        auto bb = Rectangle<float>(r, 2.f).withX(gapX + 0 * (r + gapX)).withY(bounds.getHeight() - 4.f);
+        g.fillRect(bb);
+    }
+
+    if (fm_bout > 0.f)
+    {
+        g.setColour(COLOR_B());
+        auto bb = Rectangle<float>(r, 2.f).withX(gapX + 1 * (r + gapX)).withY(bounds.getHeight() - 4.f);
+        g.fillRect(bb);
+    }
+
+    if (fm_cout > 0.f)
+    {
+        g.setColour(COLOR_C());
+        auto bb = Rectangle<float>(r, 2.f).withX(gapX + 2 * (r + gapX)).withY(bounds.getHeight() - 4.f);
+        g.fillRect(bb);
+    }
+
+    if (fm_dout > 0.f)
+    {
+        g.setColour(COLOR_D());
+        auto bb = Rectangle<float>(r, 2.f).withX(gapX + 3 * (r + gapX)).withY(bounds.getHeight() - 4.f);
+        g.fillRect(bb);
+    }
+
 }
 

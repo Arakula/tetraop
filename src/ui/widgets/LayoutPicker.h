@@ -39,6 +39,7 @@ public:
 
     void resized() override;
     void paint(Graphics& g) override;
+    void drawCustomLayoutPreview(Graphics& g, Rectangle<float> bounds);
 
 private:
     TetraOPAudioProcessorEditor& editor;
