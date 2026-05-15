@@ -247,10 +247,10 @@ void LFODisplay::paint(juce::Graphics& g)
     // draw sync btn
     auto sync = (int)editor.audioProcessor.params.getRawParameterValue(lfoid + "_sync")->load();
     if (sync == 0) {
-        UIUtils::drawClock(g, syncBtn.getBounds().reduced(5).toFloat(), Colour(0xff333333));
+        UIUtils::drawClock(g, syncBtn.getBounds().reduced(5).toFloat(), COLOR_KNOB_LABEL());
     }
     else {
-        UIUtils::drawNote(g, syncBtn.getBounds().reduced(5).toFloat(), sync - 1, Colour(0xff333333));
+        UIUtils::drawNote(g, syncBtn.getBounds().reduced(5).toFloat(), sync - 1, COLOR_KNOB_LABEL());
     }
 
     // draw top view buttons
@@ -334,7 +334,7 @@ void LFODisplay::toggleUIComponents()
     modeBtn.setBounds(gridBtn.getBounds().withWidth(40).withRightX((int)(viewBounds.reduced(5.f).getX() + viewBounds.reduced(5.f).getWidth())));
     fileBtn.setBounds(modeBtn.getBounds().translated(-50, 0).withWidth(40));
 
-    syncBtn.setBounds(bounds.getX() + 5, bounds.getBottom() - globals::KNOB_HEIGHT + 10, 25, 25);
+    syncBtn.setBounds(bounds.getX() + 15, bounds.getBottom() - globals::KNOB_HEIGHT + 10, 25, 25);
 
     repaint();
 }
