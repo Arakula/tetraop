@@ -99,6 +99,7 @@ public:
     bool playing = false;
     int currBlockSize = 128;
     int currBlockPos = 0;
+    int samplesPerBlock = 512;
 
     // UI
     int selectedTab = 0;
@@ -127,7 +128,7 @@ public:
     std::unique_ptr<FX> createFX(FX::FXType type);
     void rebuildFXChain();
     void ensureFXExists(FX::FXType type);
-    void TetraOPAudioProcessor::destroyFX(FX::FXType type);
+    void destroyFX(FX::FXType type);
 
     //==============================================================================
     bool supportsMPE() const override { return true; }

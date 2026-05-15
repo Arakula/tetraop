@@ -258,7 +258,7 @@ public:
 		}
 	};
 
-	MiniVerb(RipplerAudioProcessor& p, int layer);
+	MiniVerb(TetraOPAudioProcessor& p);
 	~MiniVerb() override;
 
 	void parameterChanged(const juce::String& paramId, float value) override;

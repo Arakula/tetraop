@@ -1,7 +1,7 @@
 #include "./Distortion.h"
 #include "../../PluginProcessor.h"
 
-Distortion::Distortion(RipplerAudioProcessor& p, int _layer) : FX(p, FX::Distortion, _layer) 
+Distortion::Distortion(TetraOPAudioProcessor& p) : FX(p, FX::Distortion) 
 {
 	modeParam = audioProcessor.params.getRawParameterValue(prefix + "mode");
 	driveParam = audioProcessor.modulation->getParamHandle(prefix + "drive");
@@ -49,7 +49,7 @@ void Distortion::processBlock(float* left, float* right, int nsamps, int /*block
 		filterR.clear(0.f);
 		colorL.clear(0.f);
 		colorR.clear(0.f);
-		audioProcessor.distoversamplerM->reset();
+		audioProcessor.distoversampler->reset();
 		drive = audioProcessor.modulation->getValue(driveParam, false, nsamps);
 		gain = audioProcessor.modulation->getValue(gainParam, false, nsamps);
 		mix = audioProcessor.modulation->getValue(mixParam, false, nsamps);

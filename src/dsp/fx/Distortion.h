@@ -10,7 +10,7 @@ class Distortion
 	, private juce::AudioProcessorValueTreeState::Listener
 {
 public:
-	Distortion(RipplerAudioProcessor& p, int layer);
+	Distortion(TetraOPAudioProcessor& p);
     ~Distortion() override;
 
 	void parameterChanged(const juce::String& paramId, float value) override;

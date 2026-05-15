@@ -34,7 +34,7 @@ class Chorus : public FX
 public:
 	static constexpr int MAX_VOICES = 16;
 
-	Chorus(RipplerAudioProcessor& p, int _layer);
+	Chorus(TetraOPAudioProcessor& p);
 	~Chorus() override {}
 
 	void prepare(float _srate) override;

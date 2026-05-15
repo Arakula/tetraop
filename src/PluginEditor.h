@@ -26,6 +26,7 @@
 #include "ui/panels/DragDropOverlay.h"
 #include "ui/panels/MatrixPanel.h"
 #include "ui/panels/ConfigsPanel.h"
+#include "ui/panels/FXPanel.h"
 #include "ui/panels/Header.h"
 #include "ui/CustomLookAndFeel.h"
 #include "ui/widgets/Macro.h"
@@ -107,6 +108,7 @@ public:
     std::unique_ptr<Header> header;
     std::unique_ptr<MatrixPanel> matrixPanel;
     std::unique_ptr<ConfigsPanel> configsPanel;
+    std::unique_ptr<FXPanel> fxPanel;
     std::unique_ptr<AboutDialog> aboutDialog;
 
     std::unique_ptr<CustomLookAndFeel> customLookAndFeel;

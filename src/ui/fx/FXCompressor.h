@@ -4,7 +4,7 @@
 #include "../../Globals.h"
 #include "../widgets/Rotary.h"
 
-class RipplerAudioProcessorEditor;
+class TetraOPAudioProcessorEditor;
 
 class FXCompressor
 	: public UIFX
@@ -20,7 +20,7 @@ public:
 
 	juce::TextButton makeupBtn;
 
-	FXCompressor(RipplerAudioProcessorEditor& e);
+	FXCompressor(TetraOPAudioProcessorEditor& e);
 	~FXCompressor() override;
 
 	void timerCallback() override;

@@ -1,8 +1,8 @@
 #include "./MiniVerb.h"
 #include "../../PluginProcessor.h"
 
-MiniVerb::MiniVerb(RipplerAudioProcessor& p, int _layer)
-	: FX(p, FX::Reverb, _layer)
+MiniVerb::MiniVerb(TetraOPAudioProcessor& p)
+	: FX(p, FX::Reverb)
 {
 	audioProcessor.params.addParameterListener(prefix + "on", this);
 	audioProcessor.params.addParameterListener(prefix + "bypass", this);

@@ -1,8 +1,8 @@
 #include "./Delay.h"
 #include "../../PluginProcessor.h"
 
-Delay::Delay(RipplerAudioProcessor& p, int _layer) 
-	: FX(p, FX::Delay, _layer)
+Delay::Delay(TetraOPAudioProcessor& p) 
+	: FX(p, FX::Delay)
 {
 	modeParam = audioProcessor.params.getRawParameterValue(prefix + "mode");
 	linkParam = audioProcessor.params.getRawParameterValue(prefix + "link");

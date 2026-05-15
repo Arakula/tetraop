@@ -9,7 +9,7 @@ class EQ
 	, private juce::AudioProcessorValueTreeState::Listener
 {
 public:
-	EQ(RipplerAudioProcessor& p, int layer);
+	EQ(TetraOPAudioProcessor& p);
 	~EQ() override;
 
 	void parameterChanged(const juce::String& paramId, float value) override;

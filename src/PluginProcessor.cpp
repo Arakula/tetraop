@@ -426,7 +426,7 @@ std::unique_ptr<FX> TetraOPAudioProcessor::createFX(FX::FXType type)
         case FX::Chorus:      return std::make_unique<Chorus>(*this);
         case FX::Delay:       return std::make_unique<Delay>(*this);
         case FX::Reverb:      return std::make_unique<ReverbFX>(*this);
-        case FX::Phaser:      return std::make_unique<Phaser>(*this);
+        case FX::Phaser:      return std::make_unique<PhaserFX>(*this);
         case FX::EQ:          return std::make_unique<EQ>(*this);
         default:
             jassertfalse;
@@ -464,9 +464,6 @@ void TetraOPAudioProcessor::ensureFXExists(FX::FXType type)
 
 void TetraOPAudioProcessor::destroyFX(FX::FXType type)
 {
-    if (type == FX::Vibrato)
-        return;
-
     if (fxSlots[type] == nullptr)
         return;
 
@@ -625,10 +622,11 @@ void TetraOPAudioProcessor::changeProgramName (int index, const juce::String& ne
 }
 
 //==============================================================================
-void TetraOPAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void TetraOPAudioProcessor::prepareToPlay (double sampleRate, int _samplesPerBlock)
 {
     clearAll();
 
+    samplesPerBlock = _samplesPerBlock;
     srate = (float)sampleRate;
     osrate = (float)sampleRate;
     iosrate = 1.f / osrate;

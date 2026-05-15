@@ -57,7 +57,6 @@ FXReverb::FXReverb(TetraOPAudioProcessorEditor& e)
 	editor.registerModParam(modrate.get(), TetraOPAudioProcessorEditor::kFX);
 	editor.registerModParam(mix.get(), TetraOPAudioProcessorEditor::kFX);
 
-	updateShimmerUI();
 }
 
 FXReverb::~FXReverb()
@@ -73,7 +72,6 @@ void FXReverb::parameterChanged(const juce::String& parameterID, float newValue)
 	juce::MessageManager::callAsync([this]
 		{
             toggleUIComponents();
-			updateShimmerUI();
 			repaint();
 		});
 }
@@ -131,7 +129,7 @@ void FXReverb::showModeMenu ()
         [ this ] ( int result ) {
         if ( result == 0 ) return;
         if (auto* param = dynamic_cast<juce::AudioParameterInt*>(editor.audioProcessor.params.getParameter(prefix + "mode")))
-            param->setValueNotifyingHost(param->convertTo0to1(result - 1));
+            param->setValueNotifyingHost(param->convertTo0to1(result - 1.f));
         repaint ();
     } );
 }

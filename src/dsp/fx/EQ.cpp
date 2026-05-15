@@ -1,11 +1,10 @@
 #include "./EQ.h"
 #include "../../PluginProcessor.h"
 
-EQ::EQ(RipplerAudioProcessor& p, int _layer) : FX(p, FX::EQ, _layer)
+EQ::EQ(TetraOPAudioProcessor& p) : FX(p, FX::EQ)
 {
-	juce::String prelayer = layer == 0 ? "m_" : layer == 1 ? "l1_" : "l2_";
 	for (int i = 0; i < globals::EQ_BANDS; i++) {
-		auto pre = prelayer + "fx_eq_band" + juce::String(i + 1);
+		auto pre = "fx_eq_band" + juce::String(i + 1);
 		freqParams[i] = audioProcessor.params.getRawParameterValue(pre + "_freq");
 		gainParams[i] = audioProcessor.params.getRawParameterValue(pre + "_gain");
 		qParams[i] = audioProcessor.params.getRawParameterValue(pre + "_q");

@@ -1,8 +1,8 @@
 #include "./Chorus.h"
 #include "../../PluginProcessor.h"
 
-Chorus::Chorus(RipplerAudioProcessor& p, int _layer)
-	: FX(p, FX::Chorus, _layer)
+Chorus::Chorus(TetraOPAudioProcessor& p)
+	: FX(p, FX::Chorus)
 {
 	voicesParam = audioProcessor.params.getRawParameterValue(prefix + "voices");
 	rateParam = audioProcessor.params.getRawParameterValue(prefix + "rate");
@@ -53,8 +53,8 @@ void Chorus::processBlock(float* left, float* right, int nsamps, int /*blockoffs
 			base_delay[i] = std::fmax(0.f, delay_samples + offset);
 			phase_offset[i] = i * (1.0f / (float)voices);
 			const auto phase_offset_rad = phase_offset[i] * juce::MathConstants<float>::twoPi;
-			phase_offset_sin[i] = fast::sin(phase_offset_rad);
-			phase_offset_cos[i] = fast::cos(phase_offset_rad);
+			phase_offset_sin[i] = std::sin(phase_offset_rad);
+			phase_offset_cos[i] = std::cos(phase_offset_rad);
 		}
 	}
 	auto sqrtvoices = sqrt((float)voices);
@@ -86,8 +86,8 @@ void Chorus::processBlock(float* left, float* right, int nsamps, int /*blockoffs
 	auto feedback_step = (feedback_targ - feedback) / nsamps;
 
 	auto global_phase = phase * juce::MathConstants<float>::twoPi;
-	auto global_sin = fast::sin(global_phase);
-	auto global_cos = fast::cos(global_phase);
+	auto global_sin = std::sin(global_phase);
+	auto global_cos = std::cos(global_phase);
 
 	for (int i = 0; i < nsamps; ++i) {
 		auto wet_l = 0.f;
@@ -172,8 +172,8 @@ void Chorus::processBlock(float* left, float* right, int nsamps, int /*blockoffs
 
 		// increment phase
 		const auto delta_radians = juce::MathConstants<float>::twoPi * rate / srate;
-		const auto sin_delta = fast::sin(delta_radians);
-		const auto cos_delta = fast::cos(delta_radians);
+		const auto sin_delta = std::sin(delta_radians);
+		const auto cos_delta = std::cos(delta_radians);
 		const auto next_global_sin = global_sin * cos_delta + global_cos * sin_delta;
 		const auto next_global_cos = global_cos * cos_delta - global_sin * sin_delta;
 		global_sin = next_global_sin;

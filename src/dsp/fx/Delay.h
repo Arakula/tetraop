@@ -11,7 +11,7 @@ class Delay
 	, private juce::AudioProcessorValueTreeState::Listener
 {
 public:
-	Delay(RipplerAudioProcessor& p, int layer);
+	Delay(TetraOPAudioProcessor& p);
 	~Delay() override;
 
 	void parameterChanged(const juce::String& paramId, float value) override;

@@ -104,6 +104,10 @@ void TetraOPAudioProcessorEditor::buildUI()
     addChildComponent(configsPanel.get());
     configsPanel->setBounds(matrixPanel->getBounds());
 
+    fxPanel = std::make_unique<FXPanel>(*this);
+    addChildComponent(fxPanel.get());
+    fxPanel->setBounds(matrixPanel->getBounds());
+
     dragDropOverlay = std::make_unique<DragDropOverlay>();
     addChildComponent (dragDropOverlay.get());
     dragDropOverlay->setInterceptsMouseClicks(false, false);
@@ -354,6 +358,7 @@ void TetraOPAudioProcessorEditor::unregisterModParam(ModulatedParam* param)
 
 void TetraOPAudioProcessorEditor::selectTab(int tab)
 {
+    fxPanel->setVisible(tab == 1);
     matrixPanel->setVisible(tab == 2);
     configsPanel->setVisible(tab == 3);
     audioProcessor.selectedTab = tab;

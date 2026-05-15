@@ -8,7 +8,7 @@
 
 // Copyright 2025 tilr
 // Based off Vital synth one_pole
-class OnePole {
+class OneP {
 public:
     inline static LookupTable coeffLUT = LookupTable(
 		[] (float ratio) {
@@ -23,7 +23,7 @@ public:
     float state = 0.0f;
     float curr = 0.0f;
 
-    OnePole() {}
+    OneP() {}
 
     void init(float freq, float srate) {
         freq = std::clamp(freq, 20.f, srate * 0.48f);
@@ -82,8 +82,8 @@ private:
 	Lerp g = 0.0f;
 	Lerp k = 0.0f;
 
-	OnePole remove_lows_stage;
-	OnePole remove_highs_stage;
-	OnePole stages[kMaxStages];
+	OneP remove_lows_stage;
+	OneP remove_highs_stage;
+	OneP stages[kMaxStages];
 	float allpass_output = 0.0f;
 };

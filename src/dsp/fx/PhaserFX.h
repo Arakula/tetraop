@@ -52,11 +52,11 @@ public:
 	}
 };
 
-class Phaser : public FX
+class PhaserFX : public FX
 {
 public:
-	Phaser(RipplerAudioProcessor& p, int layer);
-	~Phaser() override;
+	PhaserFX(TetraOPAudioProcessor& p);
+	~PhaserFX() override;
 
 	void prepare(float _srate) override;
 	void processBlock(float* left, float* right, int nsamps, int blockoffset, bool audioRate) override;

@@ -34,8 +34,8 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override;
     void toggleUIComponents();
-    void onDrag(FXHeader* header);
-    void onDragEnded(FXHeader* header);
+    void onDrag(UIFX* fx);
+    void onDragEnded(UIFX* fx);
 
 private:
     TetraOPAudioProcessorEditor& editor;

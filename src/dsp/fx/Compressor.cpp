@@ -1,7 +1,7 @@
 #include "./Compressor.h"
 #include "../../PluginProcessor.h"
 
-Compressor::Compressor(RipplerAudioProcessor& p, int _layer) : FX(p, FX::Compressor, _layer)
+Compressor::Compressor(TetraOPAudioProcessor& p) : FX(p, FX::Compressor)
 {
 	makeupParam = audioProcessor.params.getRawParameterValue(prefix + "makeup");
 	threshParam = audioProcessor.modulation->getParamHandle(prefix + "thresh");

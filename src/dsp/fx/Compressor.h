@@ -6,7 +6,7 @@
 class Compressor : public FX
 {
 public:
-	Compressor(RipplerAudioProcessor& p, int layer);
+	Compressor(TetraOPAudioProcessor& p);
 	~Compressor() override;
 
 	void prepare(float _srate) override;

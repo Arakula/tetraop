@@ -10,7 +10,7 @@ class ReverbFX
 	, private juce::AudioProcessorValueTreeState::Listener
 {
 public:
-	ReverbFX(RipplerAudioProcessor& p, int layer);
+	ReverbFX(TetraOPAudioProcessor& p);
 	~ReverbFX() override;
 
 	void parameterChanged(const juce::String& paramId, float value) override;

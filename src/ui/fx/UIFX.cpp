@@ -23,6 +23,28 @@ UIFX::~UIFX()
 {
 }
 
+void UIFX::mouseDown(const juce::MouseEvent& e)
+{
+    editor.audioProcessor.undomgr->createUndo();
+	toFront(true);
+	dragger.startDraggingComponent(this, e);
+}
+
+void UIFX::mouseDrag(const juce::MouseEvent& e)
+{
+	auto oldBounds = getBounds();
+	dragger.dragComponent(this, e, nullptr);
+	setTopLeftPosition(std::clamp(getX(), minX, maxX), oldBounds.getY());
+	if (onDrag)
+		onDrag(this);
+}
+
+void UIFX::mouseUp(const juce::MouseEvent&)
+{
+	if (onDragEnded)
+		onDragEnded(this);
+}
+
 void UIFX::paint(juce::Graphics& g)
 {
 	auto b = getLocalBounds().toFloat();

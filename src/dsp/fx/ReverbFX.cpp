@@ -1,47 +1,44 @@
-#include "./Reverb.h"
+#include "./ReverbFX.h"
 #include "../../PluginProcessor.h"
 
 
-ReverbFX::ReverbFX ( RipplerAudioProcessor& p, int _layer )
-    : FX ( p, FX::Reverb, _layer )
+ReverbFX::ReverbFX ( TetraOPAudioProcessor& p)
+    : FX ( p, FX::Reverb)
 {
     modeParam        = audioProcessor.params.getRawParameterValue ( prefix + "mode" );
 
     audioProcessor.params.addParameterListener ( prefix + "mode", this );
-    audioProcessor.params.addParameterListener ( prefix + "on", this ););
+    audioProcessor.params.addParameterListener ( prefix + "on", this );
 
-    rutaVerb = std::make_unique<reFX::RutaVerb> ();
-    miniVerb = std::make_unique<MiniVerb>(p, _layer);
+    miniVerb = std::make_unique<MiniVerb>(p);
 }
 
-Reverb::~Reverb ()
+ReverbFX::~ReverbFX ()
 {
     audioProcessor.params.removeParameterListener ( prefix + "mode", this );
     audioProcessor.params.removeParameterListener ( prefix + "on", this );
 }
 
-void Reverb::parameterChanged ( const juce::String& /*paramId*/, float /*value*/ )
+void ReverbFX::parameterChanged ( const juce::String& /*paramId*/, float /*value*/ )
 {
     clear ();
 }
 
-void Reverb::prepare ( float _srate )
+void ReverbFX::prepare ( float _srate )
 {
     srate = _srate;
 
     miniVerb->prepare(_srate);
-    rutaVerb->setSamplerate ( _srate );
 }
 
-void Reverb::processBlock ( float* left, float* right, int nsamps, int /* blockOffset */, bool /* audioRate */)
+void ReverbFX::processBlock ( float* left, float* right, int nsamps, int /* blockOffset */, bool /* audioRate */)
 {
     //auto mode = fast::clamp ( juce::roundToInt ( modeParam->load () ), 0, 5 );
     miniVerb->processBlock(left, right, nsamps, 0, false);
     return;
 }
 
-void Reverb::clear ()
+void ReverbFX::clear ()
 {
     miniVerb->clear();
-    rutaVerb->kill ();
 }

@@ -1,9 +1,9 @@
 
-#include "./Phaser.h"
+#include "./PhaserFX.h"
 #include "../../PluginProcessor.h"
 
-Phaser::Phaser(RipplerAudioProcessor& p, int _layer)
-	: FX(p, FX::Phaser, _layer)
+PhaserFX::PhaserFX(TetraOPAudioProcessor& p)
+	: FX(p, FX::Phaser)
 {
 	rateSyncParam = audioProcessor.params.getRawParameterValue(prefix + "rate_sync");
 	syncParam = audioProcessor.params.getRawParameterValue(prefix + "sync");
@@ -16,22 +16,22 @@ Phaser::Phaser(RipplerAudioProcessor& p, int _layer)
 	mixParam    = audioProcessor.modulation->getParamHandle(prefix + "mix");
 }
 
-Phaser::~Phaser()
+PhaserFX::~PhaserFX()
 {
 }
 
-void Phaser::prepare ( float _srate )
+void PhaserFX::prepare ( float _srate )
 {
     srate = _srate;
 }
 
-void Phaser::clear()
+void PhaserFX::clear()
 {
 	lphaser.reset(0.f);
 	rphaser.reset(0.f);
 }
 
-float Phaser::getLfoRate(int sync)
+float PhaserFX::getLfoRate(int sync)
 {
 	if (sync == 0)
 		return audioProcessor.modulation->getValue(rateParam, false, 0, srate);
@@ -61,7 +61,7 @@ float Phaser::getLfoRate(int sync)
 	return 1.f / seconds;
 }
 
-void Phaser::processBlock ( float* left, float* right, int nsamps, int /*blockoffset*/, bool /*audioRate*/)
+void PhaserFX::processBlock ( float* left, float* right, int nsamps, int /*blockoffset*/, bool /*audioRate*/)
 {
 	mix.set(audioProcessor.modulation->getValue(mixParam, false, nsamps, srate));
 	float morph = audioProcessor.modulation->getValue(morphParam, false, 0, srate);

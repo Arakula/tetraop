@@ -1,7 +1,7 @@
 #include "FXCompressor.h"
 #include "../../PluginEditor.h"
 
-FXCompressor::FXCompressor(RipplerAudioProcessorEditor& e)
+FXCompressor::FXCompressor(TetraOPAudioProcessorEditor& e)
 	: UIFX(e, FX::Compressor)
 {
 	editor.audioProcessor.params.addParameterListener(prefix + "makeup", this);
