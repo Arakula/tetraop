@@ -286,8 +286,17 @@ void TetraOPAudioProcessorEditor::mouseUp(const juce::MouseEvent& e)
         isDragDropModulation = false;
         dragDropOverlay->setVisible(false);
 
+        audioProcessor.modulation->setSelectedMod(dragDropModID.toStdString());
+        dragDropModID = "";
+
+        for (auto& [paramId, param] : modulatedParams)
+            if (param.ref->showDragAndDrop) {
+                param.ref->showDragAndDrop = false;
+                param.ref->repaint(); // unpaint drag and drop
+            }
+
         auto* comp = getComponentAt(e.getEventRelativeTo(this).getPosition());
-        if (comp == nullptr)
+        if (comp == nullptr || !comp->isEnabled())
             return;
 
         auto id = comp->getName();
@@ -296,17 +305,10 @@ void TetraOPAudioProcessorEditor::mouseUp(const juce::MouseEvent& e)
         // for each modulatable param turn off drag and drop
         // if the drag and drop finished on the param make a new connection
         for (auto& [paramId, param] : modulatedParams) {
-            if (param.ref->showDragAndDrop) {
-                param.ref->showDragAndDrop = false;
-                if (param.ref->getName() == id) {
-                    audioProcessor.modulation->connect(dragDropModID.toStdString(), id.toStdString());
-                }
-                param.ref->repaint();
+            if (param.ref->getName() == id) {
+                audioProcessor.modulation->connect(dragDropModID.toStdString(), id.toStdString());
             }
         }
-
-        audioProcessor.modulation->setSelectedMod(dragDropModID.toStdString());
-        dragDropModID = "";
     }
 }
 

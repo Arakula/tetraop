@@ -66,7 +66,6 @@ public:
     bool forceLabelShowValue = false;
     Colour colorValue = COLOR_ACTIVE();
     Colour colorModValue = COLOR_ACTIVE();
-    bool disabled = false;
     bool isMatrixBtn = false;
     bool isDark = false;
     juce::String name;

@@ -243,10 +243,11 @@ void FilterPanel::resized()
 void FilterPanel::toggleUIComponents()
 {
 	bool on = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "on")->load();
-	cut->disabled = !on;
-	res->disabled = !on;
-	drive->disabled = !on;
-	mix->disabled = !on;
+	cut->setEnabled(on);
+	res->setEnabled(on);
+	drive->setEnabled(on);
+	mix->setEnabled(on);
+
 	MessageManager::callAsync([this] { repaint(); });
 }
 

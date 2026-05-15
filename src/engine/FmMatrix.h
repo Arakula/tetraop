@@ -200,7 +200,7 @@ public:
         osc.gain_l += osc.gain_l_step;
         osc.gain_r += osc.gain_r_step;
         osc.phase_offset = (osc.phase_offset + osc.phase_offset_step).sat(0.f, 1.f);
-        osc.dist_amt = (osc.dist_amt + osc.dist_amt_step).sat(-.1f, 1.f);
+        osc.dist_amt = (osc.dist_amt + osc.dist_amt_step).sat(-1.0f, 1.0f);
         Utils::wrapPhase(osc.phase);
     }
 

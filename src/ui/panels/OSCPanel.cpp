@@ -287,17 +287,17 @@ void OSCPanel::toggleUIComponents()
 {
 	bool morphSnap = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "morph_snap")->load();
 	bool on = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "on")->load();
-	level->disabled = !on;
-	pan->disabled = !on;
-	phase->disabled = !on;
-	rand->disabled = !on;
-	morph->disabled = !on;
-	dist->disabled = !on;
-	detune->disabled = !on;
-	blend->disabled = !on;
-	wide->disabled = !on;
-	semis->disabled = !on;
-	cents->disabled = !on;
+	level->setEnabled(on);
+	pan->setEnabled(on);
+	phase->setEnabled(on);
+	rand->setEnabled(on);
+	morph->setEnabled(on);
+	dist->setEnabled(on);
+	detune->setEnabled(on);
+	blend->setEnabled(on);
+	wide->setEnabled(on);
+	semis->setEnabled(on);
+	cents->setEnabled(on);
 
 	if (!morphSnap)
 	{

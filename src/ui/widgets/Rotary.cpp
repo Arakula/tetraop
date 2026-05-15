@@ -300,7 +300,7 @@ void Rotary::drawRotary(juce::Graphics& g, float slider_pos) {
     g.setColour(colorValue);
     const float angle = -DEG130 + slider_pos * (DEG130 - -DEG130);
     const bool valueIsZero = (slider_pos == 0.f && !invertValue) || (slider_pos == 1.0f && invertValue);
-    if (!disabled) {
+    if (isEnabled()) {
         if (drawValue && ((isSymmetric && slider_pos != 0.5f) || (!isSymmetric && !valueIsZero))) {
             juce::Path arc2;
             arc2.addCentredArc(center.x, center.y, radius + value_offset, radius + value_offset, 0, isSymmetric ? 0 : invertValue ? DEG130 : -DEG130, angle, true);
@@ -315,14 +315,14 @@ void Rotary::drawRotary(juce::Graphics& g, float slider_pos) {
     g.fillPath (handle, juce::AffineTransform::rotation (angle).translated(bounds.getWidth() / 2.0f, bounds.getHeight() / 2.0f + yoffset));
 
     // draw drag and drop zone
-    if (showDragAndDrop) {
+    if (showDragAndDrop && isEnabled()) {
         g.setColour(dragAndDropColour);
         g.fillEllipse(bounds.getWidth() / 2.f - radius, bounds.getHeight() / 2.f - radius + yoffset, radius * 2.f, radius * 2.f);
     }
 }
 
 void Rotary::drawModValue(juce::Graphics& g, float slider_pos) const {
-    if (disabled) return;
+    if (!isEnabled()) return;
     auto bounds = getBounds();
     const float rad = radius + mod_value_offset;
     const float value = voiceActive ? modValue : slider_pos;
@@ -344,7 +344,7 @@ void Rotary::drawModValue(juce::Graphics& g, float slider_pos) const {
 }
 
 void Rotary::drawModRange(juce::Graphics& g, float slider_pos) const {
-    if (disabled) return;
+    if (!isEnabled()) return;
     auto bounds = getBounds();
     const float rad = radius + mod_offset;
     const float slider_angle = -DEG130 + slider_pos * (DEG130 - -DEG130);
