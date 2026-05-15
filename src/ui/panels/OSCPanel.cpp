@@ -358,6 +358,9 @@ static void buildWavetablesMenu(PopupMenu& menu, const std::vector<TablesManager
 
 			for (auto& file : folder.files)
 			{
+				if (sub.getNumItems() > 0 && sub.getNumItems() % 20 == 0)
+					sub.addColumnBreak();
+
 				sub.addItem(file.id + 4, file.name, true, selected == file.id);
 			}
 		}

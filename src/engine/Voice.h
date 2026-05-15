@@ -134,5 +134,4 @@ private:
     Modulation::Param* f2ResParam = nullptr;
     Modulation::Param* f2DriveParam = nullptr;
     Modulation::Param* f2MixParam = nullptr;
-
 };

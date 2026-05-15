@@ -193,7 +193,7 @@ void Header::resized()
 	mod.setBounds(fxs.getBounds().translated(fxs.getWidth(), 0));
 	cfg.setBounds(mod.getBounds().translated(mod.getWidth(), 0));
 
-	prevPreset.setBounds(340, 8, 28, 28);
+	prevPreset.setBounds(325, 8, 28, 28);
 	nextPreset.setBounds(prevPreset.getRight(), 8, 28, 28);
 	preset.setBounds(nextPreset.getRight(), 8, 228, 28);
 	saveBtn.setBounds(preset.getRight(), 8, 28, 28);
@@ -248,6 +248,9 @@ static void buildPresetsMenu(juce::PopupMenu& menu,
 
 		for (const auto& file : folder.files)
 		{
+			if (sub.getNumItems() > 0 && sub.getNumItems() % 20 == 0)
+				sub.addColumnBreak();
+
 			sub.addItem(file.id,
 				file.name,
 				true,
@@ -275,9 +278,10 @@ void Header::showPresets()
 	menu.addSeparator();
 	menu.addItem(99999, "Open Folder");
 
-	auto menuPos = localPointToGlobal(preset.getBounds().getBottomLeft());
+	auto menuPos = localPointToGlobal(preset.getBounds().getBottomLeft().translated(20,0));
 	menu.showMenuAsync(PopupMenu::Options()
 		.withTargetComponent(*this)
+		.withParentComponent(findParentComponentOfClass<juce::AudioProcessorEditor>())
 		.withTargetScreenArea({ menuPos.getX(), menuPos.getY(), 1, 1 }),
 		[this, fileTree](int result) {
 			if (result == 0) return;

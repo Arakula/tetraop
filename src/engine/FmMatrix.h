@@ -255,5 +255,10 @@ private:
     SIMDF cout;
     SIMDF dout;
 
+    std::atomic<float>* a_phase_dist_mode_param;
+    std::atomic<float>* b_phase_dist_mode_param;
+    std::atomic<float>* c_phase_dist_mode_param;
+    std::atomic<float>* d_phase_dist_mode_param;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FmMatrix)
 };

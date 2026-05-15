@@ -5,6 +5,11 @@ FmMatrix::FmMatrix(TetraOPAudioProcessor& p) : audioProcessor(p)
 {
     audioProcessor.params.addParameterListener("layout", this);
 
+    a_phase_dist_mode_param = audioProcessor.params.getRawParameterValue("a_phase_dist_mode");
+    b_phase_dist_mode_param = audioProcessor.params.getRawParameterValue("b_phase_dist_mode");
+    c_phase_dist_mode_param = audioProcessor.params.getRawParameterValue("c_phase_dist_mode");
+    d_phase_dist_mode_param = audioProcessor.params.getRawParameterValue("d_phase_dist_mode");
+
     // listen to fm matrix changes
     String prefix[4] = {"a", "b", "c", "d"};
     for (int i = 0; i < 4; ++i)
@@ -141,10 +146,10 @@ void FmMatrix::prepareDistortions(SIMDVox& vox)
         PhaseDist::fold
     };
 
-    auto adist = (PhaseDist::Mode)audioProcessor.params.getRawParameterValue("a_phase_dist_mode")->load();
-    auto bdist = (PhaseDist::Mode)audioProcessor.params.getRawParameterValue("b_phase_dist_mode")->load();
-    auto cdist = (PhaseDist::Mode)audioProcessor.params.getRawParameterValue("c_phase_dist_mode")->load();
-    auto ddist = (PhaseDist::Mode)audioProcessor.params.getRawParameterValue("d_phase_dist_mode")->load();
+    auto adist = (PhaseDist::Mode)a_phase_dist_mode_param->load();
+    auto bdist = (PhaseDist::Mode)b_phase_dist_mode_param->load();
+    auto cdist = (PhaseDist::Mode)c_phase_dist_mode_param->load();
+    auto ddist = (PhaseDist::Mode)d_phase_dist_mode_param->load();
 
     Adist = Utils::allLanesZero(vox.osc[0].dist_amt) && Utils::allLanesZero(vox.osc[0].dist_amt_targ) ? dists[0] : dists[adist];
     Bdist = Utils::allLanesZero(vox.osc[1].dist_amt) && Utils::allLanesZero(vox.osc[1].dist_amt_targ) ? dists[0] : dists[bdist];
