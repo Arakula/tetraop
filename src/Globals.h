@@ -23,6 +23,7 @@ namespace globals {
 	constexpr int SCOPE_BUFLEN = 512;
 	constexpr float MAX_FILTER_DRIVE = 24.f;
 	constexpr int MAX_FILTERS = 2;
+	constexpr float EQ_MAX_GAIN = 24.f;
 
 	// Theme vars
 	constexpr int PANEL_PAD = 2;
@@ -79,6 +80,16 @@ namespace globals {
 	inline Colour COLOR_MACRO() { return colors.at("COLOR_MACRO"); }
 	inline Colour COLOR_TEXT_DIM() { return colors.at("COLOR_TEXT_DIM"); }
 
+	inline Colour COLOR_VIBRATO() { return colors.at("COLOR_VIBRATO"); }
+	inline Colour COLOR_STEREOIZER() { return colors.at("COLOR_STEREOIZER"); }
+	inline Colour COLOR_COMPRESSOR() { return colors.at("COLOR_COMPRESSOR"); }
+	inline Colour COLOR_DISTORTION() { return colors.at("COLOR_DISTORTION"); }
+	inline Colour COLOR_TREMOLO() { return colors.at("COLOR_TREMOLO"); }
+	inline Colour COLOR_CHORUS() { return colors.at("COLOR_CHORUS"); }
+	inline Colour COLOR_DELAY() { return colors.at("COLOR_DELAY"); }
+	inline Colour COLOR_REVERB() { return colors.at("COLOR_REVERB"); }
+	inline Colour COLOR_EQ() { return colors.at("COLOR_EQ"); }
+
 	inline void loadDefaultTheme() {
 		themeLoaded = true;
 
@@ -104,5 +115,16 @@ namespace globals {
 		colors["COLOR_RND"] = juce::Colour(0xffff34a6);
 		colors["COLOR_OTHER_MOD"] = juce::Colour(0xffffd234);
 		colors["COLOR_MACRO"] = juce::Colour(0xffc7ff34);
+
+		colors["COLOR_FX_MASTER"] = juce::Colour(0xffBABABA);
+		colors["COLOR_VIBRATO"] = juce::Colour(0xffFFD234);
+		colors["COLOR_STEREOIZER"] = juce::Colour(0xffFF34A6);
+		colors["COLOR_COMPRESSOR"] = juce::Colour(0xff78EA42);
+		colors["COLOR_DISTORTION"] = juce::Colour(0xffDB4648);
+		colors["COLOR_TREMOLO"] = juce::Colour(0xffD66B32);
+		colors["COLOR_CHORUS"] = juce::Colour(0xff5D77FB);
+		colors["COLOR_DELAY"] = juce::Colour(0xff469DDB);
+		colors["COLOR_REVERB"] = juce::Colour(0xff3DE8F4);
+		colors["COLOR_EQ"] = juce::Colour(0xffD9D9D9);
 	}
 };

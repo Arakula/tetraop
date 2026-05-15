@@ -92,11 +92,17 @@ file(GLOB UI_WIDGET_SOURCES
 )
 source_group(Source\\ui\\widgets FILES ${UI_WIDGET_SOURCES})
 
-# file(GLOB UI_FX_SOURCES
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/fx/*.h
-#     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/fx/*.cpp
-# )
-# source_group(Source\\ui\\fx FILES ${UI_FX_SOURCES})
+file(GLOB FX_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/dsp/fx/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/dsp/fx/*.cpp
+)
+source_group(Source\\dsp\\fx FILES ${FX_SOURCES})
+
+file(GLOB UI_FX_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/fx/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/fx/*.cpp
+)
+source_group(Source\\ui\\fx FILES ${UI_FX_SOURCES})
 #
 file(GLOB DSP_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/dsp/*.h

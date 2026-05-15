@@ -69,6 +69,12 @@ public:
 	static void drawCPU(juce::Graphics& g, Rectangle<float> bounds, Colour color);
 	static void drawVoices(juce::Graphics& g, Rectangle<float> bounds, Colour color);
 
+	static void drawPeak(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour c);
+	static void drawLowShelf(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour c);
+	static void drawHighShelf(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour c);
+	static void drawLowpass(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour c);
+	static void drawHighpass(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour c);
+
     static bool startUnboundedMouse(juce::Component& c, const juce::MouseEvent& e, bool unbounded)
     {
         if (!unbounded)

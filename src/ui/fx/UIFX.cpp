@@ -1,0 +1,43 @@
+#include "UIFX.h"
+#include "../../PluginEditor.h"
+
+UIFX::UIFX(TetraOPAudioProcessorEditor& e, FX::FXType _type)
+		: type(_type)
+		, editor(e)
+	{
+		name = juce::String(FX::FXName[type].data());
+		color = FX::getColor(type);
+		prefix = juce::String(FX::FXPrefix[type].data());
+
+		onBtn.setName ("onBtn");
+		addAndMakeVisible(onBtn);
+		onBtn.setAlpha(0.f);
+		onBtn.onClick = [this]()
+			{
+				auto param = editor.audioProcessor.params.getParameter(prefix + "on");
+				param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
+			};
+	}
+
+UIFX::~UIFX()
+{
+}
+
+void UIFX::paint(juce::Graphics& g)
+{
+	auto b = getLocalBounds().toFloat();
+	g.setColour (COLOR_PANEL());
+	UIUtils::drawPanel(g, b, true);
+	UIUtils::drawCheckmark(g, onBtn.getBounds().toFloat(), COLOR_BACKGROUND(), color, active);
+	auto bbtn = onBtn.getBounds();
+	g.saveState();
+	g.setFont(juce::FontOptions(16.f));
+	g.setColour(COLOR_KNOB_LABEL());
+	auto title = titleOverride.isNotEmpty() ? titleOverride : name;
+	g.drawText(title, bbtn.withX(bbtn.getRight()).withWidth(200).toFloat(), juce::Justification::centredLeft);
+	g.restoreState();
+}
+
+void UIFX::resized()
+{
+}

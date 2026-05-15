@@ -30,6 +30,14 @@
 #include "engine/TablesManager.h"
 #include "engine/UndoMgr.h"
 #include "engine/PresetManager.h"
+#include "dsp/fx/FX.h"
+#include "dsp/fx/Chorus.h"
+#include "dsp/fx/Compressor.h"
+#include "dsp/fx/Delay.h"
+#include "dsp/fx/Distortion.h"
+#include "dsp/fx/EQ.h"
+#include "dsp/fx/ReverbFX.h"
+#include "dsp/fx/PhaserFX.h"
 #include "ui/ScaledPluginEditor.h"
 
 
@@ -46,6 +54,14 @@ public:
     std::unique_ptr<Modulation> modulation;
     std::vector<float> leftBuf;
     std::vector<float> rightBuf;
+
+    // fxs
+    using FXSlots = std::array<std::unique_ptr<FX>, FX::kFXs>;
+    FXSlots fxSlots;
+    std::vector<FX::FXType> fxOrder;
+    std::vector<FX*> fxchain;
+    std::unique_ptr<juce::dsp::Oversampling<float>> distoversampler;
+
 
     // Undo
     std::unique_ptr<UndoMgr> undomgr;
@@ -92,6 +108,8 @@ public:
     String displayLfo = "lfo1";
     std::atomic<float> rmsL;
     std::atomic<float> rmsR;
+    std::atomic<bool> FXDirty;
+    std::atomic<float> compReduction = 0.f;
 
     juce::AudioProcessorValueTreeState params;
     juce::UndoManager undoManager;
@@ -100,6 +118,16 @@ public:
     TetraOPAudioProcessor();
     ~TetraOPAudioProcessor() override;
     void parameterChanged(const juce::String& parameterID, float newValue) override;
+
+    //==============================================================================
+    void clearAll();
+    void sortFX(std::vector <FX::FXType> sorted);
+    void onFXChanged();
+    std::vector<FX::FXType> normalizeFXOrder(std::vector<FX::FXType> order) const;
+    std::unique_ptr<FX> createFX(FX::FXType type);
+    void rebuildFXChain();
+    void ensureFXExists(FX::FXType type);
+    void TetraOPAudioProcessor::destroyFX(FX::FXType type);
 
     //==============================================================================
     bool supportsMPE() const override { return true; }

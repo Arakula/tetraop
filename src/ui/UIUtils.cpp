@@ -829,3 +829,62 @@ void UIUtils::drawVoices(juce::Graphics& g, juce::Rectangle<float> bounds, juce:
     g.setColour(color);
     g.fillPath(path);
 }
+
+void UIUtils::drawPeak(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour c)
+{
+    juce::Path p;
+    p.startNewSubPath(0.0f, 11.5f);
+    p.cubicTo(9.0f, 11.5f, 6.5f, 0.5f, 9.0f, 0.5f);
+    p.cubicTo(11.5f, 0.5f, 9.0f, 11.5f, 18.0f, 11.5f);
+    p.applyTransform(juce::AffineTransform::translation(bounds.getX(), bounds.getY()));
+    g.setColour(c);
+    g.strokePath(p, juce::PathStrokeType(1.0f, juce::PathStrokeType::curved));
+}
+
+void UIUtils::drawLowShelf(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour c)
+{
+    juce::Path p;
+    p.startNewSubPath(0.0f, 13.0f);
+    p.cubicTo(1.0f, 13.0f, 5.0f, 13.0f, 5.0f, 13.0f);
+    p.cubicTo(9.0f, 13.0f, 9.0f, 0.f, 13.0f, 0.f);
+    p.cubicTo(17.0f, 0.f, 18.0f, 0.f, 18.0f, 0.f);
+    p.applyTransform(juce::AffineTransform::translation(bounds.getX(), bounds.getY()));
+    g.setColour(c);
+    g.strokePath(p, juce::PathStrokeType(1.0f, juce::PathStrokeType::curved));
+}
+
+void UIUtils::drawHighShelf(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour c)
+{
+    juce::Path p;
+    p.startNewSubPath(18.0f, 13.0f);
+    p.cubicTo(17.0f, 13.0f, 13.0f, 13.0f, 13.0f, 13.0f);
+    p.cubicTo(9.0f, 13.0f, 9.0f, 0.f, 5.0f, 0.f);
+    p.cubicTo(1.0f, 0.f, 0.0f, 0.f, 0.0f, 0.f);
+    p.applyTransform(juce::AffineTransform::translation(bounds.getX(), bounds.getY()));
+    g.setColour(c);
+    g.strokePath(p, juce::PathStrokeType(1.0f, juce::PathStrokeType::curved));
+}
+
+void UIUtils::drawHighpass(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour c)
+{
+    juce::Path p;
+    p.startNewSubPath(18.f, 0.f);
+    p.cubicTo(10.f, 0.f, 8.f, 0.5f, 8.f, 0.f);
+    p.cubicTo(5.f, 0.f, 5.f, 1.f, 4.f, 4.0f);
+    p.cubicTo(3.f, 6.f, 0.f, 11.f, 0.f, 11.f);
+    p.applyTransform(juce::AffineTransform::translation(bounds.getX(), bounds.getY()));
+    g.setColour(c);
+    g.strokePath(p, juce::PathStrokeType(1.0f, juce::PathStrokeType::curved));
+}
+
+void UIUtils::drawLowpass(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour c)
+{
+    juce::Path p;
+    p.startNewSubPath(0.0f, 0.f);
+    p.cubicTo(8.0f, 0.f, 10.f, 0.f, 10.f, 0.f);
+    p.cubicTo(13.0f, 0.f, 13.f, 1.f, 14.f, 4.0f);
+    p.cubicTo(15.f, 6.f, 18.0f, 11.f, 18.0f, 11.f);
+    p.applyTransform(juce::AffineTransform::translation(bounds.getX(), bounds.getY()));
+    g.setColour(c);
+    g.strokePath(p, juce::PathStrokeType(1.0f, juce::PathStrokeType::curved));
+}

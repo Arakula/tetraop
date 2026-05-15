@@ -48,7 +48,7 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add(std::make_unique<AudioParameterInt>("pitch_bend", "Pitch Bend", 0, 12, 2));
     layout.add(std::make_unique<AudioParameterFloat>("master_gain", "Master Gain", NormalisableRange<float>(0.f, 2.f, 0.001f, 0.5f), 1.f));
 
-    layout.add(std::make_unique<AudioParameterChoice>("layout", "FM Layout", StringArray{ "A_B_C_D", "DCBA", "CA_DB", 
+    layout.add(std::make_unique<AudioParameterChoice>("layout", "FM Layout", StringArray{ "A_B_C_D", "DCBA", "CA_DB",
         "DB_C_A", "DA_DB_DC", "BA_CA_DA", "A_CB_DC", "DC_CA_CB", "DC_DB_BA_CA", "DB_CB_BA", "Custom"}, 1));
 
     layout.add(std::make_unique<AudioParameterFloat>("fm_ab", "FM AB", 0.f, 1.f, 0.f));
@@ -185,6 +185,85 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         layout.add(std::make_unique<AudioParameterFloat>("macro" + juce::String(i + 1), "Macro" + juce::String(i + 1), 0.0f, 1.0f, 0.0f));
     }
 
+    // FX PARAMS
+    layout.add(std::make_unique<juce::AudioParameterBool>("fx_chorus_on", "FX Chorus On", false));
+    layout.add(std::make_unique<juce::AudioParameterChoice>("fx_chorus_voices", "FX Chorus Voices", juce::StringArray{ "2", "4", "8", "12", "16" }, 2));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_chorus_rate", "FX Chorus Rate", juce::NormalisableRange<float>(0.01f, 10.f, 0.01f, 0.3f), .35f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_chorus_depth", "FX Chorus Depth", 0.f, 1.f, 0.5));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_chorus_lowcut", "FX Chorus Lowcut", juce::NormalisableRange<float>(20.0f, 20000.0f, 1.f, 0.3f), 20.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_chorus_highcut", "FX Chorus Highcut", juce::NormalisableRange<float>(20.0f, 20000.0f, 1.f, 0.3f), 20000.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_chorus_feedback", "FX Chorus Feedback", -.95f, .95f, 0.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_chorus_mix", "FX Chorus Mix", 0.f, 1.f, 0.5f));
+
+    layout.add(std::make_unique<juce::AudioParameterBool>("fx_delay_on", "FX Delay On", false));
+    layout.add(std::make_unique<juce::AudioParameterChoice>("fx_delay_mode", "FX Delay Mode", juce::StringArray{ "Normal", "Ping Pong", "Tap" }, 0));
+    layout.add(std::make_unique<MetaParameterBool>("fx_delay_link", "FX Delay Link", true));
+    layout.add(std::make_unique<MetaParameterChoice>("fx_delay_sync_l", "FX Delay Sync", juce::StringArray{ "RateHz", "Straight", "Triplet", "Dotted" }, 1));
+    layout.add(std::make_unique<MetaParameterChoice>("fx_delay_sync_r", "FX Delay Sync", juce::StringArray{ "RateHz", "Straight", "Triplet", "Dotted" }, 1));
+    layout.add(std::make_unique<MetaParameterFloat>("fx_delay_rate_l", "FX Delay Rate", juce::NormalisableRange<float>(0.001f, 10.f, 0.001f, 0.3f), .5f));
+    layout.add(std::make_unique<MetaParameterFloat>("fx_delay_rate_r", "FX Delay Rate", juce::NormalisableRange<float>(0.001f, 10.f, 0.001f, 0.3f), .5f));
+    layout.add(std::make_unique<MetaParameterInt>("fx_delay_rate_sync_l", "FX Delay Rate Sync", 0, 8, 4)); // 2 bar, bar .... 1/128
+    layout.add(std::make_unique<MetaParameterInt>("fx_delay_rate_sync_r", "FX Delay Rate Sync", 0, 8, 4));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_delay_feedback", "FX Delay Feedback", 0.f, 1.f, 0.35f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_delay_lowcut", "FX Delay Lowcut", juce::NormalisableRange<float>(20.0f, 20000.0f, 1.f, 0.3f), 20.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_delay_highcut", "FX Delay Highcut", juce::NormalisableRange<float>(20.0f, 20000.0f, 1.f, 0.3f), 20000.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_delay_pipo_width", "FX Delay Width", -1.f, 1.f, 1.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_delay_mix", "FX Delay Mix", 0.f, 1.f, 0.5f));
+
+    layout.add(std::make_unique<juce::AudioParameterBool>("fx_dist_on", "FX Dist On", false));
+    layout.add(std::make_unique<juce::AudioParameterChoice>("fx_dist_mode", "FX Dist Mode", juce::StringArray{ "Tube", "Tape", "Fuzz" }, 0));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_dist_filter", "FX Dist Pre Filter", -1.f, 1.f, 0.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_dist_drive", "FX Dist Drive", -40.f, 40.f, 0.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_dist_color", "FX Dist Color", -1.f, 1.f, 0.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_dist_gain", "FX Dist Gain", -40.f, 40.f, 0.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_dist_mix", "FX Dist Mix", 0.f, 1.f, 0.5f));
+
+    layout.add(std::make_unique<juce::AudioParameterBool>("fx_comp_on", "FX Comp On", false));
+    layout.add(std::make_unique<juce::AudioParameterBool>("fx_comp_makeup", "FX Comp Makeup", true));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_comp_thresh", "FX Comp Thresh", -30.f, 0.f, 0.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_comp_ratio", "FX Comp Ratio", juce::NormalisableRange<float>(1.f, 20.f, 0.01f, 0.4f), 1.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_comp_att", "FX Comp Attack", juce::NormalisableRange<float>(0.f, 500.f, 0.01f, 0.5f), 20.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_comp_rel", "FX Comp Release", juce::NormalisableRange<float>(0.f, 1000.f, 0.01f, 0.5f), 200.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_comp_gain", "FX Comp Gain", -24.f, 24.f, 0.f));
+
+    layout.add(std::make_unique<juce::AudioParameterBool>("fx_reverb_on", "FX Reverb On", false));
+    layout.add(std::make_unique<juce::AudioParameterInt>("fx_reverb_mode", "FX Reverb Mode", 0, 5, 0));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_reverb_decay", "FX Reverb Decay", 0.f, 1.0f, 0.5f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_reverb_revsize", "FX Reverb Size", 0.f, 1.0f, 0.8f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_reverb_lowcut", "FX Reverb Lowcut", juce::NormalisableRange<float>(20.0f, 20000.0f, 1.f, 0.3f), 50.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_reverb_highcut", "FX Reverb Highcut", juce::NormalisableRange<float>(20.0f, 20000.0f, 1.f, 0.3f), 15000.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_reverb_modrate", "FX Reverb Mod Rate", juce::NormalisableRange<float>(0.f, 4.f, 0.0001f, 0.4f), 0.25f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_reverb_moddepth", "FX Reverb Mod Depth", 0.f, 1.f, 0.25f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_reverb_predel", "FX Reverb Pre-Delay", juce::NormalisableRange<float>(0.f, 1.f, 0.001f, 0.4f), 0.011f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_reverb_mix", "FX Reverb Mix", 0.f, 1.f, 0.5f));
+
+    layout.add(std::make_unique<juce::AudioParameterBool>("fx_phaser_on", "FX Phaser On", false));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_phaser_center", "Phaser LFO Center", juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 0.3f), 2000.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_phaser_depth", "Phaser LFO Depth", 0.f, 1.f, 0.5f));
+    layout.add(std::make_unique<juce::AudioParameterChoice>("fx_phaser_sync", "Phaser Sync", juce::StringArray{ "RateHz", "Straight", "Triplet", "Dotted" }, 0));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_phaser_rate", "Phaser LFO Rate", juce::NormalisableRange<float>(0.01f, 10.f, 0.0001f, 0.5f), 1.f));
+    layout.add(std::make_unique<juce::AudioParameterChoice>("fx_phaser_rate_sync", "Phaser Rate Sync", juce::StringArray{ "1/32", "1/16", "1/8", "1/4", "1/2", "1/1", "2/1", "4/1", "8/1", "16/1", "32/1" }, 3));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_phaser_res", "Phaser Resonance", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_phaser_morph", "Phaser Morph", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_phaser_stereo", "Phaser Stereo", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_phaser_mix", "Phaser Mix", 0.f, 1.f, 1.0f));
+
+    auto getEQBandFreq = [](int band)
+        {
+            return 20.f * 2.f * std::pow(10000.f / 20.f / 2.f, band / (float)(globals::EQ_BANDS - 1));
+        };
+
+    for (int i = 0; i < globals::EQ_BANDS; ++i) {
+        auto paramPrefix = "fx_eq_band" + juce::String(i + 1);
+        auto namePrefix = "FX EQ Band" + juce::String(i + 1);
+        if (i == 0 || i == globals::EQ_BANDS - 1) {
+            layout.add(std::make_unique<juce::AudioParameterChoice>(paramPrefix + "_mode", namePrefix + " Mode", juce::StringArray{ "Filter", "Shelf" }, 1));
+        }
+        layout.add(std::make_unique<juce::AudioParameterFloat>(paramPrefix + "_freq", namePrefix + " Freq", juce::NormalisableRange<float>(20.f, 20000.f, 1.f, 0.3f), getEQBandFreq(i)));
+        layout.add(std::make_unique<juce::AudioParameterFloat>(paramPrefix + "_q", namePrefix + " Q", 0.707f, 8.f, 0.707f));
+        layout.add(std::make_unique<juce::AudioParameterFloat>(paramPrefix + "_gain", namePrefix + " Gain", -globals::EQ_MAX_GAIN, globals::EQ_MAX_GAIN, 0.f));
+    }
+
     return layout;
 }
 
@@ -225,6 +304,20 @@ TetraOPAudioProcessor::TetraOPAudioProcessor()
 
     loadSettings();
 
+    mtsClientPtr = MTS_RegisterClient();
+
+    distoversampler = std::make_unique<juce::dsp::Oversampling<float>>(
+        2, 1,
+        juce::dsp::Oversampling<float>::FilterType::filterHalfBandPolyphaseIIR,
+        true, true
+    );
+
+    for (int i = 0; i < FX::kFXs; i++) {
+        fxOrder.push_back((FX::FXType)i);
+        auto prefix = juce::String(FX::FXPrefix[i].data());
+        params.addParameterListener(prefix + "on", this);
+    }
+
     tablesMgr = std::make_unique<TablesManager>(*this, waveTablesFolder);
     presetmgr = std::make_unique<PresetManager>(*this, presetsFolder);
 
@@ -240,7 +333,7 @@ TetraOPAudioProcessor::TetraOPAudioProcessor()
 
     presetmgr->loadInit();
     undomgr = std::make_unique<UndoMgr>(*this);
-
+    onFXChanged();
 }
 
 TetraOPAudioProcessor::~TetraOPAudioProcessor()
@@ -250,10 +343,135 @@ TetraOPAudioProcessor::~TetraOPAudioProcessor()
 
 void TetraOPAudioProcessor::parameterChanged(const juce::String& paramId, float value)
 {
-    (void)paramId;
     (void)value;
 
-    configsChanged = true;
+    if (paramId.startsWith("fx_"))
+        onFXChanged();
+    else
+        configsChanged = true;
+}
+
+// =================================================================
+
+void TetraOPAudioProcessor::clearAll()
+{
+    synth->clear();
+
+    for (auto& fx : fxchain)
+        fx->clear();
+
+    distoversampler->reset();
+}
+
+void TetraOPAudioProcessor::sortFX(std::vector <FX::FXType> sorted)
+{
+    fxOrder = normalizeFXOrder(std::move(sorted));
+    rebuildFXChain();
+    FXDirty.store(true);
+}
+
+void TetraOPAudioProcessor::onFXChanged()
+{
+    const juce::ScopedLock lock(dspLock);
+
+    for (int i = 0; i < FX::kFXs; i++) {
+        auto type = (FX::FXType)i;
+
+        bool on = (bool)params.getRawParameterValue(String(FX::FXPrefix[i].data()) + "on")->load();
+
+        if (on) {
+            if (fxSlots[type] == nullptr)
+                ensureFXExists(type);
+
+            if (fxSlots[type] != nullptr) {
+                fxSlots[type]->active.store(true);
+            }
+        }
+        else if (fxSlots[type] != nullptr) {
+            destroyFX(type);
+        }
+    }
+
+    FXDirty.store(true);
+}
+
+std::vector<FX::FXType> TetraOPAudioProcessor::normalizeFXOrder(std::vector<FX::FXType> order) const
+{
+    std::vector<FX::FXType> normalized{};
+    normalized.reserve(FX::kFXs);
+
+    auto appendIfValid = [&](FX::FXType type)
+        {
+            if (type >= FX::kFXs)
+                return;
+            if (std::find(normalized.begin(), normalized.end(), type) != normalized.end())
+                return;
+            normalized.push_back(type);
+        };
+
+    for (auto type : order)
+        appendIfValid(type);
+
+    for (int i = 0; i < FX::kFXs; i++)
+        appendIfValid((FX::FXType)i);
+
+    return normalized;
+}
+
+std::unique_ptr<FX> TetraOPAudioProcessor::createFX(FX::FXType type)
+{
+    switch (type) {
+        case FX::Compressor:  return std::make_unique<Compressor>(*this);
+        case FX::Distortion:  return std::make_unique<Distortion>(*this);
+        case FX::Chorus:      return std::make_unique<Chorus>(*this);
+        case FX::Delay:       return std::make_unique<Delay>(*this);
+        case FX::Reverb:      return std::make_unique<ReverbFX>(*this);
+        case FX::Phaser:      return std::make_unique<Phaser>(*this);
+        case FX::EQ:          return std::make_unique<EQ>(*this);
+        default:
+            jassertfalse;
+            break;
+    }
+
+    return nullptr;
+}
+
+void TetraOPAudioProcessor::rebuildFXChain()
+{
+    fxchain.clear();
+
+    for (auto type : fxOrder) {
+        if (fxSlots[type] != nullptr)
+            fxchain.push_back(fxSlots[type].get());
+    }
+}
+
+void TetraOPAudioProcessor::ensureFXExists(FX::FXType type)
+{
+    if (fxSlots[type] != nullptr)
+        return;
+
+    fxSlots[type] = createFX(type);
+    if (fxSlots[type] == nullptr)
+        return;
+
+    auto sampleRate = (float)getSampleRate();
+    if (sampleRate > 0.f)
+        fxSlots[type]->prepare(sampleRate);
+
+    rebuildFXChain();
+}
+
+void TetraOPAudioProcessor::destroyFX(FX::FXType type)
+{
+    if (type == FX::Vibrato)
+        return;
+
+    if (fxSlots[type] == nullptr)
+        return;
+
+    fxSlots[type].reset();
+    rebuildFXChain();
 }
 
 // =================================================================
@@ -409,13 +627,21 @@ void TetraOPAudioProcessor::changeProgramName (int index, const juce::String& ne
 //==============================================================================
 void TetraOPAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    (void)samplesPerBlock;
+    clearAll();
+
     srate = (float)sampleRate;
     osrate = (float)sampleRate;
     iosrate = 1.f / osrate;
     synth->setCurrentPlaybackSampleRate(sampleRate);
     synth->prepare();
     modulation->prepare();
+
+    for (auto& fx : fxchain) {
+        fx->prepare((float)sampleRate);
+    }
+
+    distoversampler->initProcessing(samplesPerBlock);
+    distoversampler->reset();
 
     tablesMgr->reloadWavetables();
 }
