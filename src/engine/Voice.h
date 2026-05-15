@@ -5,6 +5,7 @@
 #include <JuceHeader.h>
 #include "Utils.h"
 #include "OSC.h"
+#include "Modulation.h"
 
 class TetraOPAudioProcessor;
 
@@ -116,4 +117,22 @@ private:
     // interpolation
     float vel_targ = 0.f;
     float vel_step = 0.f;
+
+    // params
+    std::atomic<float>* glideParam = nullptr;
+    std::atomic<float>* glideTensionParam = nullptr;
+    std::atomic<float>* legatoParam = nullptr;
+    std::atomic<float>* velSenseParam = nullptr;
+    std::atomic<float>* f1OnParam = nullptr;
+    std::atomic<float>* f2OnParam = nullptr;
+
+    Modulation::Param* f1CutParam = nullptr;
+    Modulation::Param* f1ResParam = nullptr;
+    Modulation::Param* f1DriveParam = nullptr;
+    Modulation::Param* f1MixParam = nullptr;
+    Modulation::Param* f2CutParam = nullptr;
+    Modulation::Param* f2ResParam = nullptr;
+    Modulation::Param* f2DriveParam = nullptr;
+    Modulation::Param* f2MixParam = nullptr;
+
 };

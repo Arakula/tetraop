@@ -9,6 +9,25 @@ OSC::OSC(int _id, int _voiceId, TetraOPAudioProcessor& p)
 	, lane(_voiceId % SIMDSZ)
 	, audioProcessor(p)
 {
+	morphSnapParam = audioProcessor.params.getRawParameterValue(prefix + "morph_snap");
+	onParam = audioProcessor.params.getRawParameterValue(prefix + "on");
+	unisonVoicesParam = audioProcessor.params.getRawParameterValue(prefix + "unison_voices");
+	unisonModeParam = audioProcessor.params.getRawParameterValue(prefix + "unison_mode");
+
+	phaseOffsetParam = audioProcessor.modulation->getParamHandle(prefix + "phase_offset");
+	phaseRandParam = audioProcessor.modulation->getParamHandle(prefix + "phase_rand");
+	morphParam = audioProcessor.modulation->getParamHandle(prefix + "morph");
+	levelParam = audioProcessor.modulation->getParamHandle(prefix + "level");
+	pitchCentsParam = audioProcessor.modulation->getParamHandle(prefix + "pitch_cents");
+	pitchSemisParam = audioProcessor.modulation->getParamHandle(prefix + "pitch_semis");
+	pitchOctParam = audioProcessor.modulation->getParamHandle(prefix + "pitch_oct");
+	panParam = audioProcessor.modulation->getParamHandle(prefix + "pan");
+	feedbackParam = audioProcessor.modulation->getParamHandle(prefix + "feedback");
+	phaseDistAmtParam = audioProcessor.modulation->getParamHandle(prefix + "phase_dist_amt");
+	unisonDetuneParam = audioProcessor.modulation->getParamHandle(prefix + "unison_detune");
+	unisonStereoParam = audioProcessor.modulation->getParamHandle(prefix + "unison_stereo");
+	unisonSpreadParam = audioProcessor.modulation->getParamHandle(prefix + "unison_spread");
+	unisonBlendParam = audioProcessor.modulation->getParamHandle(prefix + "unison_blend");
 }
 
 void OSC::trigger(int note, float _srate)
@@ -25,15 +44,15 @@ void OSC::trigger(int note, float _srate)
 	Utils::setMasked(osc.freq, 440.0f * std::pow(2.0f, (note - 69) / 12.0f), mask);
 	Utils::setMasked(osc.phase_inc, osc.freq.get(lane) / srate, mask);
 	Utils::setMasked(osc.out, 0.f, mask);
-	Utils::setMasked(osc.phase_offset, mod->getPolyValue(prefix + "phase_offset", voiceId, 0), mask);
-	auto phase_rand = mod->getPolyValue(prefix + "phase_rand", voiceId, 0);
+	Utils::setMasked(osc.phase_offset, mod->getPolyValue(phaseOffsetParam, voiceId, 0), mask);
+	auto phase_rand = mod->getPolyValue(phaseRandParam, voiceId, 0);
 	Utils::setMasked(osc.phase, (rand() / (float)RAND_MAX) * phase_rand, mask);
 	auto unison_phase = Unison::generatePhases(phase_rand);
 	for (int i = 0; i < MAX_UNISON / SIMDSZ; ++i)
 		osc.unison[lane].phase[i].load(&unison_phase[i * SIMDSZ]);
 
-	bool morph_snap = (bool)audioProcessor.params.getRawParameterValue(prefix + "morph_snap")->load();
-	float morph = mod->getPolyValue(prefix + "morph", voiceId);
+	bool morph_snap = (bool)morphSnapParam->load();
+	float morph = mod->getPolyValue(morphParam, voiceId);
 	if (morph_snap)
 	{
 		auto ntables = audioProcessor.tablesMgr->wavetables[id].numTables;
@@ -51,15 +70,15 @@ void OSC::trigger(int note, float _srate)
 	Utils::setMasked(osc.morph_targ, morph, mask);
 	osc.morph_snap = morph_snap;
 
-	bool isOn = mod->getValue(prefix + "on");
-	auto level = mod->getPolyValue(prefix + "level", voiceId, 0) * isOn;
+	bool isOn = (bool)onParam->load();
+	auto level = mod->getPolyValue(levelParam, voiceId, 0) * isOn;
 	osc.isOn = isOn;
 	Utils::setMasked(osc.level, level, mask);
 	Utils::setMasked(osc.level_targ, level, mask);
 
-	auto pitch_cents = mod->getPolyValue(prefix + "pitch_cents", voiceId, 0);
-	auto pitch_semis = mod->getPolyValue(prefix + "pitch_semis", voiceId, 0);
-	auto pitch_oct = mod->getPolyValue(prefix + "pitch_oct", voiceId, 0);
+	auto pitch_cents = mod->getPolyValue(pitchCentsParam, voiceId, 0);
+	auto pitch_semis = mod->getPolyValue(pitchSemisParam, voiceId, 0);
+	auto pitch_oct = mod->getPolyValue(pitchOctParam, voiceId, 0);
 	auto total_cents = pitch_cents + (pitch_semis * 100.0f) + (pitch_oct * 1200.0f);
 	auto pitch_ratio = Utils::centsToRatio(total_cents);
 	Utils::setMasked(osc.pitch_ratio, pitch_ratio, mask);
@@ -104,14 +123,14 @@ void OSC::startBlock(int startSample, int numSamples)
 	int blkoffset = startSample - audioProcessor.currBlockPos + numSamples;
 	auto& mod = audioProcessor.modulation;
 
-	auto isOn = mod->getValue(prefix + "on");
+	auto isOn = (bool)onParam->load();
 	osc.isOn = isOn;
-	Utils::setMasked(osc.level_targ, mod->getPolyValue(prefix + "level", voiceId, blkoffset) * isOn, mask);
+	Utils::setMasked(osc.level_targ, mod->getPolyValue(levelParam, voiceId, blkoffset) * isOn, mask);
 	if (osc.level.get(lane) < 1e-4f && osc.level_targ.get(lane) < 1e-4f) 
 		return; // oscillator is off
 
 	// phase_offset
-	float phase_offset_targ = mod->getPolyValue(prefix + "phase_offset", voiceId, blkoffset);
+	float phase_offset_targ = mod->getPolyValue(phaseOffsetParam, voiceId, blkoffset);
 	float phase_offset_step = (phase_offset_targ - osc.phase_offset.get(lane)) * isamps;
 	Utils::setMasked(osc.phase_offset_step, phase_offset_step, mask);
 	if (triggered)
@@ -121,7 +140,7 @@ void OSC::startBlock(int startSample, int numSamples)
 	}
 	
 	// pan gain
-	auto pan_targ = mod->getPolyValue(prefix + "pan", voiceId, blkoffset);
+	auto pan_targ = mod->getPolyValue(panParam, voiceId, blkoffset);
 	if (pan != pan_targ)
 	{
 		pan = pan_targ;
@@ -142,13 +161,13 @@ void OSC::startBlock(int startSample, int numSamples)
 	else
 	{
 		// FIX - pan gain recalc is only triggered when pan changes
-		// this ensures pan gain doesnt drift
+		// this ensures pan gain do	esnt drift
 		Utils::setMasked(osc.gain_l_step, 0.f, mask);
 		Utils::setMasked(osc.gain_r_step, 0.f, mask);
 	}
 
-	bool morph_snap = (bool)audioProcessor.params.getRawParameterValue(prefix + "morph_snap")->load();
-	float morph = mod->getPolyValue(prefix + "morph", voiceId, blkoffset);
+	bool morph_snap = (bool)morphSnapParam->load();
+	float morph = mod->getPolyValue(morphParam, voiceId, blkoffset);
 	if (morph_snap)
 	{
 		auto ntables = audioProcessor.tablesMgr->wavetables[id].numTables;
@@ -168,29 +187,29 @@ void OSC::startBlock(int startSample, int numSamples)
 	}
 	osc.morph_snap = morph_snap;
 
-	Utils::setMasked(osc.feedback, mod->getPolyValue(prefix + "feedback", voiceId, blkoffset), mask);
-	auto pitch_cents = mod->getPolyValue(prefix + "pitch_cents", voiceId, blkoffset);
-	auto pitch_semis = mod->getPolyValue(prefix + "pitch_semis", voiceId, blkoffset);
-	auto pitch_oct = mod->getPolyValue(prefix + "pitch_oct", voiceId, blkoffset);
+	Utils::setMasked(osc.feedback, mod->getPolyValue(feedbackParam, voiceId, blkoffset), mask);
+	auto pitch_cents = mod->getPolyValue(pitchCentsParam, voiceId, blkoffset);
+	auto pitch_semis = mod->getPolyValue(pitchSemisParam, voiceId, blkoffset);
+	auto pitch_oct = mod->getPolyValue(pitchOctParam, voiceId, blkoffset);
 	auto pitch_global = audioProcessor.modulation->globalPitchSemis;
 	auto pitch_bend = (float)audioProcessor.synth->getVoice(voiceId)->getCurrentlyPlayingNote().totalPitchbendInSemitones;
 	auto total_cents = pitch_cents + (pitch_semis * 100.0f) + (pitch_global * 100.f) + (pitch_oct * 1200.0f) + (pitch_bend * 100.f);
 
 	Utils::setMasked(osc.pitch_ratio_targ, Utils::centsToRatio(total_cents), mask);
 
-	float dist_amt_targ = mod->getPolyValue(prefix + "phase_dist_amt", voiceId, blkoffset);
+	float dist_amt_targ = mod->getPolyValue(phaseDistAmtParam, voiceId, blkoffset);
 	Utils::setMasked(osc.dist_amt_targ, dist_amt_targ, mask);
 	if (triggered)
 	{
 		Utils::setMasked(osc.dist_amt, dist_amt_targ, mask);
 	}
 
-	auto unison_v = (int)mod->getValue(prefix + "unison_voices", true);
-	auto unison_mod = (int)mod->getValue(prefix + "unison_mode", true);
-	auto unison_det = mod->getPolyValue(prefix + "unison_detune", voiceId, blkoffset);
-	auto unison_st = mod->getPolyValue(prefix + "unison_stereo", voiceId, blkoffset);
-	auto unison_sprd = mod->getPolyValue(prefix + "unison_spread", voiceId, blkoffset);
-	auto unison_bld = mod->getPolyValue(prefix + "unison_blend", voiceId, blkoffset);
+	auto unison_v = (int)unisonVoicesParam->load();
+	auto unison_mod = (int)unisonModeParam->load();
+	auto unison_det = mod->getPolyValue(unisonDetuneParam, voiceId, blkoffset);
+	auto unison_st = mod->getPolyValue(unisonStereoParam, voiceId, blkoffset);
+	auto unison_sprd = mod->getPolyValue(unisonSpreadParam, voiceId, blkoffset);
+	auto unison_bld = mod->getPolyValue(unisonBlendParam, voiceId, blkoffset);
 
 	if (unison_v > 1 && (unison_v != unison.voices || unison_mod != unison_mode
 		|| unison_det != unison_detune || unison_st != unison_stereo

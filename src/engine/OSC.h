@@ -4,6 +4,7 @@
 #include "../Globals.h"
 #include "Utils.h"
 #include "Unison.h"
+#include "Modulation.h"
 
 using namespace globals;
 
@@ -85,6 +86,28 @@ public:
 
 private:
     TetraOPAudioProcessor& audioProcessor;
+
+    // params
+    std::atomic<float>* morphSnapParam = nullptr;
+    std::atomic<float>* onParam = nullptr;
+    std::atomic<float>* unisonVoicesParam = nullptr;
+    std::atomic<float>* unisonModeParam = nullptr;
+
+    Modulation::Param* phaseOffsetParam = nullptr;
+    Modulation::Param* phaseRandParam = nullptr;
+    Modulation::Param* morphParam = nullptr;
+    Modulation::Param* levelParam = nullptr;
+    Modulation::Param* pitchCentsParam = nullptr;
+    Modulation::Param* pitchSemisParam = nullptr;
+    Modulation::Param* pitchOctParam = nullptr;
+    Modulation::Param* panParam = nullptr;
+    Modulation::Param* feedbackParam = nullptr;
+    Modulation::Param* phaseDistAmtParam = nullptr;
+    Modulation::Param* unisonDetuneParam = nullptr;
+    Modulation::Param* unisonStereoParam = nullptr;
+    Modulation::Param* unisonSpreadParam = nullptr;
+    Modulation::Param* unisonBlendParam = nullptr;
+
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OSC)
 };

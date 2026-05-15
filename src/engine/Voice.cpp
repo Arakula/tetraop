@@ -12,6 +12,22 @@ Voice::Voice (TetraOPAudioProcessor& p, int _id)
     {
         osc.emplace_back(i, _id, audioProcessor);
     }
+
+    glideParam = audioProcessor.params.getRawParameterValue("glide");
+    glideTensionParam = audioProcessor.params.getRawParameterValue("glide_tension");
+    legatoParam = audioProcessor.params.getRawParameterValue("legato");
+    velSenseParam = audioProcessor.params.getRawParameterValue("vel_sense");
+    f1OnParam = audioProcessor.params.getRawParameterValue("f1_on");
+    f2OnParam = audioProcessor.params.getRawParameterValue("f2_on");
+
+    f1CutParam = audioProcessor.modulation->getParamHandle("f1_cut");
+    f1ResParam = audioProcessor.modulation->getParamHandle("f1_res");
+    f1DriveParam = audioProcessor.modulation->getParamHandle("f1_drive");
+    f1MixParam = audioProcessor.modulation->getParamHandle("f1_mix");
+    f2CutParam = audioProcessor.modulation->getParamHandle("f2_cut");
+    f2ResParam = audioProcessor.modulation->getParamHandle("f2_res");
+    f2DriveParam = audioProcessor.modulation->getParamHandle("f2_drive");
+    f2MixParam = audioProcessor.modulation->getParamHandle("f2_mix");
 }
 
 void Voice::noteStarted()
@@ -37,7 +53,7 @@ void Voice::noteStarted()
     key = note.initialNote / 127.f;
     mpe_channel = note.midiChannel;
 
-    float glide_total = audioProcessor.params.getRawParameterValue("glide")->load() * 0.001f;
+    float glide_total = glideParam->load() * 0.001f;
     glide_elapsed = 0;
     glide = glide_total > 0.0f && glideInfo.fromNote >= 0 && glideInfo.fromNote != note.initialNote;
     glide_curr = key;
@@ -70,7 +86,7 @@ void Voice::noteStarted()
     SIMDM mask = SIMDM(msk);
     Utils::setMasked(voice.env, 0.f, mask);
 
-    auto velsense = audioProcessor.params.getRawParameterValue("vel_sense")->load();
+    auto velsense = velSenseParam->load();
     Utils::setMasked(voice.vel_mult, vel * velsense + 1.0f - velsense, mask);
     Utils::setMasked(voice.vel_step, 0.f, mask);
 
@@ -99,7 +115,7 @@ void Voice::noteRetriggered()
         released = false;
     }
 
-    bool legato = (bool)audioProcessor.params.getRawParameterValue("legato")->load();
+    bool legato = (bool)legatoParam->load();
     if (!legato)
     {
         attack_elapsed = 0;
@@ -121,7 +137,7 @@ void Voice::noteRetriggered()
 
     key = note.initialNote / 127.f;
 
-    float glide_total = audioProcessor.params.getRawParameterValue("glide")->load() * 0.001f;
+    float glide_total = glideParam->load() * 0.001f;
     glide_elapsed = 0;
     glide = glide_total > 0.0f && glideInfo.fromNote >= 0;
     if (glide)
@@ -215,7 +231,7 @@ void Voice::startBlock(int startSample, int numSamples)
 
     if (vel != vel_targ)
     {
-        float velsense = audioProcessor.params.getRawParameterValue("vel_sense")->load();
+        float velsense = velSenseParam->load();
         float vcurr = vel * velsense + 1.0f - velsense;
         float vtarg = vel_targ * velsense + 1.0f - velsense;
         Utils::setMasked(voice.vel_step, (vtarg - vcurr) / numSamples, mask);
@@ -230,8 +246,8 @@ void Voice::startBlock(int startSample, int numSamples)
 
     if (glide) 
     {
-        float glide_total = audioProcessor.params.getRawParameterValue("glide")->load() * 0.001f;
-        float glide_tension = audioProcessor.params.getRawParameterValue("glide_tension")->load();
+        float glide_total = glideParam->load() * 0.001f;
+        float glide_tension = glideTensionParam->load();
         float glide_power = glide_tension != 0.f ? std::pow(1.1f, std::fabs(glide_tension * globals::POWER_CURVE_POWER)) : 0.f;
 
         if (glide_elapsed < glide_total && glide_total > 0.f) 
@@ -287,26 +303,26 @@ void Voice::endBlock(int, int numSamples)
 
 void Voice::updateFilters(bool init, int blkoffset)
 {
-    auto f1_on = (bool)audioProcessor.params.getRawParameterValue("f1_on")->load();
+    auto f1_on = (bool)f1OnParam->load();
     if (init || f1_on) 
     {
-        auto f1_cut = audioProcessor.modulation->getPolyValue("f1_cut", id, blkoffset);
-        auto f1_res = audioProcessor.modulation->getPolyValue("f1_res", id, blkoffset);
-        auto f1_drive = audioProcessor.modulation->getPolyValue("f1_drive", id, blkoffset);
-        auto f1_mix = audioProcessor.modulation->getPolyValue("f1_mix", id, blkoffset);
+        auto f1_cut = audioProcessor.modulation->getPolyValue(f1CutParam, id, blkoffset);
+        auto f1_res = audioProcessor.modulation->getPolyValue(f1ResParam, id, blkoffset);
+        auto f1_drive = audioProcessor.modulation->getPolyValue(f1DriveParam, id, blkoffset);
+        auto f1_mix = audioProcessor.modulation->getPolyValue(f1MixParam, id, blkoffset);
         if (init)
             audioProcessor.synth->initFilters(id, 0, f1_cut, f1_res, f1_drive, f1_mix);
         else
             audioProcessor.synth->updateFilters(id, 0, f1_cut, f1_res, f1_drive, f1_mix);
     }
 
-    auto f2_on = (bool)audioProcessor.params.getRawParameterValue("f2_on")->load();
+    auto f2_on = (bool)f2OnParam->load();
     if (init || f2_on)
     {
-        auto f2_cut = audioProcessor.modulation->getPolyValue("f2_cut", id, blkoffset);
-        auto f2_res = audioProcessor.modulation->getPolyValue("f2_res", id, blkoffset);
-        auto f2_drive = audioProcessor.modulation->getPolyValue("f2_drive", id, blkoffset);
-        auto f2_mix = audioProcessor.modulation->getPolyValue("f2_mix", id, blkoffset);
+        auto f2_cut = audioProcessor.modulation->getPolyValue(f2CutParam, id, blkoffset);
+        auto f2_res = audioProcessor.modulation->getPolyValue(f2ResParam, id, blkoffset);
+        auto f2_drive = audioProcessor.modulation->getPolyValue(f2DriveParam, id, blkoffset);
+        auto f2_mix = audioProcessor.modulation->getPolyValue(f2MixParam, id, blkoffset);
         if (init)
             audioProcessor.synth->initFilters(id, 1, f2_cut, f2_res, f2_drive, f2_mix);
         else
