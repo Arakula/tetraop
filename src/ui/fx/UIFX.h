@@ -12,7 +12,7 @@ class UIFX : public juce::Component
 {
 public:
 	juce::TextButton onBtn;
-	bool active = false;
+	bool on = false;
 	FX::FXType type;
 	int minX = 4;
 	int maxX = 100000000;

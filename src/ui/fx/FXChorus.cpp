@@ -62,7 +62,7 @@ void FXChorus::paint(juce::Graphics& g)
 
 void FXChorus::resized()
 {
-
+	UIFX::resized();
 }
 
 void FXChorus::showVoicesMenu()

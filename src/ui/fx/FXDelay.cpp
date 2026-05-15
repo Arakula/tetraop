@@ -142,6 +142,7 @@ void FXDelay::paint(juce::Graphics& g)
 
 void FXDelay::resized()
 {
+	UIFX::resized();
 	toggleUIComponents();
 }
 

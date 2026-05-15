@@ -95,6 +95,7 @@ void FXReverb::paint(juce::Graphics& g)
 
 void FXReverb::resized()
 {
+	UIFX::resized();
 	toggleUIComponents();
 }
 

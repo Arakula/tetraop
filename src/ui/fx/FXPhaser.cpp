@@ -82,6 +82,7 @@ void FXPhaser::toggleUIComponents()
 
 void FXPhaser::resized()
 {
+	UIFX::resized();
 	toggleUIComponents();
 }
 

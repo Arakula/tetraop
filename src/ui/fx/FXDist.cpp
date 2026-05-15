@@ -71,6 +71,7 @@ void FXDist::paint(juce::Graphics& g)
 
 void FXDist::resized()
 {
+	UIFX::resized();
 	toggleUIComponents();
 }
 

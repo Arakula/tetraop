@@ -271,6 +271,7 @@ void FXEQ::paint(juce::Graphics& g)
 
 void FXEQ::resized()
 {
+	UIFX::resized();
 	// viewBounds is paint-only, derived from the freqknob position.
 	viewBounds = juce::Rectangle<float>(140.f, (float)getHeight())
 		.reduced(0.f, 5.f)

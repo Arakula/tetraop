@@ -82,8 +82,9 @@ void FXPanel::refreshFX(bool)
         for (int j = 0; j < fxs.size(); ++j)
         {
             auto* fx = fxs[j];
-            fx->setAlpha(!on ? 0.5f : 1.f);
             if (fx->type == i) {
+				fx->setAlpha(!on ? 0.5f : 1.f);
+				fx->on = on;
                 fx->repaint();
                 break;
             }
@@ -133,7 +134,7 @@ void FXPanel::resized()
 {
 	for (int i = 0; i < fxs.size(); ++i) {
 		auto* fx = fxs[i];
-		fx->setBounds(PANEL_PAD + i * (100 + PANEL_PAD), PANEL_PAD, 100, getHeight() - PANEL_PAD * 2);
+		fx->setBounds(PANEL_PAD + i * (KNOB_WIDTH * 2 + PANEL_PAD), PANEL_PAD, KNOB_WIDTH * 2, getHeight() - PANEL_PAD * 2);
 	}
 
 	toggleUIComponents();
@@ -141,6 +142,7 @@ void FXPanel::resized()
 
 void FXPanel::onDrag(UIFX* dragged)
 {
+	dragged->toFront(false);
 	int draggedIndex = 0;
 
 	for (int i = 0; fxs[i]->type != dragged->type; ++i)

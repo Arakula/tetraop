@@ -87,6 +87,7 @@ void FXCompressor::paint(juce::Graphics& g)
 
 void FXCompressor::resized()
 {
+	UIFX::resized();
 	toggleUIComponents();
 }
 

@@ -50,16 +50,16 @@ void UIFX::paint(juce::Graphics& g)
 	auto b = getLocalBounds().toFloat();
 	g.setColour (COLOR_PANEL());
 	UIUtils::drawPanel(g, b, true);
-	UIUtils::drawCheckmark(g, onBtn.getBounds().toFloat(), COLOR_BACKGROUND(), color, active);
 	auto bbtn = onBtn.getBounds();
-	g.saveState();
+	UIUtils::drawCheckmark(g, bbtn.toFloat(), COLOR_BACKGROUND(), color, on);
 	g.setFont(juce::FontOptions(16.f));
 	g.setColour(COLOR_KNOB_LABEL());
 	auto title = titleOverride.isNotEmpty() ? titleOverride : name;
 	g.drawText(title, bbtn.withX(bbtn.getRight()).withWidth(200).toFloat(), juce::Justification::centredLeft);
-	g.restoreState();
 }
 
 void UIFX::resized()
 {
+	auto b = getLocalBounds();
+	onBtn.setBounds(b.getX(), b.getY(), PANEL_HEADER_HEIGHT, PANEL_HEADER_HEIGHT);
 }
