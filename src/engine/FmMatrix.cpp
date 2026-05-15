@@ -598,6 +598,8 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
             A.level += A.level_step;
             A.phase = A.phase_inc.fmadd(A.pitch_ratio, A.phase);
             A.pitch_ratio += A.pitch_ratio_step;
+            A.gain_l += A.gain_l_step;
+            A.gain_r += A.gain_r_step;
             Utils::wrapPhase(A.phase); 
         }
         if constexpr (BOn) 
@@ -612,6 +614,8 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
             B.level += B.level_step;
             B.phase = B.phase_inc.fmadd(B.pitch_ratio, B.phase);
             B.pitch_ratio += B.pitch_ratio_step;
+            B.gain_l += B.gain_l_step;
+            B.gain_r += B.gain_r_step;
             Utils::wrapPhase(B.phase); 
         }
         if constexpr (COn) 
@@ -626,6 +630,8 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
             C.level += C.level_step;
             C.phase = C.phase_inc.fmadd(C.pitch_ratio, C.phase);
             C.pitch_ratio += C.pitch_ratio_step;
+            C.gain_l += C.gain_l_step;
+            C.gain_r += C.gain_r_step;
             Utils::wrapPhase(C.phase); 
         }
         if constexpr (DOn) 
@@ -640,6 +646,8 @@ void FmMatrix::_process(SIMDVox& vox, int numSamples, const int activeVoice, SIM
             D.level += D.level_step;
             D.phase = D.phase_inc.fmadd(D.pitch_ratio, D.phase);
             D.pitch_ratio += D.pitch_ratio_step;
+            D.gain_l += D.gain_l_step;
+            D.gain_r += D.gain_r_step;
             Utils::wrapPhase(D.phase); 
         }
 

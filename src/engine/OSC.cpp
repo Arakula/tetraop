@@ -13,6 +13,7 @@ OSC::OSC(int _id, int _voiceId, TetraOPAudioProcessor& p)
 
 void OSC::trigger(int note, float _srate)
 {
+	triggered = true;
 	srate = _srate;
 	auto& vox = audioProcessor.synth->vox[batch];
 	auto& osc = vox.osc[id];
@@ -113,8 +114,19 @@ void OSC::startBlock(int startSample, int numSamples)
 	if (pan != pan_targ)
 	{
 		pan = pan_targ;
-		Utils::setMasked(osc.gain_l, std::cos(MathConstants<float>::halfPi * pan), mask);
-		Utils::setMasked(osc.gain_r, std::sin(MathConstants<float>::halfPi * pan), mask);
+		float targ_l = std::cos(MathConstants<float>::halfPi * pan);
+		float targ_r = std::sin(MathConstants<float>::halfPi * pan);
+		float gain_l_step = (targ_l - osc.gain_l.get(lane)) / numSamples;
+		float gain_r_step = (targ_r - osc.gain_r.get(lane)) / numSamples;
+		Utils::setMasked(osc.gain_l_step, gain_l_step, mask);
+		Utils::setMasked(osc.gain_r_step, gain_r_step, mask);
+
+		if (triggered) {
+			Utils::setMasked(osc.gain_l, targ_l, mask);
+			Utils::setMasked(osc.gain_r, targ_r, mask);
+			Utils::setMasked(osc.gain_l_step, 0.f, mask);
+			Utils::setMasked(osc.gain_r_step, 0.f, mask);
+		}
 	}
 
 	bool morph_snap = (bool)audioProcessor.params.getRawParameterValue(prefix + "morph_snap")->load();
@@ -156,7 +168,6 @@ void OSC::startBlock(int startSample, int numSamples)
 	auto unison_sprd = mod->getPolyValue(prefix + "unison_spread", voiceId, blkoffset);
 	auto unison_bld = mod->getPolyValue(prefix + "unison_blend", voiceId, blkoffset);
 
-	
 	if (unison_v > 1 && (unison_v != unison.voices || unison_mod != unison_mode
 		|| unison_det != unison_detune || unison_st != unison_stereo
 		|| unison_sprd != unison_spread || unison_bld != unison_blend
@@ -175,6 +186,8 @@ void OSC::startBlock(int startSample, int numSamples)
 	bool isFMOutput = audioProcessor.synth->fm->isOut[id].hmax() > 0.f;
 	if (!isFMOutput || (osc.level.get(lane) <= 1e-5f && osc.level_targ.get(lane) < 1e-5f))
 		unison.voices = 1; // TODO remove this?
+
+	triggered = false;
 }
 
 void OSC::recalcUnison(SIMDUnison& unison, int unison_mod) const

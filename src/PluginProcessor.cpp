@@ -227,8 +227,8 @@ TetraOPAudioProcessor::TetraOPAudioProcessor()
     tablesMgr = std::make_unique<TablesManager>(*this, waveTablesFolder);
     presetmgr = std::make_unique<PresetManager>(*this, presetsFolder);
 
-    synth = std::make_unique<Synth>(*this);
     modulation = std::make_unique<Modulation>(*this);
+    synth = std::make_unique<Synth>(*this);
 
     params.addParameterListener("polyphony", this);
     params.addParameterListener("legato", this);

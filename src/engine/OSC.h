@@ -33,7 +33,9 @@ public:
         SIMDF pitch_ratio_targ;
         SIMDF pitch_ratio_step;
         SIMDF gain_l;
+        SIMDF gain_l_step;
         SIMDF gain_r;
+        SIMDF gain_r_step;
         SIMDF freq;
         SIMDF level;
         SIMDF level_targ;
@@ -52,6 +54,7 @@ public:
     String prefix = "";
     int batch = 0; // SIMD group
     int lane = 0; // SIMD lane inside batch
+    bool triggered = false; // process trigger logic inside startBlock
 
     int voiceId = 0;
     int id = 0;
