@@ -5,11 +5,15 @@
 static void showSourceMenu(
 	juce::Component* component
 	, juce::Point<int> pos
+	, bool removeOption
 	, std::function<void(juce::String)> cb
 ) {
 	juce::PopupMenu menu;
-	menu.addItem(1, "Remove");
-	menu.addSeparator();
+	if (removeOption)
+	{
+		menu.addItem(1, "Remove");
+		menu.addSeparator();
+	}
 
 	juce::PopupMenu envs;
 	envs.addItem(21, "Env1");
@@ -399,7 +403,7 @@ Row::Row(TetraOPAudioProcessorEditor& e
 	src.onClick = [this]()
 		{
 			auto pos = localPointToGlobal(src.getBounds().getBottomLeft());
-			showSourceMenu((Component *)this, pos, [this](String src)
+			showSourceMenu((Component *)this, pos, true, [this](String src)
 				{
 					if (src == "") return;
 					if (src == "-") {
@@ -545,7 +549,7 @@ MatrixPanel::MatrixPanel(TetraOPAudioProcessorEditor& e)
 	newBtn.onClick = [this]()
 		{
 			auto pos = localPointToGlobal(newBtn.getBounds().getBottomLeft());
-			showSourceMenu((Component*)this, pos, [this, pos](String src)
+			showSourceMenu((Component*)this, pos, false, [this, pos](String src)
 				{
 					if (src == "" || src == "-") return;
 					showDestinationMenu((Component*)this, editor, pos, [this, src](String dst)
@@ -702,7 +706,7 @@ void MatrixPanel::resized()
 	auto bheader = bid.withRight(bpass.getRight()).toNearestInt();
 	float translateX = bounds.getCentreX() - bheader.getWidth() / 2.f - bheader.getX();
 
-	bheader.translate(translateX, 0);
+	bheader.translate((int)translateX, 0);
 	bid.translate(translateX, 0);
 	bsrc.translate(translateX, 0);
 	bmap.translate(translateX, 0);

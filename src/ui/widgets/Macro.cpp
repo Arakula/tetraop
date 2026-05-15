@@ -66,7 +66,7 @@ void Macro::mouseUp(const juce::MouseEvent& e)
 
 void Macro::mouseDrag(const juce::MouseEvent& e)
 {
-	if (!editor.isDragDropModulation && !getLocalBounds().contains(e.getPosition())) {
+	if (!editor.isDragDropModulation && getLocalBounds().contains(e.getPosition())) {
 		editor.startDragDrop(macroId, this);
 		setMouseCursor(juce::MouseCursor::CrosshairCursor);
 	}

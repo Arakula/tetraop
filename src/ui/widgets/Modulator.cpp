@@ -124,7 +124,7 @@ void Modulator::mouseUp(const juce::MouseEvent& e)
 
 void Modulator::mouseDrag(const juce::MouseEvent& e)
 {
-    if (!editor.isDragDropModulation && !getLocalBounds().contains(e.getPosition())) {
+    if (!editor.isDragDropModulation && getLocalBounds().contains(e.getPosition())) {
         editor.startDragDrop(modId, this);
         setMouseCursor(juce::MouseCursor::CrosshairCursor);
     }

@@ -113,7 +113,7 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 	feedback->isPercentage = true;
 	feedback->suffix = "%";
 	//feedback->align = Justification::centredRight;
-	feedback->color = COLOR_PANEL_HEADER_TEXT().brighter(0.25f);
+	feedback->color = COLOR_PANEL_HEADER_TEXT().withAlpha(0.5f);
 	feedback->precision = 0;
 	feedback->fontSize = 14.f;
 	addAndMakeVisible(feedback.get());
@@ -157,7 +157,7 @@ void OSCPanel::paint(Graphics& g)
 	auto c = oscId == 0 ? COLOR_A() : oscId == 1 ? COLOR_B() : oscId == 2 ? COLOR_C() : COLOR_D();
 	bool on = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "on")->load();
 
-	UIUtils::drawPanel(g, b, true, false, on ? c.brighter(0.5f) : COLOR_PANEL_HEADER());
+	UIUtils::drawPanel(g, b, true, false, COLOR_PANEL_HEADER());
 	UIUtils::drawBevel(g, viewport, 5.f, Colours::black);
 
 	g.setColour(COLOR_BACKGROUND());
@@ -222,7 +222,7 @@ void OSCPanel::paint(Graphics& g)
 	}
 
 	UIUtils::drawFeedback(g, feedback->getBounds().withWidth(PANEL_HEADER_HEIGHT)
-		.withX(feedback->getX() -15).reduced(5, 5).toFloat(), COLOR_PANEL_HEADER_TEXT().brighter(0.25f));
+		.withX(feedback->getX() -15).reduced(5, 5).toFloat(), COLOR_PANEL_HEADER_TEXT().withAlpha(0.5f));
 
 	auto r = octave->getBounds().reduced(8, 4).translated(-13, 0).toFloat().translated(0.5f, 0.5f);
 	g.setColour(Colours::black.brighter(0.5f));

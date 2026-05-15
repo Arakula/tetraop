@@ -30,7 +30,7 @@ ConfigsPanel::ConfigsPanel(TetraOPAudioProcessorEditor& e)
 		&editor.audioProcessor.modulation->velCurve, 5.f,
 		COLOR_ACTIVE(), COLOR_LFO(), false, false
 	);
-	velEditor->drawShade = false;
+	//velEditor->drawShade = false;
 	velEditor->drawBasicSeek = true;
 	velEditor->useGrid = false;
 	velEditor->onChange = [this]()
@@ -107,15 +107,20 @@ void ConfigsPanel::paint(juce::Graphics& g)
 	g.setFont(juce::FontOptions(16.f));
 	g.drawText("Unbounded Mouse", unboundedMouseBtn.getBounds().withTrimmedLeft(22), juce::Justification::centredLeft);
 
-	UIUtils::drawBevel(g, velEditor->getBounds().toFloat(), 4.f, COLOR_BACKGROUND());
+	UIUtils::drawBevel(g, velEditor->getBounds().toFloat(), 6.f, COLOR_BEVEL());
 
-	auto b = Rectangle<float>(500.f, 20.f, 200.f, 80.f).withRightX(bounds.getRight() - 20.f);
-	g.setColour(COLOR_KNOB_LABEL());
-	g.drawText("TetraOP", b, juce::Justification::centredTop);
+	auto b = Rectangle<float>(350.f, 150.f, 200.f, 80.f).withRightX(bounds.getRight() - 20.f);
+	g.setColour(COLOR_PANEL().brighter(0.5f));
+	g.fillRoundedRectangle(b, 6.f);
+	g.setColour(COLOR_BACKGROUND());
+	b = b.translated(20.f, 0);
+	g.setFont(FontOptions(22.f));
+	g.drawText("TetraOP", b.translated(0, 10.f), juce::Justification::centredTop);
+	g.setFont(FontOptions(16.f));
 	g.drawText(juce::String(ProjectInfo::versionString), b.withTrimmedTop(30.f), juce::Justification::centredTop);
 	g.setFont(juce::FontOptions(12.f));
-	g.setColour(COLOR_KNOB_LABEL());
 	g.drawText(juce::String(__DATE__), b.withTrimmedTop(53.f), juce::Justification::centredTop);
+	UIUtils::drawLogo(g, Rectangle<float>(50.f, 50.f).withX(b.getX() + 15).withY(b.getY() + b.getHeight() / 2 - 50.f / 2), COLOR_BACKGROUND().brighter(0.15f));
 }
 
 void ConfigsPanel::resized()

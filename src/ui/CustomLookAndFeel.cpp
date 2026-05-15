@@ -22,7 +22,7 @@ Typeface::Ptr CustomLookAndFeel::getTypefaceForFont(const Font& font)
 juce::Font CustomLookAndFeel::getBoldFont(float size)
 {
     if (defaultFontBold != nullptr)
-        return juce::Font(defaultFontBold).withHeight(size);
+        return juce::Font(FontOptions(defaultFontBold)).withHeight(size);
     return juce::Font(juce::FontOptions().withHeight(size).withStyle("Bold"));
 }
 

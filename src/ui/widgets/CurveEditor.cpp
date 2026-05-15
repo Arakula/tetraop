@@ -429,7 +429,7 @@ void CurveEditor::paint(juce::Graphics& g)
         auto start = seekPos * bounds.getWidth();
         int xEnd = std::min<int>((int)start, (int)pixels - 1);
 
-        g.setColour(COLOR_LFO().withAlpha(0.5f));
+        g.setColour(color.withAlpha(0.5f));
         g.drawVerticalLine((int)bounds.getX() + xEnd, bounds.getY(), bounds.getBottom());
         //juce::Path seek;
         //auto seekwidth = 30;

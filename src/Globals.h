@@ -86,8 +86,8 @@ namespace globals {
 		colors["COLOR_ACTIVE"] = Colour(0xff00C8FF);
 		colors["COLOR_PANEL"] = Colour(0xff3F3F3F);
 		colors["COLOR_BEVEL"] = Colour(0xff1a1a1a);
-		colors["COLOR_PANEL_HEADER"] = Colour(0xffBABABA);
-		colors["COLOR_PANEL_HEADER_TEXT"] = Colour(0xff141414);
+		colors["COLOR_PANEL_HEADER"] = Colour(0xff272727);
+		colors["COLOR_PANEL_HEADER_TEXT"] = Colour(0xffFAFAFA);
 		colors["COLOR_KNOB"] = Colour(0xff626262);
 		colors["COLOR_KNOB_HANDLE"] = Colour(0xffD9D9D9);
 		colors["COLOR_KNOB_LABEL"] = Colour(0xffFAFAFA);
@@ -96,7 +96,7 @@ namespace globals {
 		colors["COLOR_CHECKMARK_BG_LIGHT"] = Colour(0xff373737);
 		colors["COLOR_A"] = Colour(0xff00FFA6);
 		colors["COLOR_B"] = Colour(0xff008CFF);
-		colors["COLOR_C"] = Colour(0xffFFC300);
+		colors["COLOR_C"] = Colour(0xffF3B713);
 		colors["COLOR_D"] = Colour(0xffF34713);
 
 		colors["COLOR_ENVELOPE"] = juce::Colour(0xffff3700);
