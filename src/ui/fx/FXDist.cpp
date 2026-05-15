@@ -54,7 +54,7 @@ void FXDist::parameterChanged(const juce::String& parameterID, float newValue)
 
 void FXDist::mouseDown(const juce::MouseEvent& e)
 {
-	(void)e;
+	UIFX::mouseDown(e);
 }
 
 void FXDist::paint(juce::Graphics& g)

@@ -63,7 +63,7 @@ void FXCompressor::parameterChanged(const juce::String& parameterID, float newVa
 
 void FXCompressor::mouseDown(const juce::MouseEvent& e)
 {
-	(void)e;
+	UIFX::mouseDown(e);
 }
 
 void FXCompressor::paint(juce::Graphics& g)

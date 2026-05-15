@@ -107,7 +107,7 @@ void FXDelay::parameterChanged(const juce::String& parameterID, float newValue)
 
 void FXDelay::mouseDown(const juce::MouseEvent& e)
 {
-	(void)e;
+	UIFX::mouseDown(e);
 }
 
 void FXDelay::paint(juce::Graphics& g)

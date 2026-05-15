@@ -40,6 +40,7 @@ FXChorus::~FXChorus()
 
 void FXChorus::mouseDown(const juce::MouseEvent& e)
 {
+	UIFX::mouseDown(e);
 	if (voiceBounds.contains((float)e.x, (float)e.y)) {
 		showVoicesMenu();
 	}

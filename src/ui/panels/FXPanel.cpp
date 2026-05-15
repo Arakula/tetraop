@@ -142,7 +142,6 @@ void FXPanel::resized()
 
 void FXPanel::onDrag(UIFX* dragged)
 {
-	dragged->toFront(false);
 	int draggedIndex = 0;
 
 	for (int i = 0; fxs[i]->type != dragged->type; ++i)

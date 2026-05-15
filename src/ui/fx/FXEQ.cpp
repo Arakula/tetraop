@@ -63,7 +63,10 @@ void FXEQ::mouseDown(const juce::MouseEvent& e)
 	}
 
 	if (dragband == -1)
+	{
+		UIFX::mouseDown(e);
 		return;
+	}
 
     editor.audioProcessor.undomgr->createUndo();
 
@@ -86,7 +89,11 @@ void FXEQ::mouseDown(const juce::MouseEvent& e)
 
 void FXEQ::mouseUp(const juce::MouseEvent& e)
 {
-    if (!mouse_down) return;
+	if (!mouse_down)
+	{
+		UIFX::mouseUp(e);
+		return;
+	}
     freqknobs[selband]->forceLabelShowValue = false;
     gainknobs[selband]->forceLabelShowValue = false;
     freqknobs[selband]->repaint();
@@ -103,7 +110,12 @@ void FXEQ::mouseUp(const juce::MouseEvent& e)
 
 void FXEQ::mouseDrag(const juce::MouseEvent& e)
 {
-	if (!mouse_down) return;
+	if (!mouse_down)
+	{
+		UIFX::mouseDrag(e);
+		return;
+	}
+
 	freqknobs[selband]->repaint();
 	gainknobs[selband]->repaint();
 

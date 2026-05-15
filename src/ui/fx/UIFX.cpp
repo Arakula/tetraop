@@ -26,7 +26,7 @@ UIFX::~UIFX()
 void UIFX::mouseDown(const juce::MouseEvent& e)
 {
     editor.audioProcessor.undomgr->createUndo();
-	toFront(true);
+	toFront(false);
 	dragger.startDraggingComponent(this, e);
 }
 
