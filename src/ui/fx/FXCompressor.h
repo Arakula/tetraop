@@ -25,9 +25,13 @@ public:
 
 	void timerCallback() override;
 	void parameterChanged(const juce::String& parameterID, float newValue) override;
-	void mouseDown(const juce::MouseEvent& e) override;
 
+	void onActiveToggle() override;
+	void mouseDown(const juce::MouseEvent& e) override;
     void paint(juce::Graphics& g) override;
 	void resized() override;
 	void toggleUIComponents();
+
+private:
+	Rectangle<int> redBounds;
 };

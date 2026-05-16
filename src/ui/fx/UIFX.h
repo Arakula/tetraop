@@ -26,6 +26,8 @@ public:
 	void paint(juce::Graphics& g) override;
 	void resized() override;
 
+	virtual void onActiveToggle() {};
+
 	juce::String prefix;
 	std::function<void(UIFX*)> onDragEnded;
     std::function<void(UIFX*)> onDrag;

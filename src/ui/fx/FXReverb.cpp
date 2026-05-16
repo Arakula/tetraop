@@ -18,29 +18,16 @@ FXReverb::FXReverb(TetraOPAudioProcessorEditor& e)
 	predel = std::make_unique<Rotary>(editor, prefix + "predel", "PreDel", Rotary::VerbPredelay);
 	decay = std::make_unique<Rotary>(editor, prefix + "decay", "Decay", Rotary::Percent);
 	size = std::make_unique<Rotary>(editor, prefix + "revsize", "Size", Rotary::Percent);
-	damp = std::make_unique<Rotary>(editor, prefix + "damp", "Damp", Rotary::Percent);
-    damp->invertValue = true;
 	lowcut = std::make_unique<Rotary>(editor, prefix + "lowcut", "Lowcut", Rotary::Hz);
 	highcut = std::make_unique<Rotary>(editor, prefix + "highcut", "Highcut", Rotary::Hz);
 	highcut->invertValue = true;
 	moddepth = std::make_unique<Rotary>(editor, prefix + "moddepth", "ModDep", Rotary::Percent);
 	modrate = std::make_unique<Rotary>(editor, prefix + "modrate", "ModRate", Rotary::Hz1f);
-	mix = std::make_unique<Rotary>(editor, prefix + "mix", "Mix", Rotary::Percent, true);
-
-	predel->setName          ("predel");
-	decay->setName           ("decay");
-	size->setName            ("size");
-	damp->setName            ("damp");
-	lowcut->setName          ("lowcut");
-	highcut->setName         ("highcut");
-	moddepth->setName        ("moddepth");
-	modrate->setName         ("modrate");
-	mix->setName             ("mix");
+	mix = std::make_unique<Rotary>(editor, prefix + "mix", "Mix", Rotary::Percent);
 
 	addAndMakeVisible(predel.get());
 	addAndMakeVisible(decay.get());
 	addAndMakeVisible(size.get());
-	addAndMakeVisible(damp.get());
 	addAndMakeVisible(lowcut.get());
 	addAndMakeVisible(highcut.get());
 	addAndMakeVisible(moddepth.get());
@@ -50,13 +37,13 @@ FXReverb::FXReverb(TetraOPAudioProcessorEditor& e)
 	editor.registerModParam(predel.get(), TetraOPAudioProcessorEditor::kFX);
 	editor.registerModParam(decay.get(), TetraOPAudioProcessorEditor::kFX);
 	editor.registerModParam(size.get(), TetraOPAudioProcessorEditor::kFX);
-	editor.registerModParam(damp.get(), TetraOPAudioProcessorEditor::kFX);
 	editor.registerModParam(lowcut.get(), TetraOPAudioProcessorEditor::kFX);
 	editor.registerModParam(highcut.get(), TetraOPAudioProcessorEditor::kFX);
 	editor.registerModParam(moddepth.get(), TetraOPAudioProcessorEditor::kFX);
 	editor.registerModParam(modrate.get(), TetraOPAudioProcessorEditor::kFX);
 	editor.registerModParam(mix.get(), TetraOPAudioProcessorEditor::kFX);
 
+	onActiveToggle();
 }
 
 FXReverb::~FXReverb()
@@ -74,6 +61,18 @@ void FXReverb::parameterChanged(const juce::String& parameterID, float newValue)
             toggleUIComponents();
 			repaint();
 		});
+}
+
+void FXReverb::onActiveToggle()
+{
+	predel->setEnabled(on);
+	decay->setEnabled(on);
+	size->setEnabled(on);
+	lowcut->setEnabled(on);
+	highcut->setEnabled(on);
+	moddepth->setEnabled(on);
+	modrate->setEnabled(on);
+	mix->setEnabled(on);
 }
 
 void FXReverb::paint(juce::Graphics& g)
@@ -96,17 +95,23 @@ void FXReverb::paint(juce::Graphics& g)
 void FXReverb::resized()
 {
 	UIFX::resized();
+
+	mix->setBounds(Rectangle<int>(KNOB_WIDTH, KNOB_HEIGHT).withX(KNOB_WIDTH).withBottomY(getBottom() - 10 - PANEL_PAD));
+	predel->setBounds(mix->getBounds().translated(-KNOB_WIDTH, 0));
+	moddepth->setBounds(mix->getBounds().translated(0, -KNOB_HEIGHT));
+	modrate->setBounds(moddepth->getBounds().translated(-KNOB_WIDTH, 0));
+	highcut->setBounds(moddepth->getBounds().translated(0, -KNOB_HEIGHT));
+	lowcut->setBounds(modrate->getBounds().translated(0, -KNOB_HEIGHT));
+	size->setBounds(highcut->getBounds().translated(0, -KNOB_HEIGHT));
+	decay->setBounds(lowcut->getBounds().translated(0, -KNOB_HEIGHT));
+
 	toggleUIComponents();
 }
 
 void FXReverb::toggleUIComponents()
 {
-    auto mode = juce::jlimit(0, 5, juce::roundToInt(editor.audioProcessor.params.getRawParameterValue(prefix + "mode")->load()));
-    bool isMiniVerb = mode == 5;
-
-    size->setVisible(isMiniVerb);
-    damp->setVisible(!isMiniVerb);
-    modrate->setVisible(isMiniVerb);
+    //auto mode = juce::jlimit(0, 5, juce::roundToInt(editor.audioProcessor.params.getRawParameterValue(prefix + "mode")->load()));
+    //bool isMiniVerb = mode == 5;
 }
 
 void FXReverb::showModeMenu ()

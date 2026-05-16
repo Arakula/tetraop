@@ -19,6 +19,8 @@ public:
 	FXChorus(TetraOPAudioProcessorEditor& e);
 	~FXChorus() override;
 
+	void onActiveToggle() override;
+
 	void mouseDown(const juce::MouseEvent& e) override;
 
     void paint(juce::Graphics& g) override;

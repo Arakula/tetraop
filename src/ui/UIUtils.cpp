@@ -118,6 +118,19 @@ void UIUtils::drawBevel(Graphics& g, Rectangle<float> bounds, float corner, Colo
     g.fillRoundedRectangle(bounds.expanded(-1.f), corner);
 }
 
+void UIUtils::drawBevelLight(Graphics& g, Rectangle<float> bounds, bool checked)
+{
+    g.setColour(Colours::black.withAlpha(0.15f));
+    g.fillRoundedRectangle(bounds.translated(0.5f, 0.5f), 3.f);
+    if (checked)
+    {
+        g.setColour(COLOR_ACTIVE().withAlpha(0.5f));
+        g.fillRoundedRectangle(bounds.translated(0.5f, 0.5f), 3.f);
+    }
+    g.setColour(Colours::black.withAlpha(0.35f));
+    g.drawRoundedRectangle(bounds.toFloat().translated(0.5f, 0.5f), 3.f, 1.f);
+}
+
 void UIUtils::drawTriangle(Graphics& g, Rectangle<float> bounds, int direction, Colour c)
 {
     g.setColour(c);

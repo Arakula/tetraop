@@ -34,6 +34,7 @@ public:
     static juce::String aliasParameter(const juce::String& pid);
 
 	static void drawBevel(Graphics& g, Rectangle<float> bounds, float corner, Colour bg);
+	static void drawBevelLight(Graphics& g, Rectangle<float> bounds, bool checked);
 	static void drawTriangle(Graphics& g, Rectangle<float> bounds, int direction, Colour c);
 	static void drawPanel(Graphics& g, Rectangle<float> bounds, bool drawHeader, bool darker = false, Colour headerc = Colours::transparentBlack);
 	static void drawVSeparator(Graphics& g, Rectangle<float> bounds);

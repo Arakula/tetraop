@@ -33,6 +33,7 @@ public:
     void paint(juce::Graphics& g) override;
 	void resized() override;
 	void toggleUIComponents();
+	void onActiveToggle() override;
 
 	void updateEQCurve();
 	void showBandModeMenu();

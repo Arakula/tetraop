@@ -211,7 +211,7 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add(std::make_unique<juce::AudioParameterFloat>("fx_delay_mix", "FX Delay Mix", 0.f, 1.f, 0.5f));
 
     layout.add(std::make_unique<juce::AudioParameterBool>("fx_dist_on", "FX Dist On", false));
-    layout.add(std::make_unique<juce::AudioParameterChoice>("fx_dist_mode", "FX Dist Mode", juce::StringArray{ "Tube", "Tape", "Fuzz" }, 0));
+    layout.add(std::make_unique<juce::AudioParameterChoice>("fx_dist_mode", "FX Dist Mode", juce::StringArray{ "Tube", "SoftClip", "HardClip" }, 0));
     layout.add(std::make_unique<juce::AudioParameterFloat>("fx_dist_filter", "FX Dist Pre Filter", -1.f, 1.f, 0.f));
     layout.add(std::make_unique<juce::AudioParameterFloat>("fx_dist_drive", "FX Dist Drive", -40.f, 40.f, 0.f));
     layout.add(std::make_unique<juce::AudioParameterFloat>("fx_dist_color", "FX Dist Color", -1.f, 1.f, 0.f));
@@ -221,7 +221,7 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add(std::make_unique<juce::AudioParameterBool>("fx_comp_on", "FX Comp On", false));
     layout.add(std::make_unique<juce::AudioParameterBool>("fx_comp_makeup", "FX Comp Makeup", true));
     layout.add(std::make_unique<juce::AudioParameterFloat>("fx_comp_thresh", "FX Comp Thresh", -30.f, 0.f, 0.f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_comp_ratio", "FX Comp Ratio", juce::NormalisableRange<float>(1.f, 20.f, 0.01f, 0.4f), 1.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_comp_ratio", "FX Comp Ratio", juce::NormalisableRange<float>(1.f, 20.f, 0.01f, 0.4f), 4.f));
     layout.add(std::make_unique<juce::AudioParameterFloat>("fx_comp_att", "FX Comp Attack", juce::NormalisableRange<float>(0.f, 500.f, 0.01f, 0.5f), 20.f));
     layout.add(std::make_unique<juce::AudioParameterFloat>("fx_comp_rel", "FX Comp Release", juce::NormalisableRange<float>(0.f, 1000.f, 0.01f, 0.5f), 200.f));
     layout.add(std::make_unique<juce::AudioParameterFloat>("fx_comp_gain", "FX Comp Gain", -24.f, 24.f, 0.f));
@@ -754,11 +754,32 @@ void TetraOPAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     }
     synth->endBlock(numSamples);
 
+    processFx(buffer.getWritePointer(0), buffer.getWritePointer(1), numSamples);
+
     buffer.applyGain(masterGain);
     rmsL.store(buffer.getMagnitude(0, 0, numSamples));
     rmsR.store(buffer.getMagnitude(1, 0, numSamples));
 
     dspLock.exit();
+}
+
+void TetraOPAudioProcessor::processFx(float* bufL, float* bufR, int nsamples)
+{
+    for (auto& fx : fxchain) {
+        if (fx->type == FX::Distortion) {
+            float* channels[2] = { bufL, bufR };
+            juce::dsp::AudioBlock<float> block(channels, 2, (size_t)nsamples);
+            auto oversampledBlock = distoversampler->processSamplesUp(block);
+            auto* osleft = oversampledBlock.getChannelPointer(0);
+            auto* osright = oversampledBlock.getChannelPointer(1);
+
+            fx->processBlock(osleft, osright, (int)oversampledBlock.getNumSamples(), 0, false);
+            distoversampler->processSamplesDown(block);
+        }
+        else {
+            fx->processBlock(bufL, bufR, nsamples, 0, false);
+        }
+    }
 }
 
 //==============================================================================
@@ -798,6 +819,18 @@ void TetraOPAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
     auto tables = tablesMgr->serialize();
     state.appendChild(tables, nullptr);
 
+    // serialize FX
+    auto fxtree = juce::ValueTree("EFFECTS");
+    juce::String s;
+    for (int i = 0; i < int(fxOrder.size()); i++) 
+    {
+        s << fxOrder[i];
+        if (i < int(fxOrder.size()) - 1)
+            s << ",";
+    }
+    fxtree.setProperty("master", s, nullptr);
+    state.appendChild(fxtree, nullptr);
+
     std::unique_ptr<juce::XmlElement> xml(state.createXml());
     copyXmlToBinary(*xml, destData);
 }
@@ -823,6 +856,7 @@ void TetraOPAudioProcessor::setStateInformation (const void* data, int sizeInByt
     auto mods = state.getChildWithName("MODULATIONS");
     auto macros = state.getChildWithName("MACROS");
     auto tables = state.getChildWithName("WAVETABLES");
+    auto effects = state.getChildWithName("EFFECTS");
 
     if (parameters.isValid()) {
         params.replaceState(parameters);
@@ -859,6 +893,19 @@ void TetraOPAudioProcessor::setStateInformation (const void* data, int sizeInByt
     if (tables.isValid())
     {
         tablesMgr->unserialize(tables);
+    }
+
+    if (effects.isValid()) 
+    {
+        std::vector<FX::FXType> numbers;
+        juce::String s = effects.getProperty("master").toString();
+        juce::StringArray parts = juce::StringArray::fromTokens(s, ",", {});
+
+        numbers.reserve(parts.size());
+        for (auto& p : parts)
+            numbers.push_back((FX::FXType)p.getIntValue());
+
+        sortFX(numbers);
     }
 }
 

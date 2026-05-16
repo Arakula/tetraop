@@ -10,9 +10,6 @@ FXEQ::FXEQ(TetraOPAudioProcessorEditor& e)
 		auto freq = std::make_unique<Rotary>(editor, pre + "_freq", "Freq", Rotary::Hz);
 		auto q = std::make_unique<Rotary>(editor, pre + "_q", "Q", Rotary::float1);
 		auto gain = std::make_unique<Rotary>(editor, pre + "_gain", "Gain", Rotary::dB, true);
-		freq->setName ("freq" + juce::String (i));
-		q->setName    ("q"    + juce::String (i));
-		gain->setName ("gain" + juce::String (i));
 		addChildComponent(freq.get());
 		addChildComponent(q.get());
 		addChildComponent(gain.get());
@@ -31,6 +28,8 @@ FXEQ::FXEQ(TetraOPAudioProcessorEditor& e)
 		{
 			showBandModeMenu();
 		};
+
+	onActiveToggle();
 }
 
 FXEQ::~FXEQ()
@@ -49,6 +48,16 @@ void FXEQ::parameterChanged(const juce::String& parameterID, float newValue)
 	(void)parameterID;
 	(void)newValue;
 	juce::MessageManager::callAsync([this] { repaint(); });
+}
+
+void FXEQ::onActiveToggle()
+{
+	for (int i = 0; i < globals::EQ_BANDS; ++i)
+	{
+		freqknobs[i]->setEnabled(on);
+		gainknobs[i]->setEnabled(on);
+		qknobs[i]->setEnabled(on);
+	}
 }
 
 void FXEQ::mouseDown(const juce::MouseEvent& e)
@@ -200,11 +209,40 @@ void FXEQ::mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetai
 void FXEQ::paint(juce::Graphics& g)
 {
 	UIFX::paint(g);
-	UIUtils::drawBevel(g, viewBounds.expanded(5.5f), 3.f, COLOR_BEVEL());
+	g.setColour(COLOR_BACKGROUND());
+	g.fillRect(viewBounds);
 
 	std::array<float, globals::EQ_BANDS> freqs{};
 	std::array<float, globals::EQ_BANDS> gains{};
 	std::array<float, globals::EQ_BANDS> qs{};
+
+	// draw band curve button
+	g.setColour(COLOR_KNOB_LABEL());
+	UIUtils::drawBevelLight(g, bandBtn.getBounds().toFloat().expanded(1.f), false);
+	auto mode = bandFilters[selband].mode;
+	if (mode == SVF::PK) {
+		UIUtils::drawPeak(g, bandBtn.getBounds().toFloat().translated(4.5f, 6.5f), COLOR_KNOB_LABEL());
+	}
+	else if (mode == SVF::LP) {
+		UIUtils::drawLowpass(g, bandBtn.getBounds().toFloat().translated(4.5f, 6.5f), COLOR_KNOB_LABEL());
+	}
+	else if (mode == SVF::HP) {
+		UIUtils::drawHighpass(g, bandBtn.getBounds().toFloat().translated(4.5f, 6.5f), COLOR_KNOB_LABEL());
+	}
+	else if (mode == SVF::LS) {
+		UIUtils::drawLowShelf(g, bandBtn.getBounds().toFloat().translated(4.5f, 6.5f), COLOR_KNOB_LABEL());
+	}
+	else if (mode == SVF::HS) {
+		UIUtils::drawHighShelf(g, bandBtn.getBounds().toFloat().translated(4.5f, 6.5f), COLOR_KNOB_LABEL());
+	}
+	g.setColour(COLOR_KNOB_LABEL());
+	g.setFont(FontOptions(16.f));
+	g.drawText("Band " + String(selband + 1), freqknobs[0]->getBounds()
+		.translated(-KNOB_WIDTH, 20)
+		.withHeight(16), Justification::centred);
+
+	if (!on)
+		return;
 
 	// draw eq
 	g.setColour(COLOR_EQ());
@@ -258,38 +296,24 @@ void FXEQ::paint(juce::Graphics& g)
 		g.setColour(COLOR_BACKGROUND());
 		g.drawText(juce::String(i + 1), bandBounds[i], juce::Justification::centred);
 	}
-
-	// draw band curve button
-	g.setColour(COLOR_KNOB_LABEL());
-	UIUtils::drawBevel(g, bandBtn.getBounds().toFloat().expanded(1.f), 3.f, COLOR_BEVEL());
-	auto mode = bandFilters[selband].mode;
-	if (mode == SVF::PK) {
-		UIUtils::drawPeak(g, bandBtn.getBounds().toFloat().translated(4.5f, 6.5f), COLOR_KNOB_LABEL());
-	}
-	else if (mode == SVF::LP) {
-		UIUtils::drawLowpass(g, bandBtn.getBounds().toFloat().translated(4.5f, 6.5f), COLOR_KNOB_LABEL());
-	}
-	else if (mode == SVF::HP) {
-		UIUtils::drawHighpass(g, bandBtn.getBounds().toFloat().translated(4.5f, 6.5f), COLOR_KNOB_LABEL());
-	}
-	else if (mode == SVF::LS) {
-		UIUtils::drawLowShelf(g, bandBtn.getBounds().toFloat().translated(4.5f, 6.5f), COLOR_KNOB_LABEL());
-	}
-	else if (mode == SVF::HS) {
-		UIUtils::drawHighShelf(g, bandBtn.getBounds().toFloat().translated(4.5f, 6.5f), COLOR_KNOB_LABEL());
-	}
-
 }
 
 void FXEQ::resized()
 {
 	UIFX::resized();
-	// viewBounds is paint-only, derived from the freqknob position.
-	viewBounds = juce::Rectangle<float>(140.f, (float)getHeight())
-		.reduced(0.f, 5.f)
-		.reduced(0.f, 5.f)
-		.withRightX((float)freqknobs[0]->getX() - 10.f)
-		.withY(10.f);
+
+	viewBounds = juce::Rectangle<float>((float)getWidth(), KNOB_HEIGHT + PANEL_HEADER_HEIGHT)
+		.withY(PANEL_HEADER_HEIGHT + PANEL_PAD);
+
+	for (int i = 0; i < globals::EQ_BANDS; ++i)
+	{
+		freqknobs[i]->setBounds(KNOB_WIDTH, (int)viewBounds.getBottom(), KNOB_WIDTH, KNOB_HEIGHT);
+		gainknobs[i]->setBounds(freqknobs[0]->getBounds().translated(-KNOB_WIDTH, KNOB_HEIGHT));
+		qknobs[i]->setBounds(freqknobs[0]->getBounds().translated(0, KNOB_HEIGHT));
+	}
+
+	bandBtn.setBounds(freqknobs[0]->getBounds().translated(-KNOB_WIDTH, 0).withWidth(25).withHeight(25)
+		.translated(KNOB_WIDTH / 2 - 25 / 2, KNOB_HEIGHT / 2 - 25 / 2 + 20));
 
 	toggleUIComponents();
 }
@@ -330,7 +354,7 @@ void FXEQ::updateEQCurve()
 			auto modulationActive = editor.audioProcessor.modulation->isAnyVoiceActive();
 
 			auto pre = "fx_eq_band" + juce::String(b + 1);
-			auto srate = editor.audioProcessor.srate / 2.f;
+			auto srate = editor.audioProcessor.srate;
 			auto cutoff = modulationActive
 				? editor.audioProcessor.modulation->getValue(pre + "_freq")
 				: editor.audioProcessor.params.getRawParameterValue(pre + "_freq")->load();

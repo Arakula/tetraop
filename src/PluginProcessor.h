@@ -142,6 +142,7 @@ public:
 
     // ========================================================================
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
+    void processFx(float* bufL, float* bufR, int nsamples);
 
     //==============================================================================
     juce::AudioProcessorEditor* createEditor() override;

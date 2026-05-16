@@ -9,11 +9,6 @@ FXDelay::FXDelay(TetraOPAudioProcessorEditor& e)
 	editor.audioProcessor.params.addParameterListener(prefix + "sync_l", this);
 	editor.audioProcessor.params.addParameterListener(prefix + "sync_r", this);
 
-	syncModeLBtn.setName ("syncModeLBtn");
-	syncModeRBtn.setName ("syncModeRBtn");
-	linkBtn.setName      ("linkBtn");
-	modeBtn.setName      ("modeBtn");
-
 	addAndMakeVisible(syncModeLBtn);
 	syncModeLBtn.setAlpha(0.f);
 	addAndMakeVisible(syncModeRBtn);
@@ -53,21 +48,8 @@ FXDelay::FXDelay(TetraOPAudioProcessorEditor& e)
 	lowcut = std::make_unique<Rotary>(editor, prefix + "lowcut", "Lowcut", Rotary::Hz);
 	highcut = std::make_unique<Rotary>(editor, prefix + "highcut", "Highcut", Rotary::Hz);
 	highcut->invertValue = true;
-	width = std::make_unique<HSlider>(editor, prefix + "pipo_width", "Width", HSlider::Percent, true, COLOR_ACTIVE());
-	width->showLabelPrefix = true;
-	mix = std::make_unique<Rotary>(editor, prefix + "mix", "Mix", Rotary::Percent, true);
-
-	width->drawBorder = false;
-
-	rateL->setName     ("rateL");
-	rateR->setName     ("rateR");
-	rateSyncL->setName ("rateSyncL");
-	rateSyncR->setName ("rateSyncR");
-	feedback->setName  ("feedback");
-	lowcut->setName    ("lowcut");
-	highcut->setName   ("highcut");
-	width->setName     ("width");
-	mix->setName       ("mix");
+	width = std::make_unique<Rotary>(editor, prefix + "pipo_width", "Width", Rotary::Percent, true);
+	mix = std::make_unique<Rotary>(editor, prefix + "mix", "Mix", Rotary::Percent);
 
 	addAndMakeVisible(rateL.get());
 	addAndMakeVisible(rateR.get());
@@ -105,6 +87,19 @@ void FXDelay::parameterChanged(const juce::String& parameterID, float newValue)
 	juce::MessageManager::callAsync([this] { toggleUIComponents(); });
 }
 
+void FXDelay::onActiveToggle()
+{
+	rateL->setEnabled(on);
+	rateR->setEnabled(on);
+	rateSyncL->setEnabled(on);
+	rateSyncR->setEnabled(on);
+	feedback->setEnabled(on);
+	lowcut->setEnabled(on);
+	highcut->setEnabled(on);
+	width->setEnabled(on);
+	mix->setEnabled(on);
+}
+
 void FXDelay::mouseDown(const juce::MouseEvent& e)
 {
 	UIFX::mouseDown(e);
@@ -128,21 +123,36 @@ void FXDelay::paint(juce::Graphics& g)
 	else
 		UIUtils::drawNote(g, syncModeRBtn.getBounds().reduced(6).toFloat(), modeR - 1, COLOR_KNOB_LABEL());
 
-	g.setColour(COLOR_KNOB_LABEL());
-	g.drawText("L", rateL->getBounds().toFloat().translated(-10.f, 0.f), juce::Justification::centredLeft);
-	g.drawText("R", rateR->getBounds().toFloat().translated(-10.f, 0.f), juce::Justification::centredLeft);
+	
+	g.setFont(juce::FontOptions(16.f));
+	UIUtils::drawBevelLight(g, modeBtn.getBounds().toFloat().reduced(1.f), false);
+	g.setColour(link ? COLOR_ACTIVE() : COLOR_KNOB_LABEL());
+	g.drawText("Link", linkBtn.getBounds().toFloat(), Justification::centred);
 
-	UIUtils::drawChain(g, linkBtn.getBounds().toFloat().translated(-1.f, 16.f), link ? COLOR_DELAY() : COLOR_KNOB_LABEL());
-	UIUtils::drawBevel(g, modeBtn.getBounds().toFloat().expanded(0.5f), 3.f, COLOR_BEVEL());
-
 	g.setColour(COLOR_KNOB_LABEL());
-	g.setFont(juce::FontOptions(15.f));
 	g.drawText(mode == 0 ? "Normal" : mode == 1 ? "PiPo" : "Tap", modeBtn.getBounds(), juce::Justification::centred);
 }
 
 void FXDelay::resized()
 {
 	UIFX::resized();
+
+	rateL->setBounds(0, PANEL_HEADER_HEIGHT + 50, KNOB_WIDTH, 25);
+	rateR->setBounds(KNOB_WIDTH, PANEL_HEADER_HEIGHT + 50, KNOB_WIDTH - 1, 25);
+	rateSyncL->setBounds(rateL->getBounds());
+	rateSyncR->setBounds(rateR->getBounds());
+
+	mix->setBounds(Rectangle<int>(KNOB_WIDTH, KNOB_HEIGHT).withX(KNOB_WIDTH).withBottomY(getBottom() - 10 - PANEL_PAD));
+	width->setBounds(mix->getBounds().translated(-KNOB_WIDTH, 0));
+	highcut->setBounds(mix->getBounds().translated(0, -KNOB_HEIGHT));
+	lowcut->setBounds(highcut->getBounds().translated(-KNOB_WIDTH, 0));
+	feedback->setBounds(highcut->getBounds().translated(0, -KNOB_HEIGHT));
+
+	syncModeLBtn.setBounds(rateL->getBounds().translated(0, 25).reduced(17,0));
+	syncModeRBtn.setBounds(rateR->getBounds().translated(0, 25).reduced(17,0));
+	linkBtn.setBounds(Rectangle<int>(getWidth(), 25).withBottomY(rateL->getY()));
+	modeBtn.setBounds(feedback->getBounds().translated(-KNOB_WIDTH, 0).withHeight(25).translated(0, 30));
+
 	toggleUIComponents();
 }
 

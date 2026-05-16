@@ -26,6 +26,7 @@ public:
 	FXPhaser(TetraOPAudioProcessorEditor& e);
 	~FXPhaser() override;
 
+	void onActiveToggle() override;
     void parameterChanged(const juce::String& parameterID, float newValue) override;
 	void paint(juce::Graphics& g) override;
 	void resized() override;

@@ -17,7 +17,7 @@ public:
 	std::unique_ptr<Rotary> lowcut;
 	std::unique_ptr<Rotary> highcut;
 	std::unique_ptr<Rotary> mix;
-	std::unique_ptr<HSlider> width;
+	std::unique_ptr<Rotary> width;
 	std::unique_ptr<TimePicker> rateL;
 	std::unique_ptr<TimePicker> rateSyncL;
 	std::unique_ptr<TimePicker> rateR;
@@ -32,6 +32,7 @@ public:
 	FXDelay(TetraOPAudioProcessorEditor& e);
 	~FXDelay() override;
 
+	void onActiveToggle() override;
 	void parameterChanged(const juce::String& parameterID, float newValue) override;
 	void mouseDown(const juce::MouseEvent& e) override;
 

@@ -61,8 +61,11 @@ juce::String TimePicker::getSyncText(float value)
 
 void TimePicker::paint(juce::Graphics& g)
 {
-	auto bounds = getLocalBounds().toFloat().reduced(.5f);
-	UIUtils::drawBevel(g, bounds, 3.f, COLOR_BEVEL());
+	auto bounds = getLocalBounds().toFloat().reduced(1.f);
+	UIUtils::drawBevelLight(g, bounds, false);
+
+	if (!isEnabled())
+		return;
 
 	g.setColour(COLOR_KNOB_LABEL());
 	g.setFont(juce::FontOptions(15.f));
@@ -138,6 +141,9 @@ void TimePicker::paint(juce::Graphics& g)
 
 void TimePicker::mouseDown(const juce::MouseEvent& e)
 {
+	if (!isEnabled())
+		return;
+
 	if (e.mods.isRightButtonDown()) {
 		editor.showParamContextMenu(this);
 		return;

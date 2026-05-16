@@ -85,6 +85,7 @@ void FXPanel::refreshFX(bool)
             if (fx->type == i) {
 				fx->setAlpha(!on ? 0.5f : 1.f);
 				fx->on = on;
+				fx->onActiveToggle();
                 fx->repaint();
                 break;
             }

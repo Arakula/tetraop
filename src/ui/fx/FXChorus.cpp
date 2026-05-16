@@ -10,14 +10,7 @@ FXChorus::FXChorus(TetraOPAudioProcessorEditor& e)
 	highcut = std::make_unique<Rotary>(editor, prefix + "highcut", "Highcut", Rotary::Hz);
 	highcut->invertValue = true;
 	feedback = std::make_unique<Rotary>(editor, prefix + "feedback", "Feedbk", Rotary::Percent, true);
-	mix = std::make_unique<Rotary>(editor, prefix + "mix", "Mix", Rotary::Percent, true);
-
-	rate->setName     ("rate");
-	depth->setName    ("depth");
-	lowcut->setName   ("lowcut");
-	highcut->setName  ("highcut");
-	feedback->setName ("feedback");
-	mix->setName      ("mix");
+	mix = std::make_unique<Rotary>(editor, prefix + "mix", "Mix", Rotary::Percent);
 
 	addAndMakeVisible(rate.get());
 	addAndMakeVisible(depth.get());
@@ -38,6 +31,16 @@ FXChorus::~FXChorus()
 {
 }
 
+void FXChorus::onActiveToggle()
+{
+	rate->setEnabled(on);
+	depth->setEnabled(on);
+	lowcut->setEnabled(on);
+	highcut->setEnabled(on);
+	feedback->setEnabled(on);
+	mix->setEnabled(on);
+}
+
 void FXChorus::mouseDown(const juce::MouseEvent& e)
 {
 	UIFX::mouseDown(e);
@@ -52,10 +55,12 @@ void FXChorus::paint(juce::Graphics& g)
 
 	auto bounds = getLocalBounds().toFloat();
 
-	voiceBounds = juce::Rectangle<float>(50.f, 25.f).withX(95.f).withY(bounds.getCentreY() - 25 / 2.f);
-	UIUtils::drawBevel(g, voiceBounds.translated(0.5f, 0.5f), 3.f, COLOR_BEVEL());
+	UIUtils::drawBevelLight(g, voiceBounds, false);
 	g.setFont(juce::FontOptions(15.f));
-	g.setColour(COLOR_KNOB_LABEL().withAlpha(0.5f));
+	g.setColour(COLOR_KNOB_LABEL());
+
+	if (!isEnabled())
+		return;
 
 	auto voices = (int)editor.audioProcessor.params.getRawParameterValue(prefix + "voices")->load();
 	g.drawText((voices == 0 ? "2" : juce::String(voices * 4)), voiceBounds, juce::Justification::centred);
@@ -64,6 +69,18 @@ void FXChorus::paint(juce::Graphics& g)
 void FXChorus::resized()
 {
 	UIFX::resized();
+
+	mix->setBounds(Rectangle<int>(KNOB_WIDTH, KNOB_HEIGHT).withX(KNOB_WIDTH).withBottomY(getBottom() - 10 - PANEL_PAD));
+	highcut->setBounds(mix->getBounds().translated(0, -KNOB_HEIGHT));
+	lowcut->setBounds(highcut->getBounds().translated(-KNOB_WIDTH, 0));
+	rate->setBounds(lowcut->getBounds().translated(0, -KNOB_HEIGHT));
+	depth->setBounds(highcut->getBounds().translated(0, -KNOB_HEIGHT));
+	feedback->setBounds(mix->getBounds().translated(-KNOB_WIDTH, 0));
+
+	auto b = getLocalBounds();
+	voiceBounds = juce::Rectangle<float>(KNOB_WIDTH, 25.f)
+		.withX(b.getCentreX() - KNOB_WIDTH / 2.f)
+		.withY(rate->getY() + 23.f - KNOB_HEIGHT);
 }
 
 void FXChorus::showVoicesMenu()

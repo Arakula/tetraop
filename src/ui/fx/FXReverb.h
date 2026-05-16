@@ -14,7 +14,6 @@ public:
 	std::unique_ptr<Rotary> predel;
 	std::unique_ptr<Rotary> decay;
 	std::unique_ptr<Rotary> size;
-	std::unique_ptr<Rotary> damp;
 	std::unique_ptr<Rotary> lowcut;
 	std::unique_ptr<Rotary> highcut;
 	std::unique_ptr<Rotary> modrate;
@@ -24,6 +23,8 @@ public:
 
 	FXReverb(TetraOPAudioProcessorEditor& e);
 	~FXReverb() override;
+
+	void onActiveToggle() override;
 
 private:
     void parameterChanged(const juce::String& parameterID, float newValue) override;

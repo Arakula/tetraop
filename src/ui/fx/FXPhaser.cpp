@@ -20,15 +20,6 @@ FXPhaser::FXPhaser(TetraOPAudioProcessorEditor& e)
     syncBtn.setAlpha(0.f);
     syncBtn.onClick = [this] { showSyncMenu(); };
 
-	center->setName   ("center");
-	depth->setName    ("depth");
-	rate->setName     ("rate");
-	rateSync->setName ("rateSync");
-	res->setName      ("res");
-	morph->setName    ("morph");
-	stereo->setName   ("stereo");
-	mix->setName      ("mix");
-
 	addAndMakeVisible(center.get());
 	addAndMakeVisible(depth.get());
 	addAndMakeVisible(rate.get());
@@ -60,6 +51,18 @@ void FXPhaser::parameterChanged(const juce::String&, float)
     juce::MessageManager::callAsync([this] { toggleUIComponents(); });
 }
 
+void FXPhaser::onActiveToggle()
+{
+	center->setEnabled(on);
+	depth->setEnabled(on);
+	rate->setEnabled(on);
+	rateSync->setEnabled(on);
+	res->setEnabled(on);
+	morph->setEnabled(on);
+	stereo->setEnabled(on);
+	mix->setEnabled(on);
+}
+
 void FXPhaser::paint(juce::Graphics& g)
 {
 	UIFX::paint(g);
@@ -83,6 +86,16 @@ void FXPhaser::toggleUIComponents()
 void FXPhaser::resized()
 {
 	UIFX::resized();
+
+	mix->setBounds(Rectangle<int>(KNOB_WIDTH, KNOB_HEIGHT).withX(KNOB_WIDTH).withBottomY(getBottom() - 10 - PANEL_PAD));
+	res->setBounds(mix->getBounds().translated(0, -KNOB_HEIGHT));
+	morph->setBounds(res->getBounds().translated(-KNOB_WIDTH, 0));
+	center->setBounds(morph->getBounds().translated(0, -KNOB_HEIGHT));
+	depth->setBounds(res->getBounds().translated(0, -KNOB_HEIGHT));
+	rate->setBounds(depth->getBounds().translated(0, -KNOB_HEIGHT));
+	rateSync->setBounds(rate->getBounds());
+
+	syncBtn.setBounds(Rectangle<int>(25, 25).withX(center->getX() + 15).withY(rate->getY() + 20));
 	toggleUIComponents();
 }
 
