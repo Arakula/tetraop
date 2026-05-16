@@ -20,7 +20,7 @@
 #include "ui/panels/GlobalsPanel.h"
 #include "ui/panels/FmMatrixPanel.h"
 #include "ui/panels/EnvDisplay.h"
-#include "ui/panels/LfoDisplay.h"
+#include "ui/panels/LFODisplay.h"
 #include "ui/panels/MacrosPanel.h"
 #include "ui/panels/ModulatorsPanel.h"
 #include "ui/panels/DragDropOverlay.h"
