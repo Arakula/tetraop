@@ -51,7 +51,7 @@ void UIFX::paint(juce::Graphics& g)
 	g.setColour (COLOR_PANEL());
 	UIUtils::drawPanel(g, b, true);
 	auto bbtn = onBtn.getBounds();
-	UIUtils::drawCheckmark(g, bbtn.toFloat(), COLOR_BACKGROUND(), color, on);
+	UIUtils::drawCheckmark(g, bbtn.toFloat(), COLOR_CHECKMARK_BG_LIGHT(), color, on);
 	g.setFont(juce::FontOptions(16.f));
 	g.setColour(COLOR_KNOB_LABEL());
 	auto title = titleOverride.isNotEmpty() ? titleOverride : name;

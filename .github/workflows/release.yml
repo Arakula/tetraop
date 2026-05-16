@@ -1,0 +1,214 @@
+name: Release
+
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-windows:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+         submodules: recursive
+
+      - name: Generate Build Files
+        run: |
+          cmake -G "Visual Studio 17 2022" -DBUILD_STANDALONE=OFF -DCMAKE_BUILD_TYPE=Release -S . -B ./build
+
+      - name: Build Project
+        run: |
+         cmake --build ./build --config Release
+
+      - name: Copy readme
+        run: |
+          cp ./doc/win-readme.txt ./build/TetraOP_artefacts/Release/readme.txt
+
+      - name: Copy presets
+        run: |
+          cp -r ./install/include/presets ./build/TetraOP_artefacts/Release
+
+      - name: Copy wavetables
+        run: |
+          cp -r ./install/include/wavetables ./build/TetraOP_artefacts/Release
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: tetraop-win
+          path: |
+            ./build/TetraOP_artefacts/Release/VST3
+            ./build/TetraOP_artefacts/Release/presets
+            ./build/TetraOP_artefacts/Release/wavetables
+            ./build/TetraOP_artefacts/Release/readme.txt
+            !./build/TetraOP_artefacts/Release/VST3/*.exp
+            !./build/TetraOP_artefacts/Release/VST3/*.lib
+
+      - name: Install NSIS
+        run: choco install nsis -y
+
+      - name: Get version from git tag
+        id: version
+        run: |
+          $tag = "${env:GITHUB_REF}"
+          $version = $tag -replace "^refs/tags/v", ""
+          echo "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Run makensis
+        working-directory: ./install/win
+        run: makensis /DVERSION="${{ env.VERSION }}" ./tetraop.nsi
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: tetraop-win-exe
+          path: ./install/win/*.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+         submodules: recursive
+
+      - name: Uninstall existing cmake (if any)
+        run: brew uninstall cmake || true
+
+      - name: Install Dependencies
+        run: brew install cmake
+
+      - name: Generate Build Files
+        run: |
+          cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUILD_STANDALONE=OFF -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -S . -B ./build
+
+      - name: Build Project
+        run: |
+         cmake --build ./build --config Release
+
+      - name: Copy readme
+        run: |
+          cp ./doc/macos-readme.txt ./build/TetraOP_artefacts/Release/readme.txt
+
+      - name: Copy presets
+        run: |
+          cp -r ./install/include/presets ./build/TetraOP_artefacts/Release
+
+      - name: Copy wavetables
+        run: |
+          cp -r ./install/include/wavetables ./build/TetraOP_artefacts/Release
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: tetraop-macos
+          path: |
+            ./build/TetraOP_artefacts/Release/AU
+            ./build/TetraOP_artefacts/Release/VST3
+            ./build/TetraOP_artefacts/Release/presets
+            ./build/TetraOP_artefacts/Release/wavetables
+            ./build/TetraOP_artefacts/Release/readme.txt
+            !./build/TetraOP_artefacts/Release/VST3/*.exp
+            !./build/TetraOP_artefacts/Release/VST3/*.lib
+
+  build-linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+         submodules: recursive
+
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo apt-get install libx11-dev libfreetype-dev libfontconfig1-dev libasound2-dev libxrandr-dev libxinerama-dev libxcursor-dev
+
+      - name: Generate Build Files
+        run: |
+          cmake -G "Unix Makefiles" -DBUILD_STANDALONE=OFF -DCMAKE_BUILD_TYPE=Release -S . -B ./build
+
+      - name: Build Project
+        run: |
+         cmake --build ./build --config Release
+
+      - name: Copy readme
+        run: |
+          cp ./doc/linux-readme.txt ./build/TetraOP_artefacts/Release/readme.txt
+
+      - name: Copy presets
+        run: |
+          cp -r ./install/include/presets ./build/TetraOP_artefacts/Release
+
+      - name: Copy wavetables
+        run: |
+          cp -r ./install/include/wavetables ./build/TetraOP_artefacts/Release
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: tetraop-linux
+          path: |
+            ./build/TetraOP_artefacts/Release/LV2
+            ./build/TetraOP_artefacts/Release/VST3
+            ./build/TetraOP_artefacts/Release/presets
+            ./build/TetraOP_artefacts/Release/wavetables
+            ./build/TetraOP_artefacts/Release/readme.txt
+            !./build/TetraOP_artefacts/Release/VST3/*.exp
+            !./build/TetraOP_artefacts/Release/VST3/*.lib
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [build-windows, build-macos, build-linux]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tetraop-win
+          path: artifacts/tetraop-win
+
+      - name: Download Windows installer artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tetraop-win-exe
+          path: artifacts/tetraop-win-exe
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tetraop-macos
+          path: artifacts/tetraop-macos
+
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tetraop-linux
+          path: artifacts/tetraop-linux
+
+      - name: Append tag to artifacts
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}  # Extracts the tag name, e.g., v1.0.0
+
+          # Zip each platform's artifacts with the tag in the name
+          cd artifacts
+          zip -r tetraop-win-${TAG_NAME}.zip tetraop-win
+          zip -r tetraop-macos-${TAG_NAME}.zip tetraop-macos
+          zip -r tetraop-linux-${TAG_NAME}.zip tetraop-linux
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          tag_name: ${{ github.ref_name }}
+          files: |
+            artifacts/tetraop-win-*.zip
+            artifacts/tetraop-win-exe/*.exe
+            artifacts/tetraop-macos-*.zip
+            artifacts/tetraop-linux-*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

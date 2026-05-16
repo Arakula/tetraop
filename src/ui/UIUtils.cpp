@@ -203,10 +203,10 @@ void UIUtils::drawCheckmark(Graphics& g, Rectangle<float> bounds, Colour bg, Col
     g.fillRoundedRectangle(b, 1.f);
     if (checked)
     {
-        g.setColour(check.withAlpha(0.5f));
-        g.fillRect(b.reduced(1.f));
         g.setColour(check);
-        g.fillRect(b.reduced(2.f));
+        g.fillRoundedRectangle(b, 1.f);
+        g.setColour(Colours::black.withAlpha(0.35f));
+        g.drawRoundedRectangle(b, 1.f, 1.f);
     }
 }
 
