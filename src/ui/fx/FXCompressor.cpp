@@ -110,7 +110,7 @@ void FXCompressor::resized()
 	auto b = getLocalBounds();
 	redBounds = Rectangle<int>(70, 10)
 		.withX(b.getCentreX() - 70 / 2)
-		.withY(PANEL_HEADER_HEIGHT + 70);
+		.withY(PANEL_HEADER_HEIGHT + 60);
 
 	toggleUIComponents();
 }

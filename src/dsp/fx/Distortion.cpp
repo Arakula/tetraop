@@ -35,7 +35,7 @@ void Distortion::prepare(float _srate)
 	colorL.mode = SVF::Off;
 	colorR.mode = SVF::Off;
 
-	drive = audioProcessor.modulation->getValue(driveParam);
+	drive = std::exp(audioProcessor.modulation->getValue(driveParam) * DB2LOG);
 	gain = audioProcessor.modulation->getValue(gainParam);
 	mix = audioProcessor.modulation->getValue(mixParam);
 	dryLeft.resize(audioProcessor.samplesPerBlock * 2);
@@ -50,7 +50,7 @@ void Distortion::processBlock(float* left, float* right, int nsamps, int /*block
 		colorL.clear(0.f);
 		colorR.clear(0.f);
 		audioProcessor.distoversampler->reset();
-		drive = audioProcessor.modulation->getValue(driveParam, false, nsamps);
+		drive = std::exp(audioProcessor.modulation->getValue(driveParam, false, nsamps) * DB2LOG);
 		gain = audioProcessor.modulation->getValue(gainParam, false, nsamps);
 		mix = audioProcessor.modulation->getValue(mixParam, false, nsamps);
 		drive = std::exp(drive * globals::DB2LOG);
@@ -58,7 +58,6 @@ void Distortion::processBlock(float* left, float* right, int nsamps, int /*block
 		queueReset = false;
 	}
 
-	std::function<float(float)> dist;
 	int mode = (int)modeParam->load();
 	float drive_targ = audioProcessor.modulation->getValue(driveParam, false, nsamps);
 	float filter = audioProcessor.modulation->getValue(filterParam, false, nsamps);
@@ -73,9 +72,27 @@ void Distortion::processBlock(float* left, float* right, int nsamps, int /*block
 	auto gain_step = (gain_targ - gain) / nsamps;
 	auto mix_step = (mix_targ - mix) / nsamps;
 
-	if (mode == 0) dist = [](float x) { return std::tanh(x); };
-	else if (mode == 1) dist = [](float x) { return 2.f / (1.f + std::exp(-x)) - 1.f; };
-	else dist = [](float x) { return std::tanh(x + 0.3f * (x * x)); };
+	std::function<float(float, float)> dist;
+	if (mode == 0) dist = [](float sample, float amount) 
+		{ 
+			constexpr float a = 0.2f; // asymmetry
+			constexpr float atana = 0.19739555984988078f; // atan(a)
+			amount -= 1.f;
+
+			float num = std::atan(sample * amount + a) - atana;
+			float den = std::atan(amount + a) - atana;
+
+			return den <= 0.f ? sample : num / den;
+		};
+	else if (mode == 1) dist = [](float sample, float amount) 
+		{ 
+			float xk = sample * (amount - 1);
+			return (xk + sample) / (1.0f + std::abs(xk));
+		};
+	else dist = [](float sample, float amount) 
+		{ 
+			return std::min(std::max(-1.f, sample * amount), 1.f);
+		};
 
 	auto ffreq = 20.0f * std::pow(1000.f, filter < 0.f ? 1 + filter : filter); // map -1,1 to 20...20000
 	if (filter == 0.f) {
@@ -130,10 +147,10 @@ void Distortion::processBlock(float* left, float* right, int nsamps, int /*block
 	filterL.processBlock(left, nsamps, 0, nsamps, ffreq, 0.707f);
 	filterR.processBlock(right, nsamps, 0, nsamps, ffreq, 0.707f);
 
-	float makeup = 1.f / (drive >= 1.f ? dist(drive) : 1.f);
 	for (int i = 0; i < nsamps; ++i) {
-		left[i] = dist(left[i] * drive) * makeup * gain;
-		right[i] = dist(right[i] * drive) * makeup * gain;
+		float makeup = drive > 1.f ? 1.f / drive : 1.f;
+		left[i] = dist(left[i], drive) * makeup * gain;
+		right[i] = dist(right[i], drive) * makeup * gain;
 		drive += drive_step;
 		gain += gain_step;
 	}

@@ -193,7 +193,7 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add(std::make_unique<juce::AudioParameterFloat>("fx_chorus_lowcut", "FX Chorus Lowcut", juce::NormalisableRange<float>(20.0f, 20000.0f, 1.f, 0.3f), 20.0f));
     layout.add(std::make_unique<juce::AudioParameterFloat>("fx_chorus_highcut", "FX Chorus Highcut", juce::NormalisableRange<float>(20.0f, 20000.0f, 1.f, 0.3f), 20000.0f));
     layout.add(std::make_unique<juce::AudioParameterFloat>("fx_chorus_feedback", "FX Chorus Feedback", -.95f, .95f, 0.f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_chorus_mix", "FX Chorus Mix", 0.f, 1.f, 0.5f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_chorus_mix", "FX Chorus Mix", 0.f, 1.f, 1.0f));
 
     layout.add(std::make_unique<juce::AudioParameterBool>("fx_delay_on", "FX Delay On", false));
     layout.add(std::make_unique<juce::AudioParameterChoice>("fx_delay_mode", "FX Delay Mode", juce::StringArray{ "Normal", "Ping Pong", "Tap" }, 0));
@@ -213,10 +213,10 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add(std::make_unique<juce::AudioParameterBool>("fx_dist_on", "FX Dist On", false));
     layout.add(std::make_unique<juce::AudioParameterChoice>("fx_dist_mode", "FX Dist Mode", juce::StringArray{ "Tube", "SoftClip", "HardClip" }, 0));
     layout.add(std::make_unique<juce::AudioParameterFloat>("fx_dist_filter", "FX Dist Pre Filter", -1.f, 1.f, 0.f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_dist_drive", "FX Dist Drive", -40.f, 40.f, 0.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_dist_drive", "FX Dist Drive", 0.f, 40.f, 0.f));
     layout.add(std::make_unique<juce::AudioParameterFloat>("fx_dist_color", "FX Dist Color", -1.f, 1.f, 0.f));
     layout.add(std::make_unique<juce::AudioParameterFloat>("fx_dist_gain", "FX Dist Gain", -40.f, 40.f, 0.f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_dist_mix", "FX Dist Mix", 0.f, 1.f, 0.5f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_dist_mix", "FX Dist Mix", 0.f, 1.f, 1.f));
 
     layout.add(std::make_unique<juce::AudioParameterBool>("fx_comp_on", "FX Comp On", false));
     layout.add(std::make_unique<juce::AudioParameterBool>("fx_comp_makeup", "FX Comp Makeup", true));

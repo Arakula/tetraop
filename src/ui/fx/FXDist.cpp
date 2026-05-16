@@ -16,7 +16,7 @@ FXDist::FXDist(TetraOPAudioProcessorEditor& e)
 		};
 
 	filter = std::make_unique<Rotary>(editor, prefix + "filter", "Filter", Rotary::FilterLPHP, true);
-	drive = std::make_unique<Rotary>(editor, prefix + "drive", "Drive", Rotary::dB, true);
+	drive = std::make_unique<Rotary>(editor, prefix + "drive", "Drive", Rotary::dB, false);
 	color = std::make_unique<Rotary>(editor, prefix + "color", "Color", Rotary::FilterLPHP, true);
 	gain = std::make_unique<Rotary>(editor, prefix + "gain", "Gain", Rotary::dB, true);
 	mix = std::make_unique<Rotary>(editor, prefix + "mix", "Mix", Rotary::Percent);

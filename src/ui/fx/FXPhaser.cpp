@@ -95,7 +95,7 @@ void FXPhaser::resized()
 	rate->setBounds(depth->getBounds().translated(0, -KNOB_HEIGHT));
 	rateSync->setBounds(rate->getBounds());
 
-	syncBtn.setBounds(Rectangle<int>(25, 25).withX(center->getX() + 15).withY(rate->getY() + 20));
+	syncBtn.setBounds(Rectangle<int>(25, 25).withX(center->getX() + 15).withY(rate->getY() + 23));
 	toggleUIComponents();
 }
 
