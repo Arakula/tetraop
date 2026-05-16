@@ -9,8 +9,8 @@ PresetManager::PresetManager(TetraOPAudioProcessor& audioProcessor, String dir)
 	if (!File(dir).exists())
     	File(dir).createDirectory();
 
-    auto userDir = File(dir).getChildFile("User");
-    auto factoryDir = File(dir).getChildFile("Factory");
+    userDir = File(dir).getChildFile("User");
+    factoryDir = File(dir).getChildFile("Factory");
 
     if (!userDir.exists()) userDir.createDirectory();
     if (!factoryDir.exists()) factoryDir.createDirectory();
@@ -238,7 +238,8 @@ void PresetManager::loadPresetFromPath(String path)
 void PresetManager::loadInit()
 {
     isLoadingPreset = true;
-    // audioProcessor.setStateInformation(BinaryData::Init_xml, BinaryData::Init_xmlSize);
+     audioProcessor.setStateInformation(BinaryData::Init_xml, BinaryData::Init_xmlSize);
+    isLoadingPreset = false;
 }
 
 String PresetManager::exportPreset(Preset preset)

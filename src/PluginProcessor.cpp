@@ -800,6 +800,7 @@ void TetraOPAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
     auto paramsState = params.copyState();
     state.appendChild(paramsState, nullptr);
     state.setProperty("version", PROJECT_VERSION, nullptr);
+    state.setProperty("name", presetmgr->selectedPreset.name, nullptr);
 
     auto lfos = ValueTree("LFOS");
     for (int i = 0; i < MAX_LFOS; ++i) {
@@ -907,6 +908,11 @@ void TetraOPAudioProcessor::setStateInformation (const void* data, int sizeInByt
 
         sortFX(numbers);
     }
+
+    PresetManager::Preset preset;
+    preset.id = state.getProperty("id", juce::Uuid().toString());
+    preset.name = state.getProperty("name", "(Empty)");
+    presetmgr->setSelected(preset);
 }
 
 //==============================================================================

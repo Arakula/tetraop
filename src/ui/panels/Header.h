@@ -62,7 +62,9 @@ public:
     void resized() override;
     void toggleUIComponents();
     void showPresets();
+    void savePreset();
 
 private:
+    std::unique_ptr<juce::FileChooser> fileChooser;
     TetraOPAudioProcessorEditor& editor;
 };

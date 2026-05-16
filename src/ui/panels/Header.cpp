@@ -92,6 +92,7 @@ Header::Header(TetraOPAudioProcessorEditor& e)
 
 	addAndMakeVisible(saveBtn);
 	saveBtn.setAlpha(0.f);
+	saveBtn.onClick = [this] { savePreset(); };
 
 	addAndMakeVisible(undoBtn);
 	undoBtn.setAlpha(0.f);
@@ -306,5 +307,28 @@ void Header::showPresets()
 				editor.audioProcessor.presetmgr->loadPresetFromPath(file->file.getFullPathName());
 				return;
 			}
+		});
+}
+
+void Header::savePreset()
+{
+	auto& mgr = editor.audioProcessor.presetmgr;
+	String dir = mgr->userDir.getFullPathName();
+
+	fileChooser.reset(new juce::FileChooser("Save preset", dir, "*.xml"));
+	fileChooser->launchAsync(juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::warnAboutOverwriting,
+		[this](const juce::FileChooser& fc)
+		{
+			auto file = fc.getResult();
+			if (file.isDirectory()) return;
+			if (file == juce::File()) return;
+
+			auto& mgr = editor.audioProcessor.presetmgr;
+			auto preset = mgr->getPreset(mgr->selectedPreset.id);
+			preset.name = file.getFileNameWithoutExtension();
+			auto filestr = mgr->exportPreset(preset);
+
+			file.replaceWithText(filestr);
+			editor.audioProcessor.presetmgr->loadPresetFromPath(file.getFullPathName());
 		});
 }

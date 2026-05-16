@@ -51,6 +51,8 @@ public:
 	};
 
     String dir;
+	File userDir;
+	File factoryDir;
 	Preset selectedPreset;
 	String selectedCategory = "";
 	String selectedBank = "";
