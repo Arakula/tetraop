@@ -89,6 +89,7 @@ public:
 	void importBank(File file);
 
 	FileTree::Folder buildFileTree(const juce::File& directory, const juce::String& extension, int& nextId);
+	void flattenTree(const FileTree::Folder& folder, std::vector<FileTree::FileEntry>& out);
 
 
 private:

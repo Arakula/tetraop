@@ -5,6 +5,7 @@
 #include "../UIUtils.h"
 #include "../widgets/Rotary.h"
 #include "../widgets/Meter.h"
+#include "../../engine/PresetManager.h"
 
 class TetraOPAudioProcessorEditor;
 using namespace globals;
@@ -63,6 +64,7 @@ public:
     void toggleUIComponents();
     void showPresets();
     void savePreset();
+    void selectNextPreset(bool isNext);
 
 private:
     std::unique_ptr<juce::FileChooser> fileChooser;

@@ -82,9 +82,11 @@ Header::Header(TetraOPAudioProcessorEditor& e)
 
 	addAndMakeVisible(prevPreset);
 	prevPreset.setAlpha(0.f);
+	prevPreset.onClick = [this] { selectNextPreset(true); };
 
 	addAndMakeVisible(nextPreset);
 	nextPreset.setAlpha(0.f);
+	nextPreset.onClick = [this] { selectNextPreset(false); };
 
 	addAndMakeVisible(preset);
 	preset.setAlpha(0.f);
@@ -331,4 +333,47 @@ void Header::savePreset()
 			file.replaceWithText(filestr);
 			editor.audioProcessor.presetmgr->loadPresetFromPath(file.getFullPathName());
 		});
+}
+
+void Header::selectNextPreset(bool isNext)
+{
+	int startId = 0;
+	auto& mgr = editor.audioProcessor.presetmgr;
+	auto tree = mgr->buildFileTree(
+		mgr->dir, ".xml", startId
+	);
+
+	String fname = mgr->selectedPreset.name;
+
+	std::vector<PresetManager::FileTree::FileEntry> presets;
+	mgr->flattenTree(tree, presets);
+
+	if (presets.empty())
+		return;
+
+	if (fname == "-- Init --")
+	{
+		if (presets.size() > 0)
+			mgr->loadPresetFromPath(isNext 
+				? presets[0].file.getFullPathName()
+				: presets.back().file.getFullPathName()
+			);
+		return;
+	}
+
+	for (int i = 0; i < presets.size(); ++i)
+	{
+		if (presets[i].file.getFileNameWithoutExtension() == fname)
+		{
+			int index = isNext ? i + 1 : i - 1;
+			if (index == presets.size() || index < 0)
+				mgr->loadInit();
+			else 
+				mgr->loadPresetFromPath(presets[index].file.getFullPathName());
+			return;
+		}
+	}
+
+	// preset not found, revert to init
+	mgr->loadInit();
 }

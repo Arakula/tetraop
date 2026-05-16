@@ -307,10 +307,7 @@ void PresetManager::setSelected(Preset preset)
     if (preset.id.isEmpty()) {
         preset.version = PROJECT_VERSION;
         preset.name = "-- Init --";
-        preset.path = File(dir)
-            .getChildFile("Factory")
-            .getChildFile("Init.xml")
-            .getFullPathName();
+        preset.path = "";
     }
 
     selectedPreset = preset;
@@ -615,4 +612,16 @@ PresetManager::FileTree::Folder PresetManager::buildFileTree(const juce::File& d
     }
 
     return folder;
+}
+
+void PresetManager::flattenTree(const FileTree::Folder& folder,
+    std::vector<FileTree::FileEntry>& out)
+{
+    // Add files in this folder
+    for (const auto& file : folder.files)
+        out.push_back(file);
+
+    // Recurse into children
+    for (const auto& child : folder.children)
+        flattenTree(child, out);
 }
