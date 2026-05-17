@@ -312,7 +312,7 @@ static inline std::pair<SIMDF, SIMDF> processUnison(
             phs = U.phase[v] + offset;
             SIMDF s = renderUnison(tables[lane], tables[t2lane], size, dist(phs, dist_amt), morph.get(lane));
             window(s, phs);
-            s *= U.mask[v];
+            s = mipp::blend(s, SIMDF(0.f), Utils::floatToMask(U.mask[v]));
 
             accL[lane] += (s * U.gain_l[v]).sum();
             accR[lane] += (s * U.gain_r[v]).sum();
