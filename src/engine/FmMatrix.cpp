@@ -304,12 +304,13 @@ static inline std::pair<SIMDF, SIMDF> processUnison(
         const int t2lane = lane + 4;
         const float pitch_ratio = osc.pitch_ratio.get(lane);
         const float phase_inc = osc.phase_inc.get(lane);
+        const float dist_amt = osc.dist_amt.get(lane);
 
         SIMDF phs;
         for (int v = 0; v < batch; ++v) // for each unison voice
         {
             phs = U.phase[v] + offset;
-            SIMDF s = renderUnison(tables[lane], tables[t2lane], size, dist(phs, osc.dist_amt), morph.get(lane));
+            SIMDF s = renderUnison(tables[lane], tables[t2lane], size, dist(phs, dist_amt), morph.get(lane));
             window(s, phs);
             s *= U.mask[v];
 
