@@ -19,6 +19,7 @@ namespace globals {
 	constexpr float MORPH_SECONDS = 0.005f;
 	constexpr float DB2LOG = 0.11512925464970228420089957273422f;
 	constexpr float LOG10 = 2.30258509299f;
+	constexpr float ISQRT2 = 0.7071067811865475f;
 	constexpr float PARAM_SMOOTHER_RESISTANCE = 0.05f;
 	constexpr int SCOPE_BUFLEN = 512;
 	constexpr float MAX_FILTER_DRIVE = 24.f;

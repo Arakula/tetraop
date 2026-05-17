@@ -210,7 +210,8 @@ public:
         int lastIdx = lastScopeIdx[oscIdx];
         if (idx == lastIdx) return;
 
-        float val = ((out_l + out_r) * 0.5f).get(voice);
+        static const float SQRT2 = 1.4142135623730951f;
+        float val = ((out_l + out_r) * SQRT2).get(voice);
         int start = lastIdx;
         int end = idx;
         if (end < start) end += SCOPE_BUFLEN; // handle wrap-around

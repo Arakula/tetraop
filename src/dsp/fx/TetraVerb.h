@@ -4,6 +4,56 @@
 #include <array>
 #include <vector>
 #include <algorithm>
+#include <cstring>
+
+class TapDelay
+{
+public:
+    static constexpr int MAX_TAPS = 10;
+    static constexpr int MAX_SIZE = 200000;
+
+    TapDelay()
+    {
+        write = 0;
+        amount = 0;
+        std::memset(buffer, 0, sizeof(buffer));
+        std::memset(feedback, 0, sizeof(feedback));
+        std::memset(time, 1, sizeof(time));
+    }
+
+    void setAmount(int amt) { amount = amt; }
+
+    void setTime(int i, int t) { time[i] = t; }
+
+    void setFeedback(int i, float f) { feedback[i] = f; }
+
+    void process(float& sample)
+    {
+        float out = sample;
+
+        for (int i = 0; i < amount; i++)
+        {
+            int r = write - time[i];
+            if (r < 0) r += MAX_SIZE;
+
+            out += buffer[r] * feedback[i];
+        }
+
+        buffer[write] = sample;
+
+        sample = out;
+
+        if (++write >= MAX_SIZE)
+            write = 0;
+    }
+
+private:
+    float buffer[MAX_SIZE];
+    float feedback[MAX_TAPS];
+    int   time[MAX_TAPS];
+    int   write;
+    int   amount;
+};
 
 class TetraVerb
 {
@@ -18,7 +68,10 @@ class TetraVerb
         return table[idx];
     }
 
-
+    TapDelay	early1L;
+	TapDelay	early1R;
+	TapDelay	early2L;
+	TapDelay	early2R;
 
 private:
 	float size = 0.0f;
