@@ -548,7 +548,6 @@ public:
 
     void reset()
     {
-        b = 0;
         z = 0;
     }
 

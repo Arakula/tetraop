@@ -16,8 +16,9 @@ public:
     struct SIMDVoice
     {
         std::array<float, 4> key; // float 0..127 note pressed used to get wavetable
+        float env_coeff = 1.f;
         SIMDF env;
-        SIMDF env_step;
+        SIMDF env_targ;
         SIMDF vel_mult;
         SIMDF vel_step;
 

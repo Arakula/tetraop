@@ -80,7 +80,7 @@ void Voice::noteStarted()
         updateMatrix(voice);
     }
 
-    // FIX pops by resetting envelope to zero
+    // reset envelope to zero
     bool msk[4] = { false, false, false, false };
     msk[lane] = true;
     SIMDM mask = SIMDM(msk);
@@ -197,8 +197,14 @@ void Voice::noteTimbreChanged()
 void Voice::setCurrentSampleRate (double newRate)
 {
     MPESynthesiserVoice::setCurrentSampleRate (newRate);
-    srate = (float)getSampleRate();
+
+    if (newRate <= 0.f) return; // FIX
+    srate = (float)newRate;
     israte = 1.f / srate;
+    
+    auto& voice = audioProcessor.synth->vox[batch].voice;
+    float smoothTime = 0.001f; // 1 ms
+    voice.env_coeff = 1.0f - expf(-1.0f / (smoothTime * srate));
 }
 
 void Voice::startBlock(int startSample, int numSamples)
@@ -227,7 +233,7 @@ void Voice::startBlock(int startSample, int numSamples)
         env_targ *= fastKillGain;
     }
 
-    Utils::setMasked(voice.env_step, (env_targ - voice.env.get(lane)) / numSamples, mask);
+    Utils::setMasked(voice.env_targ, env_targ, mask);
 
     if (vel != vel_targ)
     {
@@ -269,14 +275,6 @@ void Voice::startBlock(int startSample, int numSamples)
 
 void Voice::endBlock(int, int numSamples)
 {
-    if (released)
-        release_elapsed += (float)(numSamples * israte);
-    else
-        attack_elapsed += (float)(numSamples * israte);
-
-    if (glide)
-        glide_elapsed += (float)(numSamples * israte);
-
     // velocity is interpolated over a block in MONO mode
     if (vel != vel_targ) 
     {
@@ -299,6 +297,14 @@ void Voice::endBlock(int, int numSamples)
     {
         clearCurrentNote();
     }
+
+    if (released)
+        release_elapsed += (float)(numSamples * israte);
+    else
+        attack_elapsed += (float)(numSamples * israte);
+
+    if (glide)
+        glide_elapsed += (float)(numSamples * israte);
 }
 
 void Voice::clear()

@@ -246,7 +246,14 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
             activeVoices.push_back((Voice*)voice);
 
     if (activeVoices.empty())
+    {
+        for (int i = 0; i < numSamples; ++i)
+        {
+            left[startSample + i] = dcBlockerL.process(left[startSample + i]);
+            right[startSample + i] = dcBlockerR.process(right[startSample + i]);
+        }
         return;
+    }
 
     for (auto& voice : activeVoices)
     {
@@ -397,7 +404,8 @@ void Synth::renderNextSubBlock(AudioBuffer<float>& buffer, int startSample, int 
         {
             left[startSample + s] += (outL[s] * v.voice.env * v.voice.vel_mult).sum();
             right[startSample + s] += (outR[s] * v.voice.env * v.voice.vel_mult).sum();
-            v.voice.env += v.voice.env_step;
+
+            v.voice.env += (v.voice.env_targ - v.voice.env) * v.voice.env_coeff;
             v.voice.vel_mult += v.voice.vel_step;
         }
     }
