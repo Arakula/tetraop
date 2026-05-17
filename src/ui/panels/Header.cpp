@@ -234,6 +234,25 @@ static const PresetManager::FileTree::FileEntry* findFileById(
 	return nullptr;
 }
 
+static const PresetManager::FileTree::FileEntry* findFileByName(
+	const std::vector<PresetManager::FileTree::Folder>& folders,
+	String name)
+{
+	for (const auto& folder : folders)
+	{
+		for (const auto& file : folder.files)
+		{
+			if (file.name == name)
+				return &file;
+		}
+
+		if (auto* result = findFileByName(folder.children, name))
+			return result;
+	}
+
+	return nullptr;
+}
+
 static void buildPresetsMenu(juce::PopupMenu& menu,
 	const std::vector<PresetManager::FileTree::Folder>& folders,
 	String selected)
@@ -314,8 +333,14 @@ void Header::showPresets()
 
 void Header::savePreset()
 {
+	int startId = 0;
 	auto& mgr = editor.audioProcessor.presetmgr;
-	String dir = mgr->userDir.getFullPathName();
+	auto fileTree = mgr->buildFileTree(mgr->dir, ".xml", startId);
+	auto selPreset = findFileByName(fileTree.children, mgr->selectedPreset.name);
+
+	String dir = selPreset
+		? selPreset->file.getFullPathName()
+		: mgr->userDir.getFullPathName();
 
 	fileChooser.reset(new juce::FileChooser("Save preset", dir, "*.xml"));
 	fileChooser->launchAsync(juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::warnAboutOverwriting,

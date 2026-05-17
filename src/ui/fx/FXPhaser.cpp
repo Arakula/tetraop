@@ -88,6 +88,7 @@ void FXPhaser::resized()
 	UIFX::resized();
 
 	mix->setBounds(Rectangle<int>(KNOB_WIDTH, KNOB_HEIGHT).withX(KNOB_WIDTH).withBottomY(getBottom() - 10 - PANEL_PAD));
+	stereo->setBounds(mix->getBounds().translated(-KNOB_WIDTH, 0));
 	res->setBounds(mix->getBounds().translated(0, -KNOB_HEIGHT));
 	morph->setBounds(res->getBounds().translated(-KNOB_WIDTH, 0));
 	center->setBounds(morph->getBounds().translated(0, -KNOB_HEIGHT));
