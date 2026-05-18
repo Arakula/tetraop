@@ -79,6 +79,7 @@ public:
     float fastKillGain = 1.f; // fastkill fadeout gain
     float fastKillStep = 1.f; // fastkill gain increment per sample
 
+    float freq = 0.f;
     float glide_elapsed = 0;
     bool glide = false;
     float glide_start = 0;
@@ -92,6 +93,7 @@ public:
     void clear();
 
     float getCurrentNote() override { return key * 127.0f; }
+    void updateFreq(float keyval);
 
     void noteStarted() override;
     void noteRetriggered() override;
@@ -108,6 +110,7 @@ public:
     void endBlock(int startSample, int numSamples);
 
     void updateFilters(bool init, int blkoffset = 0);
+    float getKeytrackCutoff(float cutoff, float keytrack);
     void updateMatrix(SIMDVoice& voice, int blkoffset = 0);
 
 private:
@@ -127,7 +130,9 @@ private:
     std::atomic<float>* legatoParam = nullptr;
     std::atomic<float>* velSenseParam = nullptr;
     std::atomic<float>* f1OnParam = nullptr;
+    std::atomic<float>* f1KTrackParam = nullptr;
     std::atomic<float>* f2OnParam = nullptr;
+    std::atomic<float>* f2KTrackParam = nullptr;
 
     Modulation::Param* f1CutParam = nullptr;
     Modulation::Param* f1ResParam = nullptr;

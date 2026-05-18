@@ -30,7 +30,7 @@ OSC::OSC(int _id, int _voiceId, TetraOPAudioProcessor& p)
 	unisonBlendParam = audioProcessor.modulation->getParamHandle(prefix + "unison_blend");
 }
 
-void OSC::trigger(int note, float _srate)
+void OSC::trigger(float freq, float _srate)
 {
 	triggered = true;
 	srate = _srate;
@@ -41,7 +41,7 @@ void OSC::trigger(int note, float _srate)
 	SIMDM mask = SIMDM(msk);
 
 	auto& mod = audioProcessor.modulation;
-	Utils::setMasked(osc.freq, 440.0f * std::pow(2.0f, (note - 69) / 12.0f), mask);
+	Utils::setMasked(osc.freq, freq, mask);
 	Utils::setMasked(osc.phase_inc, osc.freq.get(lane) / srate, mask);
 	Utils::setMasked(osc.out, 0.f, mask);
 	Utils::setMasked(osc.phase_offset, mod->getPolyValue(phaseOffsetParam, voiceId, 0), mask);
@@ -70,7 +70,7 @@ void OSC::trigger(int note, float _srate)
 	Utils::setMasked(osc.morph_targ, morph, mask);
 	osc.morph_snap = morph_snap;
 
-	bool isOn = (bool)onParam->load();
+	isOn = (bool)onParam->load();
 	auto level = mod->getPolyValue(levelParam, voiceId, 0) * isOn;
 	osc.isOn = isOn;
 	Utils::setMasked(osc.level, level, mask);
@@ -89,7 +89,7 @@ void OSC::trigger(int note, float _srate)
 	osc.pinkNoiseGen[lane].reseed(seed);
 }
 
-void OSC::retrigger(int note, float _srate)
+void OSC::retrigger(float freq, float _srate)
 {
 	srate = _srate;
 	auto& vox = audioProcessor.synth->vox[batch];
@@ -98,7 +98,7 @@ void OSC::retrigger(int note, float _srate)
 	msk[lane] = true;
 	SIMDM mask = SIMDM(msk);
 
-	Utils::setMasked(osc.freq, 440.0f * std::pow(2.0f, (note - 69) / 12.0f), mask);
+	Utils::setMasked(osc.freq, freq, mask);
 	Utils::setMasked(osc.phase_inc, osc.freq.get(lane) / srate, mask);
 }
 
@@ -116,14 +116,14 @@ void OSC::startBlock(int startSample, int numSamples)
 	// recalc frequency during glide
 	if (voice->glide)
 	{
-		Utils::setMasked(osc.freq, 440.0f * std::pow(2.0f, (voice->glide_curr * 127.f - 69) / 12.0f), mask);
-		Utils::setMasked(osc.phase_inc, osc.freq.get(lane) / srate, mask);
+		Utils::setMasked(osc.freq, voice->freq, mask);
+		Utils::setMasked(osc.phase_inc, voice->freq / srate, mask);
 	}
 
 	int blkoffset = startSample - audioProcessor.currBlockPos + numSamples;
 	auto& mod = audioProcessor.modulation;
 
-	auto isOn = (bool)onParam->load();
+	isOn = (bool)onParam->load();
 	osc.isOn = isOn;
 	Utils::setMasked(osc.level_targ, mod->getPolyValue(levelParam, voiceId, blkoffset) * isOn, mask);
 	if (osc.level.get(lane) < 1e-4f && osc.level_targ.get(lane) < 1e-4f) 

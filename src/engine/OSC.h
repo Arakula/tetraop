@@ -70,6 +70,7 @@ public:
     float unison_stereo = -1.f;
     float unison_spread = -1.f;
     float unison_blend = -1.f;
+    bool isOn = false;
 
     
 
@@ -79,8 +80,8 @@ public:
     OSC(OSC&&) = default;
     OSC& operator=(OSC&&) = default;
 
-    void trigger(int note, float srate);
-    void retrigger(int note, float srate);
+    void trigger(float freq, float srate);
+    void retrigger(float freq, float srate);
     void startBlock(int startSample, int numSamples);
     void recalcUnison(SIMDUnison& unison, int mod) const;
 

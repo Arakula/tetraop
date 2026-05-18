@@ -1,5 +1,4 @@
 // copyright 2026 tilr
-// based of nexus reverb
 #pragma once
 #include <array>
 #include <vector>

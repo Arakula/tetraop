@@ -150,7 +150,7 @@ void Header::paint(Graphics& g)
 	g.setFont(16.f);
 	//g.drawText("LIB", lib.getBounds().toFloat(), Justification::centred);
 	g.drawText("SYN", syn.getBounds().toFloat(), Justification::centred);
-	g.drawText("FXS", fxs.getBounds().toFloat(), Justification::centred);
+	g.drawText("FX", fxs.getBounds().toFloat(), Justification::centred);
 	g.drawText("MOD", mod.getBounds().toFloat(), Justification::centred);
 	g.drawText("CFG", cfg.getBounds().toFloat(), Justification::centred);
 
@@ -166,7 +166,7 @@ void Header::paint(Graphics& g)
 	g.fillRoundedRectangle(prevPreset.getBounds().withRight(saveBtn.getRight()).toFloat(), 5.f);
 
 	auto txt = tab == 0 ? "SYN"
-		: tab == 1 ? "FXS"
+		: tab == 1 ? "FX"
 		: tab == 2 ? "MOD"
 		: tab == 3 ? "CFG"
 		: "LIB";

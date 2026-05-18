@@ -18,7 +18,9 @@ Voice::Voice (TetraOPAudioProcessor& p, int _id)
     legatoParam = audioProcessor.params.getRawParameterValue("legato");
     velSenseParam = audioProcessor.params.getRawParameterValue("vel_sense");
     f1OnParam = audioProcessor.params.getRawParameterValue("f1_on");
+    f1KTrackParam = audioProcessor.params.getRawParameterValue("f1_ktrack");
     f2OnParam = audioProcessor.params.getRawParameterValue("f2_on");
+    f2KTrackParam = audioProcessor.params.getRawParameterValue("f2_ktrack");
 
     f1CutParam = audioProcessor.modulation->getParamHandle("f1_cut");
     f1ResParam = audioProcessor.modulation->getParamHandle("f1_res");
@@ -64,9 +66,11 @@ void Voice::noteStarted()
         glide_targ = note.initialNote / 127.0f;
     }
 
+    updateFreq(note.initialNote);
+
     for (int i = 0; i < MAX_OSCILLATORS; i++)
     {
-        osc[i].trigger(note.initialNote, srate);
+        osc[i].trigger(freq, srate);
     }
 
     updateFilters(true);
@@ -147,9 +151,11 @@ void Voice::noteRetriggered()
         glide_targ = note.initialNote / 127.0f;
     }
 
+    updateFreq(note.initialNote);
+
     for (int i = 0; i < MAX_OSCILLATORS; i++)
     {
-        osc[i].retrigger(note.initialNote, srate);
+        osc[i].retrigger(freq, srate);
     }
 
     auto& voice = audioProcessor.synth->vox[batch].voice;
@@ -265,12 +271,19 @@ void Voice::startBlock(int startSample, int numSamples)
                 t = 1.f - std::pow(1.f - t, glide_power);
 
             glide_curr = glide_start + (glide_targ - glide_start) * t;
-        } 
-        else
+            updateFreq(glide_curr * 127.f);
+        }
+        else if (glide_curr != glide_targ)
         {
             glide_curr = glide_targ;
+            updateFreq(glide_curr * 127.f);
         }
     }
+}
+
+void Voice::updateFreq(float keyval)
+{
+    freq = 440.0f * std::pow(2.0f, (keyval - 69) / 12.0f);
 }
 
 void Voice::endBlock(int, int numSamples)
@@ -318,6 +331,8 @@ void Voice::updateFilters(bool init, int blkoffset)
     if (init || f1_on) 
     {
         auto f1_cut = audioProcessor.modulation->getPolyValue(f1CutParam, id, blkoffset);
+        if ((bool)f1KTrackParam->load()) f1_cut = getKeytrackCutoff(f1_cut, 1.f);
+
         auto f1_res = audioProcessor.modulation->getPolyValue(f1ResParam, id, blkoffset);
         auto f1_drive = audioProcessor.modulation->getPolyValue(f1DriveParam, id, blkoffset);
         auto f1_mix = audioProcessor.modulation->getPolyValue(f1MixParam, id, blkoffset);
@@ -331,6 +346,8 @@ void Voice::updateFilters(bool init, int blkoffset)
     if (init || f2_on)
     {
         auto f2_cut = audioProcessor.modulation->getPolyValue(f2CutParam, id, blkoffset);
+        if ((bool)f2KTrackParam->load()) f2_cut = getKeytrackCutoff(f2_cut, 1.f);
+
         auto f2_res = audioProcessor.modulation->getPolyValue(f2ResParam, id, blkoffset);
         auto f2_drive = audioProcessor.modulation->getPolyValue(f2DriveParam, id, blkoffset);
         auto f2_mix = audioProcessor.modulation->getPolyValue(f2MixParam, id, blkoffset);
@@ -339,6 +356,17 @@ void Voice::updateFilters(bool init, int blkoffset)
         else
             audioProcessor.synth->updateFilters(id, 1, f2_cut, f2_res, f2_drive, f2_mix);
     }
+}
+
+float Voice::getKeytrackCutoff(float cutoff, float keytrack)
+{
+    if (keytrack == 0.f)
+        return cutoff;
+
+    return std::clamp(cutoff * std::pow(
+        freq / 440.f,
+        keytrack
+    ), 20.f, 20000.f);
 }
 
 /*

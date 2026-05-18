@@ -5,8 +5,7 @@ void TB303::init(SIMDF cutoff, SIMDF resonance, bool reset, SIMDM mask)
     Utils::setMasked(cut_targ, cutoff, mask);
     Utils::setMasked(res_targ, resonance, mask);
 
-    SIMDF q =  (one - (resonance * -3.f).exp()) / (one - SIMDF(-3.f).exp());
-
+    SIMDF q =  ((one - (resonance * -3.f).exp()) / (one - SIMDF(-3.f).exp()));
     // calculate intermediate variables:
     SIMDF wc = cutoff * MathConstants<float>::twoPi * israte;
     SIMDF s,c;
