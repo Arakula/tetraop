@@ -2,7 +2,7 @@
 
 <TETRAOP version="0.0.1" id="e126c45fd6db4888aa5ae22e6ea614a4" name="-- Init --"
          description="" category="" author="" date="20260516T162218.379+0100">
-  <PARAMETERS>
+ <PARAMETERS>
     <PARAM id="a_feedback" value="0.0"/>
     <PARAM id="a_fixed" value="0.0"/>
     <PARAM id="a_level" value="1.0"/>
@@ -83,42 +83,42 @@
     <PARAM id="d_unison_spread" value="0.2999999523162842"/>
     <PARAM id="d_unison_stereo" value="1.0"/>
     <PARAM id="d_unison_voices" value="1.0"/>
-    <PARAM id="env1_att" value="0.009999998845160007"/>
+    <PARAM id="env1_att" value="0.004999999888241291"/>
     <PARAM id="env1_dec" value="0.1499999910593033"/>
     <PARAM id="env1_del" value="0.0"/>
     <PARAM id="env1_hld" value="0.0"/>
     <PARAM id="env1_mode" value="0.0"/>
-    <PARAM id="env1_rel" value="1.0"/>
+    <PARAM id="env1_rel" value="0.01499999966472387"/>
     <PARAM id="env1_sus" value="0.800000011920929"/>
     <PARAM id="env1_tenatt" value="0.0"/>
     <PARAM id="env1_tendec" value="-0.25"/>
     <PARAM id="env1_tenrel" value="-0.25"/>
-    <PARAM id="env2_att" value="0.009999998845160007"/>
+    <PARAM id="env2_att" value="0.004999999888241291"/>
     <PARAM id="env2_dec" value="0.1499999910593033"/>
     <PARAM id="env2_del" value="0.0"/>
     <PARAM id="env2_hld" value="0.0"/>
     <PARAM id="env2_mode" value="0.0"/>
-    <PARAM id="env2_rel" value="1.0"/>
+    <PARAM id="env2_rel" value="0.01499999966472387"/>
     <PARAM id="env2_sus" value="0.800000011920929"/>
     <PARAM id="env2_tenatt" value="0.0"/>
     <PARAM id="env2_tendec" value="-0.25"/>
     <PARAM id="env2_tenrel" value="-0.25"/>
-    <PARAM id="env3_att" value="0.009999998845160007"/>
+    <PARAM id="env3_att" value="0.004999999888241291"/>
     <PARAM id="env3_dec" value="0.1499999910593033"/>
     <PARAM id="env3_del" value="0.0"/>
     <PARAM id="env3_hld" value="0.0"/>
     <PARAM id="env3_mode" value="0.0"/>
-    <PARAM id="env3_rel" value="1.0"/>
+    <PARAM id="env3_rel" value="0.01499999966472387"/>
     <PARAM id="env3_sus" value="0.800000011920929"/>
     <PARAM id="env3_tenatt" value="0.0"/>
     <PARAM id="env3_tendec" value="-0.25"/>
     <PARAM id="env3_tenrel" value="-0.25"/>
-    <PARAM id="env4_att" value="0.009999998845160007"/>
+    <PARAM id="env4_att" value="0.004999999888241291"/>
     <PARAM id="env4_dec" value="0.1499999910593033"/>
     <PARAM id="env4_del" value="0.0"/>
     <PARAM id="env4_hld" value="0.0"/>
     <PARAM id="env4_mode" value="0.0"/>
-    <PARAM id="env4_rel" value="1.0"/>
+    <PARAM id="env4_rel" value="0.01499999966472387"/>
     <PARAM id="env4_sus" value="0.800000011920929"/>
     <PARAM id="env4_tenatt" value="0.0"/>
     <PARAM id="env4_tendec" value="-0.25"/>
@@ -449,7 +449,7 @@
     <LFO4 points="0 0 0 1 0 0.5 1 0 1 0 "/>
   </LFOS>
   <MODULATIONS/>
-  <MACROS macro1="" macro2="" macro3="" macro4=""/>
+  <MACROS macro1="Macro1" macro2="Macro2" macro3="Macro3" macro4="Macro4"/>
   <WAVETABLES>
     <Table id="0" path="" mode="1" data=""/>
     <Table id="1" path="" mode="1" data=""/>

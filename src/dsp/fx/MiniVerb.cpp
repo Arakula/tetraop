@@ -5,7 +5,6 @@ MiniVerb::MiniVerb(TetraOPAudioProcessor& p)
 	: FX(p, FX::Reverb)
 {
 	audioProcessor.params.addParameterListener(prefix + "on", this);
-	audioProcessor.params.addParameterListener(prefix + "bypass", this);
 
     predelParam = audioProcessor.modulation->getParamHandle(prefix + "predel");
 	sizeParam = audioProcessor.modulation->getParamHandle(prefix + "revsize");

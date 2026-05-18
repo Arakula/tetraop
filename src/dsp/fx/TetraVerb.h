@@ -5,54 +5,124 @@
 #include <vector>
 #include <algorithm>
 #include <cstring>
+#include "../DelayLine.h"
+
+class AllpassMatrix
+{
+public:
+	enum
+	{
+		maxBufferSize = 200000,
+		MATRIX_SIZE = 8,
+	};
+private:
+	static constexpr float kDecayRange = 0.7f;
+	//static constexpr float B = 0.8f;
+	//static constexpr float C = -0.85f;
+};
+
+class AllpassDelay
+{
+public:
+    void resize(int maxDelaySamples)
+    {
+        delayLine.resize(maxDelaySamples);
+    }
+
+    void setDelay(float samples)
+    {
+        delay = samples;
+    }
+
+    void setFeedback(float value)
+    {
+        g = value;
+    }
+
+    void clear()
+    {
+        delayLine.clear();
+    }
+
+    inline float process(float in) noexcept
+    {
+        const float z = delayLine.read(delay);
+
+        const float out = z + g * in;
+
+        // standard allpass
+        delayLine.write(in - g * out);
+
+        return out;
+    }
+
+    inline float processDelay(float in) noexcept
+    {
+        const float z = delayLine.read(delay);
+        const float out = z + g * in;
+        delayLine.write(-g * out);
+
+        return out;
+    }
+
+private:
+    DelayLine delayLine;
+
+    float delay = 1.0f;   // delay in samples
+    float g = 0.5f;       // feedback coefficient
+};
 
 class TapDelay
 {
 public:
     static constexpr int MAX_TAPS = 10;
-    static constexpr int MAX_SIZE = 200000;
 
-    TapDelay()
+    void resize(int maxDelaySamples)
     {
-        write = 0;
-        amount = 0;
-        std::memset(buffer, 0, sizeof(buffer));
-        std::memset(feedback, 0, sizeof(feedback));
-        std::memset(time, 1, sizeof(time));
+        delayLine.resize(maxDelaySamples);
     }
 
-    void setAmount(int amt) { amount = amt; }
-
-    void setTime(int i, int t) { time[i] = t; }
-
-    void setFeedback(int i, float f) { feedback[i] = f; }
-
-    void process(float& sample)
+    void clear()
     {
-        float out = sample;
+        delayLine.clear();
+    }
 
-        for (int i = 0; i < amount; i++)
+    void setAmount(int amt)
+    {
+        amount = std::clamp(amt, 0, MAX_TAPS);
+    }
+
+    void setTime(int i, float samples)
+    {
+        time[i] = samples;
+    }
+
+    void setFeedback(int i, float value)
+    {
+        feedback[i] = value;
+    }
+
+    inline float process(float in) noexcept
+    {
+        float out = in;
+
+        for (int i = 0; i < amount; ++i)
         {
-            int r = write - time[i];
-            if (r < 0) r += MAX_SIZE;
-
-            out += buffer[r] * feedback[i];
+            out += delayLine.read(time[i]) * feedback[i];
         }
 
-        buffer[write] = sample;
+        delayLine.write(in);
 
-        sample = out;
-
-        if (++write >= MAX_SIZE)
-            write = 0;
+        return out;
     }
 
 private:
-    float buffer[MAX_SIZE];
-    float feedback[MAX_TAPS];
-    int   time[MAX_TAPS];
-    int   write;
-    int   amount;
+    DelayLine delayLine;
+
+    std::array<float, MAX_TAPS> feedback{};
+    std::array<float, MAX_TAPS> time{};
+
+    int amount = 0;
 };
 
 class TetraVerb
@@ -68,12 +138,22 @@ class TetraVerb
         return table[idx];
     }
 
-    TapDelay	early1L;
-	TapDelay	early1R;
-	TapDelay	early2L;
-	TapDelay	early2R;
+    TapDelay	early1L, early1R,
+                early2L, early2R;
+
+    AllpassDelay ap1L, ap1R;
+    AllpassDelay ap2AL, ap2AR;
+    AllpassDelay ap2BL, ap2BR;
+
+    AllpassDelay ap3AL, ap3AR;
+    AllpassDelay ap3BL, ap3BR;
+
+    void prepare(float srate);
+    void setSize(float size);
+
 
 private:
+    float srate = 44100.f;
 	float size = 0.0f;
 
 	static const std::array<int, PRIME_LIMIT + 1>& getPrimeTable()

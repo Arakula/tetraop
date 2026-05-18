@@ -2,8 +2,6 @@
 #include <vector>
 #include <cmath>
 
-
-
 class DelayLine {
 public:
 	int size = 0;
