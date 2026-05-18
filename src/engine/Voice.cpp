@@ -283,7 +283,36 @@ void Voice::startBlock(int startSample, int numSamples)
 
 void Voice::updateFreq(float keyval)
 {
-    freq = 440.0f * std::pow(2.0f, (keyval - 69) / 12.0f);
+    if (audioProcessor.mtsClientPtr) 
+    {
+        float frac = keyval - std::floor(keyval);
+        if (std::abs(frac) < 1e-6f)
+        {
+            freq = (float)MTS_NoteToFrequency(audioProcessor.mtsClientPtr, static_cast<char>(keyval), -1);
+        } 
+        else
+        {
+            int note0 = (int)std::floor(keyval);
+            int note1 = note0 + 1;
+
+            float f0 = (float)MTS_NoteToFrequency(
+                audioProcessor.mtsClientPtr,
+                (char)note0,
+                -1);
+
+            float f1 = (float)MTS_NoteToFrequency(
+                audioProcessor.mtsClientPtr,
+                (char)note1,
+                -1);
+
+            // interpolate in log/pitch space
+            freq = f0 * std::pow(f1 / f0, frac);
+        }
+    }
+    else
+    {
+        freq = 440.0f * std::pow(2.0f, (keyval - 69) / 12.0f);
+    }
 }
 
 void Voice::endBlock(int, int numSamples)

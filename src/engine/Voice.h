@@ -6,6 +6,7 @@
 #include "Utils.h"
 #include "OSC.h"
 #include "Modulation.h"
+#include "libMTSClient.h"
 
 class TetraOPAudioProcessor;
 

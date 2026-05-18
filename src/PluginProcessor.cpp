@@ -276,8 +276,8 @@ TetraOPAudioProcessor::TetraOPAudioProcessor()
         .withOutput("Output", juce::AudioChannelSet::stereo(), true)
     )
     , settings{}
-    , params(*this, &undoManager, "PARAMETERS", createParameterLayout()),
-    mtsClientPtr{nullptr}
+    , params(*this, &undoManager, "PARAMETERS", createParameterLayout())
+    , mtsClientPtr{nullptr}
 #endif
 {
     juce::PropertiesFile::Options options{};
