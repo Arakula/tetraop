@@ -498,8 +498,7 @@ void Modulation::_connect(const juce::String& src, const juce::String& dst, int 
     else if (ssrc == "z") conn->sourceKind = Connection::SourceKind::MpeZ;
     else if (ssrc == "lift") conn->sourceKind = Connection::SourceKind::MpeLift;
 
-    conn->skipKeyTrackOffset = conn->sourceKind == Connection::SourceKind::Key
-        && (dst.endsWith("pitch") || dst.endsWith("pitch_semis") || (dst.startsWith("f") && dst.endsWith("_cut")));
+    conn->skipKeyTrackOffset = false;
 
     stringToMap(conn->mpoints, curvemaps[sliderId]); // reset curvemapping
     Connection* ptr = conn.get();
@@ -865,9 +864,8 @@ float Modulation::calculateOffset(std::vector<Connection*> conns, int voiceId, i
             srcValue = pitchbendValue;
         }
         else if (conn->sourceKind == Connection::SourceKind::Key) {
-            // keytracking for pitch and filter cut is implemented in getKeyTrackFor()
             if (conn->skipKeyTrackOffset) {
-                continue; // skip this calc completely
+                continue; // skip this calc completely (not used)
             }
             srcValue = voice->key;
         }

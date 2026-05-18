@@ -30,6 +30,7 @@ public:
 	TextButton inf1Btn;
 	TextButton typeBtn;
 	TextButton modeBtn;
+	TextButton ktrackBtn;
 
 	std::unique_ptr<Rotary> cut;
 	std::unique_ptr<Rotary> res;

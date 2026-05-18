@@ -843,6 +843,20 @@ void UIUtils::drawVoices(juce::Graphics& g, juce::Rectangle<float> bounds, juce:
     g.fillPath(path);
 }
 
+void UIUtils::drawKeyboard(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour color)
+{
+    const juce::String svgText =
+        R"svg(
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11.3333 0H1.41667C0.6375 0 0 0.6375 0 1.41667V11.3333C0 12.1125 0.6375 12.75 1.41667 12.75H11.3333C12.1125 12.75 12.75 12.1125 12.75 11.3333V1.41667C12.75 0.6375 12.1125 0 11.3333 0ZM7.79167 8.14583H7.96875V11.3333H4.78125V8.14583H4.95833C5.34792 8.14583 5.66667 7.82708 5.66667 7.4375V1.41667H7.08333V7.4375C7.08333 7.82708 7.40208 8.14583 7.79167 8.14583ZM1.41667 1.41667H2.83333V7.4375C2.83333 7.82708 3.15208 8.14583 3.54167 8.14583H3.71875V11.3333H1.41667V1.41667ZM11.3333 11.3333H9.03125V8.14583H9.20833C9.59792 8.14583 9.91667 7.82708 9.91667 7.4375V1.41667H11.3333V11.3333Z"/>
+            </svg>
+        )svg";
+
+    Path path = gin::SVG::renderToPath(svgText, bounds);
+    g.setColour(color);
+    g.fillPath(path);
+}
+
 void UIUtils::drawPeak(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour c)
 {
     juce::Path p;

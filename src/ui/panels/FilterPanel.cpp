@@ -7,6 +7,7 @@ FilterPanel::FilterPanel(TetraOPAudioProcessorEditor& e, int _fid)
 	, prefix(_fid == 0 ? "f1_" : "f2_")
 {
 	editor.audioProcessor.params.addParameterListener(prefix + "on", this);
+	editor.audioProcessor.params.addParameterListener(prefix + "ktrack", this);
 	editor.audioProcessor.params.addParameterListener(prefix + "type", this);
 	editor.audioProcessor.params.addParameterListener(prefix + "mode", this);
 	editor.audioProcessor.params.addParameterListener(prefix + "inA", this);
@@ -21,6 +22,14 @@ FilterPanel::FilterPanel(TetraOPAudioProcessorEditor& e, int _fid)
 	onBtn.onClick = [this]
 		{
 			auto param = editor.audioProcessor.params.getParameter(prefix + "on");
+			param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
+		};
+
+	addAndMakeVisible(ktrackBtn);
+	ktrackBtn.setAlpha(0.f);
+	ktrackBtn.onClick = [this]
+		{
+			auto param = editor.audioProcessor.params.getParameter(prefix + "ktrack");
 			param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
 		};
 
@@ -96,6 +105,7 @@ FilterPanel::FilterPanel(TetraOPAudioProcessorEditor& e, int _fid)
 FilterPanel::~FilterPanel()
 {
 	editor.audioProcessor.params.removeParameterListener(prefix + "on", this);
+	editor.audioProcessor.params.removeParameterListener(prefix + "ktrack", this);
 	editor.audioProcessor.params.removeParameterListener(prefix + "type", this);
 	editor.audioProcessor.params.removeParameterListener(prefix + "mode", this);
 	editor.audioProcessor.params.removeParameterListener(prefix + "inA", this);
@@ -124,6 +134,7 @@ void FilterPanel::paint(Graphics& g)
 	auto type = (Filter::Type)editor.audioProcessor.params.getRawParameterValue(prefix + "type")->load();
 	auto mode = (Filter::Mode)editor.audioProcessor.params.getRawParameterValue(prefix + "mode")->load();
 	bool on = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "on")->load();
+	auto ktrack = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "ktrack")->load();
 	bool ina = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "inA")->load();
 	bool inb = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "inB")->load();
 	bool inc = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "inC")->load();
@@ -178,6 +189,10 @@ void FilterPanel::paint(Graphics& g)
 	g.setColour(COLOR_PANEL_HEADER_TEXT());
 	g.drawText(fid == 0 ? "Filter 1" : "Filter 2", headerb.withWidth(50).translated(25, 0), Justification::centredLeft);
 
+	// draw keytrack
+	UIUtils::drawCheckmark(g, ktrackBtn.getBounds().withWidth(ktrackBtn.getHeight()).toFloat(), COLOR_CHECKMARK_BG_LIGHT(), COLOR_ACTIVE(), ktrack);
+	UIUtils::drawKeyboard(g, ktrackBtn.getBounds().withWidth(ktrackBtn.getHeight()).reduced(1.f).withRightX(ktrackBtn.getRight()).toFloat(), COLOR_PANEL_HEADER_TEXT());
+
 	auto text = "";
 	switch (type)
 	{
@@ -224,6 +239,8 @@ void FilterPanel::resized()
 	bounds.translate(0, PANEL_HEADER_HEIGHT);
 	typeBtn.setBounds(Rectangle<int>{bounds.getX() + FILTER_PANEL_HMARGIN, bounds.getY(), KNOB_WIDTH + 5, 23}.translated(0, 18));
 	modeBtn.setBounds(typeBtn.getBounds().translated(0, 28));
+
+	ktrackBtn.setBounds(bounds.getWidth() - 5 - 35, PANEL_HEADER_HEIGHT / 2 - 15 / 2, 35, 15);
 
 	cut->setBounds(bounds.getX() + KNOB_WIDTH + FILTER_PANEL_HMARGIN * 2, bounds.getY(), KNOB_WIDTH, KNOB_HEIGHT);
 	res->setBounds(cut->getBounds().translated(KNOB_WIDTH, 0));
