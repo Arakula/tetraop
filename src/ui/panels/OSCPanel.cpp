@@ -125,6 +125,15 @@ OSCPanel::OSCPanel(TetraOPAudioProcessorEditor& e, int _oscId)
 	octave->prefix = "Oct";
 	addAndMakeVisible(octave.get());
 
+	addAndMakeVisible(fixBtn);
+	fixBtn.setAlpha(0.f);
+	fixBtn.onClick = [this]
+		{
+			editor.audioProcessor.undomgr->createUndo();
+			auto param = editor.audioProcessor.params.getParameter(prefix + "fixed");
+			param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
+		};
+
 	toggleUIComponents();
 }
 
@@ -202,6 +211,19 @@ void OSCPanel::paint(Graphics& g)
 	g.setColour(Colours::black.withAlpha(0.35f));
 	g.drawRoundedRectangle(morphBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f, 1.f);
 
+	bool fixed = (bool)editor.audioProcessor.params.getRawParameterValue(prefix + "fixed")->load();
+	if (fixed)
+	{
+		g.setColour(Colours::black.withAlpha(0.15f));
+		g.fillRoundedRectangle(fixBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f);
+		g.setColour(COLOR_ACTIVE().withAlpha(0.5f));
+		g.fillRoundedRectangle(fixBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f);
+		g.setColour(Colours::black.withAlpha(0.35f));
+		g.drawRoundedRectangle(fixBtn.getBounds().toFloat().translated(0.5f, 0.5f), 3.f, 1.f);
+	}
+	g.setColour(COLOR_KNOB_LABEL());
+	g.drawText("Fix", fixBtn.getBounds().toFloat(), Justification::centred);
+
 	auto text = "Off";
 	switch (distMode)
 	{
@@ -244,6 +266,10 @@ void OSCPanel::resized()
 		.withRightX(tableBtn.getX()));
 
 	octave->setBounds(nextBtn.getBounds().withWidth(60).translated(30, 0));
+
+	fixBtn.setBounds(Rectangle<int>(30, 20)
+		.withX(octave->getRight() - 15)
+		.withY(PANEL_HEADER_HEIGHT / 2 - 20 / 2));
 
 	onBtn.setBounds({ bounds.getX(), bounds.getY(), PANEL_HEADER_HEIGHT, PANEL_HEADER_HEIGHT});
 	feedback->setBounds(onBtn.getBounds().translated(50, 0).withWidth(40));

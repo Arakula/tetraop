@@ -37,6 +37,7 @@ public:
 	TextButton tableBtn;
 	TextButton nextBtn;
 	TextButton prevBtn;
+	TextButton fixBtn;
 
 	std::unique_ptr<Rotary> level;
 	std::unique_ptr<Rotary> pan;

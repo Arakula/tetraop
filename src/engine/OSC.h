@@ -93,6 +93,7 @@ private:
     std::atomic<float>* onParam = nullptr;
     std::atomic<float>* unisonVoicesParam = nullptr;
     std::atomic<float>* unisonModeParam = nullptr;
+    std::atomic<float>* fixedParam = nullptr;
 
     Modulation::Param* phaseOffsetParam = nullptr;
     Modulation::Param* phaseRandParam = nullptr;

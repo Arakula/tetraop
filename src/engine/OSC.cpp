@@ -9,6 +9,7 @@ OSC::OSC(int _id, int _voiceId, TetraOPAudioProcessor& p)
 	, lane(_voiceId % SIMDSZ)
 	, audioProcessor(p)
 {
+	fixedParam = audioProcessor.params.getRawParameterValue(prefix + "fixed");
 	morphSnapParam = audioProcessor.params.getRawParameterValue(prefix + "morph_snap");
 	onParam = audioProcessor.params.getRawParameterValue(prefix + "on");
 	unisonVoicesParam = audioProcessor.params.getRawParameterValue(prefix + "unison_voices");
@@ -32,6 +33,7 @@ OSC::OSC(int _id, int _voiceId, TetraOPAudioProcessor& p)
 
 void OSC::trigger(float freq, float _srate)
 {
+	bool fixed = (bool)fixedParam->load();
 	triggered = true;
 	srate = _srate;
 	auto& vox = audioProcessor.synth->vox[batch];
@@ -41,7 +43,7 @@ void OSC::trigger(float freq, float _srate)
 	SIMDM mask = SIMDM(msk);
 
 	auto& mod = audioProcessor.modulation;
-	Utils::setMasked(osc.freq, freq, mask);
+	Utils::setMasked(osc.freq, fixed ? 440.f : freq, mask);
 	Utils::setMasked(osc.phase_inc, osc.freq.get(lane) / srate, mask);
 	Utils::setMasked(osc.out, 0.f, mask);
 	Utils::setMasked(osc.phase_offset, mod->getPolyValue(phaseOffsetParam, voiceId, 0), mask);
@@ -91,6 +93,7 @@ void OSC::trigger(float freq, float _srate)
 
 void OSC::retrigger(float freq, float _srate)
 {
+	bool fixed = (bool)fixedParam->load();
 	srate = _srate;
 	auto& vox = audioProcessor.synth->vox[batch];
 	auto& osc = vox.osc[id];
@@ -98,7 +101,7 @@ void OSC::retrigger(float freq, float _srate)
 	msk[lane] = true;
 	SIMDM mask = SIMDM(msk);
 
-	Utils::setMasked(osc.freq, freq, mask);
+	Utils::setMasked(osc.freq, fixed ? 440.f : freq, mask);
 	Utils::setMasked(osc.phase_inc, osc.freq.get(lane) / srate, mask);
 }
 
@@ -114,7 +117,7 @@ void OSC::startBlock(int startSample, int numSamples)
 	SIMDM mask = SIMDM(msk);
 
 	// recalc frequency during glide
-	if (voice->glide)
+	if (voice->glide && !(bool)fixedParam->load())
 	{
 		Utils::setMasked(osc.freq, voice->freq, mask);
 		Utils::setMasked(osc.phase_inc, voice->freq / srate, mask);

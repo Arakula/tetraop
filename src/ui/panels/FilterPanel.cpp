@@ -191,7 +191,7 @@ void FilterPanel::paint(Graphics& g)
 
 	// draw keytrack
 	UIUtils::drawCheckmark(g, ktrackBtn.getBounds().withWidth(ktrackBtn.getHeight()).toFloat(), COLOR_CHECKMARK_BG_LIGHT(), COLOR_ACTIVE(), ktrack);
-	UIUtils::drawKeyboard(g, ktrackBtn.getBounds().withWidth(ktrackBtn.getHeight()).reduced(1.f).withRightX(ktrackBtn.getRight()).toFloat(), COLOR_PANEL_HEADER_TEXT());
+	UIUtils::drawKeyboard(g, ktrackBtn.getBounds().withWidth(ktrackBtn.getHeight()).reduced(1).withRightX(ktrackBtn.getRight()).toFloat(), COLOR_PANEL_HEADER_TEXT());
 
 	auto text = "";
 	switch (type)
