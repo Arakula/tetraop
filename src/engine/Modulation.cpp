@@ -69,7 +69,7 @@ void Modulation::prepare()
 {
     for (auto& [name, param] : params)
     {
-        param.smoother.setup(globals::PARAM_SMOOTHER_RESISTANCE, audioProcessor.srate);
+        param.smoother.setup(globals::PARAM_SMOOTHER_RESISTANCE, audioProcessor.osrate);
     }
 }
 
@@ -376,7 +376,7 @@ void Modulation::tick(double srate, int nsamples, float secondsPerBeat)
 
 void Modulation::endBlock(int nsamples)
 {
-    auto dt = nsamples / audioProcessor.srate;
+    auto dt = nsamples / audioProcessor.osrate;
     for (auto it = smoothedParams.begin(); it != smoothedParams.end(); )
     {
         auto& param = params[*it];
@@ -723,7 +723,7 @@ Modulation::Param& Modulation::getParam(const juce::String& pname)
         entry.range = param->getNormalisableRange();
         auto dstIt = destinations.find(pname);
         entry.dstConnections = dstIt != destinations.end() ? &dstIt->second : nullptr;
-        entry.smoother.setup(globals::PARAM_SMOOTHER_RESISTANCE, audioProcessor.srate);
+        entry.smoother.setup(globals::PARAM_SMOOTHER_RESISTANCE, audioProcessor.osrate);
         entry.smoother.reset(entry.norm);
         entry.smoothedNorm = entry.norm;
         entry.smoothedValue = entry.value;
