@@ -314,6 +314,18 @@ TetraOPAudioProcessor::TetraOPAudioProcessor()
         true, true
     );
 
+#ifdef JUCE_DEBUG
+    int osstages = 1;
+#else 
+    int osstages = 1;
+#endif
+
+    oversampler = std::make_unique<juce::dsp::Oversampling<float>>(
+        2, osstages,
+        juce::dsp::Oversampling<float>::FilterType::filterHalfBandPolyphaseIIR,
+        true, true
+    );
+
     for (int i = 0; i < FX::kFXs; i++) {
         fxOrder.push_back((FX::FXType)i);
         auto prefix = juce::String(FX::FXPrefix[i].data());
@@ -629,18 +641,21 @@ void TetraOPAudioProcessor::changeProgramName (int index, const juce::String& ne
 void TetraOPAudioProcessor::prepareToPlay (double sampleRate, int _samplesPerBlock)
 {
     clearAll();
-
+    osfactor = (int)oversampler->getOversamplingFactor();
     samplesPerBlock = _samplesPerBlock;
     srate = (float)sampleRate;
-    osrate = (float)sampleRate;
+    osrate = (float)sampleRate * osfactor;
     iosrate = 1.f / osrate;
-    synth->setCurrentPlaybackSampleRate(sampleRate);
+    synth->setCurrentPlaybackSampleRate(sampleRate * osfactor);
     synth->prepare();
     modulation->prepare();
 
     for (auto& fx : fxchain) {
         fx->prepare((float)sampleRate);
     }
+
+    oversampler->initProcessing(samplesPerBlock);
+    oversampler->reset();
 
     distoversampler->initProcessing(samplesPerBlock);
     distoversampler->reset();
@@ -741,19 +756,51 @@ void TetraOPAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     int pos = 0;
     int todo = numSamples;
 
+    juce::MidiBuffer oversampledMidi;
+    for (const auto metadata : midiMessages)
+    {
+        auto message = metadata.getMessage();
+        int newPos = metadata.samplePosition * osfactor;
+        oversampledMidi.addEvent(message, newPos);
+    }
+
+    juce::dsp::AudioBlock<float> outputBlock(buffer);
+    auto osBlock = oversampler->processSamplesUp(outputBlock);
+    gin::ScratchBuffer osBuffer(2, numSamples * osfactor);
+
     synth->startBlock();
     while (todo > 0)
     {
-        int thisBlock = std::min(todo, MAX_BLOCKSIZE);
+        int thisBlock = std::min(todo, MAX_BLOCKSIZE / osfactor);
+
         currBlockSize = thisBlock;
         currBlockPos = pos;
-        modulation->tick((double)osrate, thisBlock, (float)secondsPerBeat);
-        synth->renderNextBlock(buffer, midiMessages, pos, thisBlock);
+
+        modulation->tick((double)osrate,
+            thisBlock * osfactor,
+            (float)secondsPerBeat);
+
+        synth->renderNextBlock(
+            osBuffer,
+            oversampledMidi,
+            pos * osfactor, 
+            thisBlock * osfactor);
+
         pos += thisBlock;
         todo -= thisBlock;
-        modulation->endBlock(thisBlock);
+
+        modulation->endBlock(thisBlock * osfactor);
     }
-    synth->endBlock(numSamples);
+    synth->endBlock(numSamples * osfactor);
+    
+    for (int ch = 0; ch < osBuffer.getNumChannels(); ++ch)
+    {
+        std::memcpy(
+            osBlock.getChannelPointer(ch),
+            osBuffer.getWritePointer(ch),
+            sizeof(float) * osBuffer.getNumSamples());
+    }
+    oversampler->processSamplesDown(outputBlock);
 
     processFx(buffer.getWritePointer(0), buffer.getWritePointer(1), numSamples);
 

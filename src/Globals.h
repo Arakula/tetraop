@@ -2,7 +2,7 @@
 
 namespace globals {
 	constexpr int SIMDSZ = 4;
-	constexpr int MAX_BLOCKSIZE = 128;
+	constexpr int MAX_BLOCKSIZE = 256; // oversampled subblock size (128 at default 2x)
 	constexpr int MAX_POLYPHONY = 44;
 	constexpr int MAX_MODULATIONS = 64;
 	constexpr float MAX_DETUNE_CENTS = 200.f;

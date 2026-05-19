@@ -50,20 +50,20 @@ void Distortion::processBlock(float* left, float* right, int nsamps, int /*block
 		colorL.clear(0.f);
 		colorR.clear(0.f);
 		audioProcessor.distoversampler->reset();
-		drive = std::exp(audioProcessor.modulation->getValue(driveParam, false, nsamps) * DB2LOG);
-		gain = audioProcessor.modulation->getValue(gainParam, false, nsamps);
-		mix = audioProcessor.modulation->getValue(mixParam, false, nsamps);
+		drive = std::exp(audioProcessor.modulation->getValue(driveParam, false, nsamps, srate) * DB2LOG);
+		gain = audioProcessor.modulation->getValue(gainParam, false, nsamps, srate);
+		mix = audioProcessor.modulation->getValue(mixParam, false, nsamps, srate);
 		drive = std::exp(drive * globals::DB2LOG);
 		gain = std::exp(gain * globals::DB2LOG);
 		queueReset = false;
 	}
 
 	int mode = (int)modeParam->load();
-	float drive_targ = audioProcessor.modulation->getValue(driveParam, false, nsamps);
-	float filter = audioProcessor.modulation->getValue(filterParam, false, nsamps);
-	float color = audioProcessor.modulation->getValue(colorParam, false, nsamps);
-	float gain_targ = audioProcessor.modulation->getValue(gainParam, false, nsamps);
-	float mix_targ = audioProcessor.modulation->getValue(mixParam, false, nsamps);
+	float drive_targ = audioProcessor.modulation->getValue(driveParam, false, nsamps, srate);
+	float filter = audioProcessor.modulation->getValue(filterParam, false, nsamps, srate);
+	float color = audioProcessor.modulation->getValue(colorParam, false, nsamps, srate);
+	float gain_targ = audioProcessor.modulation->getValue(gainParam, false, nsamps, srate);
+	float mix_targ = audioProcessor.modulation->getValue(mixParam, false, nsamps, srate);
 
 	drive_targ = std::exp(drive_targ * globals::DB2LOG);
 	gain_targ = std::exp(gain_targ * globals::DB2LOG);

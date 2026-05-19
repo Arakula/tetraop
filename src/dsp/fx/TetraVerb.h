@@ -1,4 +1,5 @@
 // copyright 2026 tilr
+/*
 #pragma once
 #include <array>
 #include <vector>
@@ -186,3 +187,4 @@ private:
         return table;
     }
 };
+*/

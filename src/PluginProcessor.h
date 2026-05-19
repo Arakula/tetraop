@@ -56,6 +56,7 @@ public:
     std::vector<FX::FXType> fxOrder;
     std::vector<FX*> fxchain;
     std::unique_ptr<juce::dsp::Oversampling<float>> distoversampler;
+    std::unique_ptr<juce::dsp::Oversampling<float>> oversampler;
 
     // synth
     std::unique_ptr<Synth> synth;
@@ -91,6 +92,7 @@ public:
     String tuningFileDir = ""; // default directory for open tuning file dialog
 
     // Playhead
+    int osfactor = 1;
     float srate = 44100.f;
     float osrate = 88200.f; // oversampled srate
     float iosrate = 1.f / 44100.f; // inverse oversampled srate

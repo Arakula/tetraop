@@ -1,3 +1,4 @@
+/*
 #include "TetraVerb.h"
 
 void TetraVerb::prepare(float _srate)
@@ -100,3 +101,4 @@ void TetraVerb::setSize(float _size)
 		//allpMx->setTimeR ( i, getNextPrime ( timesRB[ i ] * size * srScale ) );
 	}
 }
+*/
