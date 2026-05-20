@@ -3,7 +3,7 @@
 
 #include "FX.h"
 #include "../../engine/Modulation.h"
-#include "./MiniVerb.h"
+#include "./TetraVerb.h"
 
 class ReverbFX
 	: public FX
@@ -20,7 +20,7 @@ public:
 
 private:
     float srate = 44100.0f;
-    std::unique_ptr<MiniVerb> miniVerb;
+    std::unique_ptr<TetraVerb> tetraVerb;
 
 	std::atomic<float>* modeParam = nullptr;
 };

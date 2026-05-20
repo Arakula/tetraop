@@ -10,7 +10,7 @@ ReverbFX::ReverbFX ( TetraOPAudioProcessor& p)
     audioProcessor.params.addParameterListener ( prefix + "mode", this );
     audioProcessor.params.addParameterListener ( prefix + "on", this );
 
-    miniVerb = std::make_unique<MiniVerb>(p);
+    tetraVerb = std::make_unique<TetraVerb>();
 }
 
 ReverbFX::~ReverbFX ()
@@ -28,17 +28,18 @@ void ReverbFX::prepare ( float _srate )
 {
     srate = _srate;
 
-    miniVerb->prepare(_srate);
+    tetraVerb->prepare(_srate);
 }
 
 void ReverbFX::processBlock ( float* left, float* right, int nsamps, int /* blockOffset */, bool /* audioRate */)
 {
     //auto mode = fast::clamp ( juce::roundToInt ( modeParam->load () ), 0, 5 );
-    miniVerb->processBlock(left, right, nsamps, 0, false);
-    return;
+    float size = audioProcessor.params.getRawParameterValue("fx_reverb_revsize")->load();
+    tetraVerb->setSize(size);
+    tetraVerb->processBlock(left, right, nsamps);
 }
 
 void ReverbFX::clear ()
 {
-    miniVerb->clear();
+    //miniVerb->clear();
 }

@@ -1,10 +1,11 @@
 // copyright 2026 tilr
-/*
+
 #pragma once
 #include <array>
 #include <vector>
 #include <algorithm>
 #include <cstring>
+#include <memory>
 #include "../DelayLine.h"
 
 class AllpassMatrix
@@ -32,6 +33,8 @@ public:
     void setDelay(float samples)
     {
         delay = samples;
+        if (delayLine.size < samples)
+            resize((int)std::ceil(samples));
     }
 
     void setFeedback(float value)
@@ -95,6 +98,8 @@ public:
     void setTime(int i, float samples)
     {
         time[i] = samples;
+        if (delayLine.size < samples)
+            resize((int)std::ceil(samples));
     }
 
     void setFeedback(int i, float value)
@@ -127,6 +132,7 @@ private:
 
 class TetraVerb
 {
+public:
 	static constexpr int PRIME_LIMIT = 100000;
 
 	static int getNextPrime(float number)
@@ -138,6 +144,9 @@ class TetraVerb
         return table[idx];
     }
 
+    DelayLine predelL;
+    DelayLine predelR;
+
     TapDelay	early1L, early1R,
                 early2L, early2R;
 
@@ -148,43 +157,52 @@ class TetraVerb
     AllpassDelay ap3AL, ap3AR;
     AllpassDelay ap3BL, ap3BR;
 
+    int predelSamps = 0;
+    std::vector<float> lbuf;
+    std::vector<float> rbuf;
+
+    TetraVerb();
+
     void prepare(float srate);
     void setSize(float size);
-
+    void setPredel(float seconds);
+    void processBlock(float* left, float* right, int nsamps);
 
 private:
     float srate = 44100.f;
 	float size = 0.0f;
 
-	static const std::array<int, PRIME_LIMIT + 1>& getPrimeTable()
+    static const std::vector<int>& getPrimeTable()
     {
         static const auto table = []()
-        {
-            std::array<int, PRIME_LIMIT + 1> nextPrime{};
-            std::vector<bool> prime(PRIME_LIMIT + 1000, true);
-
-            prime[0] = prime[1] = false;
-
-            for (int p = 2; p * p < prime.size(); ++p)
             {
-                if (!prime[p]) continue;
-                for (int k = p * p; k < prime.size(); k += p)
-                    prime[k] = false;
-            }
+                auto nextPrime = std::make_unique<std::vector<int>>(PRIME_LIMIT + 1);
+                std::vector<bool> prime(PRIME_LIMIT + 1000, true);
 
-            int next = -1;
+                prime[0] = prime[1] = false;
 
-            for (int i = (int)prime.size() - 1; i >= 0; --i)
-            {
-                if (prime[i]) next = i;
-                if (i <= PRIME_LIMIT)
-                    nextPrime[i] = next;
-            }
+                for (int p = 2; p * p < (int)prime.size(); ++p)
+                {
+                    if (!prime[p]) continue;
 
-            return nextPrime;
-        }();
+                    for (int k = p * p; k < (int)prime.size(); k += p)
+                        prime[k] = false;
+                }
 
-        return table;
+                int next = -1;
+
+                for (int i = (int)prime.size() - 1; i >= 0; --i)
+                {
+                    if (prime[i])
+                        next = i;
+
+                    if (i <= PRIME_LIMIT)
+                        (*nextPrime)[i] = next;
+                }
+
+                return nextPrime;
+            }();
+
+        return *table;
     }
 };
-*/

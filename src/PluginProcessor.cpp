@@ -315,7 +315,7 @@ TetraOPAudioProcessor::TetraOPAudioProcessor()
     );
 
 #ifdef JUCE_DEBUG
-    int osstages = 1;
+    int osstages = 0;
 #else 
     int osstages = 1;
 #endif
