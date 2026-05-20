@@ -1,5 +1,120 @@
 #include "TetraVerb.h"
 
+void APMatrix::setTimeL(int index, int time)
+{
+	timesL[index] = (float)time;
+	for (int i = 0; i < MATRIX_SIZE; ++i)
+		delL[i].resize(time);
+}
+
+void APMatrix::setTimeR(int index, int time)
+{
+	timesR[index] = (float)time;
+	for (int i = 0; i < MATRIX_SIZE; ++i)
+		delR[i].resize(time);
+}
+
+void APMatrix::setDecay(float decay)
+{
+	decay = decay * 0.7f;
+	gpos = decay;
+	gneg = -decay;
+}
+
+void APMatrix::clear()
+{
+	for (int i = 0; i < MATRIX_SIZE; ++i)
+	{
+		delL[i].clear();
+		delR[i].clear();
+	}
+}
+
+void APMatrix::process(float& left, float& right)
+{
+	const float inL = left;
+	const float inR = right;
+
+	SIMDF buf[MATRIX_SIZE];
+	for (int i = 0; i < MATRIX_SIZE; ++i)
+	{
+		buf[i] = SIMDF({
+			delL[i].read(timesL[i]), 
+			delR[i].read(timesR[i])
+			, 0.f, 0.f});
+	}
+
+	const SIMDF pos(gpos);
+	const SIMDF neg(gneg);
+
+	const SIMDF ll = { inL, inL, 0.f, 0.f };
+	const SIMDF rr = { inR, inR, 0.f, 0.f };
+	const SIMDF lr = { inL, inR, 0.f, 0.f };
+
+	const SIMDF sample = buf[0] + buf[1] + buf[2] + buf[3]
+					   + buf[4] + buf[5] + buf[6] + buf[7];
+
+	const SIMDF sum1 = 
+		sample * pos + lr;
+
+	const SIMDF sum2 = 
+		(buf[0] + buf[2] + buf[4] + buf[6]) * pos + 
+		(buf[1] + buf[3] + buf[5] + buf[7]) * neg + lr;
+
+	const SIMDF sum3 =
+		(buf[0] + buf[1] + buf[4] + buf[5]) * pos +
+		(buf[2] + buf[3] + buf[6] + buf[7]) * neg + ll;
+
+	const SIMDF sum4 =
+		(buf[0] + buf[3] + buf[4] + buf[7]) * pos +
+		(buf[1] + buf[2] + buf[5] + buf[6]) * neg + rr;
+
+	const SIMDF sum5 =
+		(buf[0] + buf[1] + buf[2] + buf[3]) * pos +
+		(buf[4] + buf[5] + buf[6] + buf[7]) * neg + lr;
+
+	const SIMDF sum6 =
+		(buf[0] + buf[2] + buf[5] + buf[7]) * pos +
+		(buf[1] + buf[3] + buf[4] + buf[6]) * neg + lr;
+
+	const SIMDF sum7 =
+		(buf[0] + buf[1] + buf[6] + buf[7]) * pos +
+		(buf[2] + buf[3] + buf[4] + buf[5]) * neg + rr;
+
+	const SIMDF sum8 =
+		(buf[0] + buf[3] + buf[5] + buf[6]) * pos +
+		(buf[1] + buf[2] + buf[4] + buf[7]) * neg + ll;
+
+	// damping
+	//_fs1 = sum1 * damp2 + _fs1 * damp1;
+	//_fs2 = sum2 * damp2 + _fs2 * damp1;
+	//_fs3 = sum3 * damp2 + _fs3 * damp1;
+	//_fs4 = sum4 * damp2 + _fs4 * damp1;
+
+	constexpr float fact = 0.5f;
+
+	delL[0].write(sum1.get(0) * fact);
+	delL[1].write(sum2.get(1) * fact);
+	delL[2].write(sum3.get(0) * fact);
+	delL[3].write(sum4.get(1) * fact);
+	delL[4].write(sum5.get(0) * fact);
+	delL[5].write(sum6.get(1) * fact);
+	delL[6].write(sum7.get(0) * fact);
+	delL[7].write(sum8.get(1) * fact);
+
+	delR[0].write(sum1.get(1) * fact);
+	delR[1].write(sum2.get(0) * fact);
+	delR[2].write(sum3.get(1) * fact);
+	delR[3].write(sum4.get(0) * fact);
+	delR[4].write(sum5.get(1) * fact);
+	delR[5].write(sum6.get(0) * fact);
+	delR[6].write(sum7.get(1) * fact);
+	delR[7].write(sum8.get(0) * fact);
+
+	left = sample.get(0);
+	right = sample.get(1);
+}
+
 TetraVerb::TetraVerb()
 {
 	early1L.setAmount(6);
@@ -32,10 +147,6 @@ TetraVerb::TetraVerb()
 	early2R.setFeedback(3, 0.5f);
 	early2R.setFeedback(4, 0.4f);
 	early2R.setFeedback(5, 0.4f);
-
-	//allpMx = std::make_unique<AllpassMatrix>();
-
-	//initialize();
 }
 
 void TetraVerb::prepare(float _srate)
@@ -58,6 +169,13 @@ void TetraVerb::prepare(float _srate)
 void TetraVerb::setPredel(float seconds)
 {
 	predelSamps = (int)std::ceil(seconds * srate);
+}
+
+void TetraVerb::setDecay(float decay)
+{
+	decay = 1.0f - (decay * decay - 2.0f * decay + 1.0f);
+	decay *= 0.99f;
+	matrix.setDecay(decay);
 }
 
 void TetraVerb::setSize(float sizeNorm)
@@ -141,13 +259,13 @@ void TetraVerb::setSize(float sizeNorm)
 	constexpr int	timesLB[] = { 1543, 9187, 2179, 4211, 3203, 8999, 6047, 7001 };
 	constexpr int	timesRB[] = { 2741, 6073, 9643, 7591, 3319, 6163, 7151, 3329 };
 
-	static_assert ( std::size ( timesLB ) == AllpassMatrix::MATRIX_SIZE );
-	static_assert ( std::size ( timesRB ) == AllpassMatrix::MATRIX_SIZE );
+	static_assert ( std::size ( timesLB ) == APMatrix::MATRIX_SIZE );
+	static_assert ( std::size ( timesRB ) == APMatrix::MATRIX_SIZE );
 
-	for ( auto i = 0; i < AllpassMatrix::MATRIX_SIZE; ++i )
+	for ( auto i = 0; i < APMatrix::MATRIX_SIZE; ++i )
 	{
-		//allpMx->setTimeL ( i, getNextPrime ( timesLB[ i ] * size * srScale ) );
-		//allpMx->setTimeR ( i, getNextPrime ( timesRB[ i ] * size * srScale ) );
+		matrix.setTimeL ( i, getNextPrime ( timesLB[ i ] * size * srScale ) );
+		matrix.setTimeR ( i, getNextPrime ( timesRB[ i ] * size * srScale ) );
 	}
 }
 
@@ -174,7 +292,6 @@ void TetraVerb::processBlock(float* left, float* right, int nsamps)
 		eL = ap1L.processDelay(eL);
 		eR = ap1R.processDelay(eR);
 
-		// =========================
 		// LATE
 		spl0 = ap2AL.process(spl0);
 		spl1 = ap2AR.process(spl1);
@@ -188,7 +305,7 @@ void TetraVerb::processBlock(float* left, float* right, int nsamps)
 		spl0 = ap3BL.process(spl0);
 		spl1 = ap3BR.process(spl1);
 
-		//allpMx.process(spl0, spl1);
+		matrix.process(spl0, spl1);
 
 		left[i] = spl0 + eL;
 		right[i] = spl1 + eR;

@@ -7,19 +7,37 @@
 #include <cstring>
 #include <memory>
 #include "../DelayLine.h"
+#include "../../engine/Utils.h"
 
-class AllpassMatrix
+class APMatrix
 {
 public:
 	enum
 	{
-		maxBufferSize = 200000,
 		MATRIX_SIZE = 8,
 	};
+
+    DelayLine delL[MATRIX_SIZE];
+    DelayLine delR[MATRIX_SIZE];
+
+    void setTimeL(int index, int time);
+    void setTimeR(int index, int time);
+    void setDecay(float value);
+    void process(float& sampleL, float& sampleR);
+
+    void clear();
+
 private:
 	static constexpr float kDecayRange = 0.7f;
-	//static constexpr float B = 0.8f;
-	//static constexpr float C = -0.85f;
+
+    float timesL[MATRIX_SIZE];
+    float timesR[MATRIX_SIZE];
+
+    float gpos = 0.f;
+    float gneg = 0.f;
+
+    float modDepth = 0.f;
+    float modRate = 0.f;
 };
 
 class AllpassDelay
@@ -157,6 +175,8 @@ public:
     AllpassDelay ap3AL, ap3AR;
     AllpassDelay ap3BL, ap3BR;
 
+    APMatrix matrix;
+
     int predelSamps = 0;
     std::vector<float> lbuf;
     std::vector<float> rbuf;
@@ -166,6 +186,7 @@ public:
     void prepare(float srate);
     void setSize(float size);
     void setPredel(float seconds);
+    void setDecay(float decay);
     void processBlock(float* left, float* right, int nsamps);
 
 private:

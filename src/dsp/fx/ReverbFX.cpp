@@ -36,6 +36,10 @@ void ReverbFX::processBlock ( float* left, float* right, int nsamps, int /* bloc
     //auto mode = fast::clamp ( juce::roundToInt ( modeParam->load () ), 0, 5 );
     float size = audioProcessor.params.getRawParameterValue("fx_reverb_revsize")->load();
     tetraVerb->setSize(size);
+
+    float decay = audioProcessor.params.getRawParameterValue("fx_reverb_decay")->load();
+    tetraVerb->setDecay(decay);
+
     tetraVerb->processBlock(left, right, nsamps);
 }
 
