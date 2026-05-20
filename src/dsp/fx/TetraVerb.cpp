@@ -18,7 +18,38 @@ void APMatrix::setDecay(float decay)
 {
 	decay = decay * 0.7f;
 	gpos = decay;
-	gneg = -decay;
+	gneg = -decay * 0.3f;
+}
+
+void APMatrix::setModDepth(float value)
+{
+	modDepth = value * 30.f;
+}
+
+void APMatrix::setModRate(float hertz)
+{
+	modRate = hertz;
+}
+
+void APMatrix::updateModulation(float srate, int nsamps)
+{
+	constexpr float TWO_PI = 6.283185307179586f;
+	const float phaseInc = modRate / srate;
+
+	modPhase += phaseInc * nsamps;
+	modPhase -= std::floor(modPhase);
+
+	const float phaseDist = 1.0f / float(MATRIX_SIZE);
+
+	for (int i = 0; i < MATRIX_SIZE; i++)
+	{
+		const float phaseL = modPhase + phaseDist * float(i);
+		const float phaseR = modPhase + phaseDist * float(i + 1);
+		const float wrappedL = phaseL - std::floor(phaseL);
+		const float wrappedR = phaseR - std::floor(phaseR);
+		modL[i] = std::sin(wrappedL * TWO_PI) * modDepth;
+		modR[i] = std::sin(wrappedR * TWO_PI) * modDepth;
+	}
 }
 
 void APMatrix::clear()
@@ -39,8 +70,8 @@ void APMatrix::process(float& left, float& right)
 	for (int i = 0; i < MATRIX_SIZE; ++i)
 	{
 		buf[i] = SIMDF({
-			delL[i].read(timesL[i]), 
-			delR[i].read(timesR[i])
+			delL[i].read(timesL[i] + modL[i]),
+			delR[i].read(timesR[i] + modR[i])
 			, 0.f, 0.f});
 	}
 
@@ -86,26 +117,26 @@ void APMatrix::process(float& left, float& right)
 		(buf[1] + buf[2] + buf[4] + buf[7]) * neg + ll;
 
 	// damping
-	//_fs1 = sum1 * damp2 + _fs1 * damp1;
-	//_fs2 = sum2 * damp2 + _fs2 * damp1;
-	//_fs3 = sum3 * damp2 + _fs3 * damp1;
-	//_fs4 = sum4 * damp2 + _fs4 * damp1;
+	fs1 = sum1 * 1.f + fs1 * 0.f;
+	fs2 = sum2 * 1.f + fs2 * 0.f;
+	fs3 = sum3 * 1.f + fs3 * 0.f;
+	fs4 = sum4 * 1.f + fs4 * 0.f;
 
 	constexpr float fact = 0.5f;
 
-	delL[0].write(sum1.get(0) * fact);
-	delL[1].write(sum2.get(1) * fact);
-	delL[2].write(sum3.get(0) * fact);
-	delL[3].write(sum4.get(1) * fact);
+	delL[0].write(fs1.get(0) * fact);
+	delL[1].write(fs2.get(1) * fact);
+	delL[2].write(fs3.get(0) * fact);
+	delL[3].write(fs4.get(1) * fact);
 	delL[4].write(sum5.get(0) * fact);
 	delL[5].write(sum6.get(1) * fact);
 	delL[6].write(sum7.get(0) * fact);
 	delL[7].write(sum8.get(1) * fact);
 
-	delR[0].write(sum1.get(1) * fact);
-	delR[1].write(sum2.get(0) * fact);
-	delR[2].write(sum3.get(1) * fact);
-	delR[3].write(sum4.get(0) * fact);
+	delR[0].write(fs1.get(1) * fact);
+	delR[1].write(fs2.get(0) * fact);
+	delR[2].write(fs3.get(1) * fact);
+	delR[3].write(fs4.get(0) * fact);
 	delR[4].write(sum5.get(1) * fact);
 	delR[5].write(sum6.get(0) * fact);
 	delR[6].write(sum7.get(1) * fact);
@@ -176,6 +207,12 @@ void TetraVerb::setDecay(float decay)
 	decay = 1.0f - (decay * decay - 2.0f * decay + 1.0f);
 	decay *= 0.99f;
 	matrix.setDecay(decay);
+}
+
+void TetraVerb::setModulation(float rate, float depth)
+{
+	matrix.setModRate(rate);
+	matrix.setModDepth(depth);
 }
 
 void TetraVerb::setSize(float sizeNorm)
@@ -271,6 +308,8 @@ void TetraVerb::setSize(float sizeNorm)
 
 void TetraVerb::processBlock(float* left, float* right, int nsamps)
 {
+	matrix.updateModulation(srate, nsamps);
+
 	for (int i = 0; i < nsamps; ++i)
 	{
 		// predelay
@@ -307,7 +346,7 @@ void TetraVerb::processBlock(float* left, float* right, int nsamps)
 
 		matrix.process(spl0, spl1);
 
-		left[i] = spl0 + eL;
-		right[i] = spl1 + eR;
+		left[i] = spl0;
+		right[i] = spl1;
 	}
 }

@@ -40,6 +40,10 @@ void ReverbFX::processBlock ( float* left, float* right, int nsamps, int /* bloc
     float decay = audioProcessor.params.getRawParameterValue("fx_reverb_decay")->load();
     tetraVerb->setDecay(decay);
 
+    float rate = audioProcessor.params.getRawParameterValue("fx_reverb_modrate")->load();
+    float depth = audioProcessor.params.getRawParameterValue("fx_reverb_moddepth")->load();
+    tetraVerb->setModulation(rate, depth);
+
     tetraVerb->processBlock(left, right, nsamps);
 }
 

@@ -23,6 +23,9 @@ public:
     void setTimeL(int index, int time);
     void setTimeR(int index, int time);
     void setDecay(float value);
+    void setModDepth(float value);
+    void setModRate(float hertz);
+    void updateModulation(float srate, int nsamps);
     void process(float& sampleL, float& sampleR);
 
     void clear();
@@ -38,6 +41,16 @@ private:
 
     float modDepth = 0.f;
     float modRate = 0.f;
+    float modPhase = 0.f;
+
+    float modL[MATRIX_SIZE];
+    float modR[MATRIX_SIZE];
+
+    SIMDF fs1 = 0.f;
+    SIMDF fs2 = 0.f;
+    SIMDF fs3 = 0.f;
+    SIMDF fs4 = 0.f;
+    SIMDF fs[8];
 };
 
 class AllpassDelay
@@ -187,6 +200,7 @@ public:
     void setSize(float size);
     void setPredel(float seconds);
     void setDecay(float decay);
+    void setModulation(float rate, float depth);
     void processBlock(float* left, float* right, int nsamps);
 
 private:
