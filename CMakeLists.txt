@@ -25,7 +25,6 @@ if (UNIX AND NOT APPLE)
      target_link_libraries(mts-esp-client PUBLIC dl)
 endif ()
 
-
 set(plugin_formats)
 
 if(WIN32)
@@ -151,6 +150,10 @@ target_link_libraries(${PROJECT_NAME}
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
+)
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+    libs/mverb
 )
 
 file(GLOB_RECURSE res "${CMAKE_CURRENT_SOURCE_DIR}/resources/*.*")

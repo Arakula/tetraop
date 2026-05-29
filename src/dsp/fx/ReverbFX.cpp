@@ -9,8 +9,6 @@ ReverbFX::ReverbFX ( TetraOPAudioProcessor& p)
 
     audioProcessor.params.addParameterListener ( prefix + "mode", this );
     audioProcessor.params.addParameterListener ( prefix + "on", this );
-
-    tetraVerb = std::make_unique<TetraVerb>();
 }
 
 ReverbFX::~ReverbFX ()
@@ -22,32 +20,51 @@ ReverbFX::~ReverbFX ()
 void ReverbFX::parameterChanged ( const juce::String& /*paramId*/, float /*value*/ )
 {
     clear ();
+    mverb.reset();
 }
 
 void ReverbFX::prepare ( float _srate )
 {
     srate = _srate;
 
-    tetraVerb->prepare(_srate);
+    mverb.setSampleRate(srate);
 }
 
-void ReverbFX::processBlock ( float* left, float* right, int nsamps, int /* blockOffset */, bool /* audioRate */)
+void ReverbFX::processBlock(float* left, float* right, int nsamps, int /* blockOffset */, bool /* audioRate */)
 {
-    //auto mode = fast::clamp ( juce::roundToInt ( modeParam->load () ), 0, 5 );
-    float size = audioProcessor.params.getRawParameterValue("fx_reverb_revsize")->load();
-    tetraVerb->setSize(size);
-
+    mverb.setParameter(MVerb<float>::DAMPINGFREQ, 0.f);
+    mverb.setParameter(MVerb<float>::BANDWIDTHFREQ, 1.f);
+    mverb.setParameter(MVerb<float>::DENSITY, 1.f);
+    float predel = audioProcessor.params.getRawParameterValue("fx_reverb_predel")->load();
+    mverb.setParameter(MVerb<float>::PREDELAY, predel);
+    mverb.setParameter(MVerb<float>::EARLYMIX, 0.75f);
+    float mix = audioProcessor.params.getRawParameterValue("fx_reverb_mix")->load();
+    mverb.setParameter(MVerb<float>::MIX, mix);
+    mverb.setParameter(MVerb<float>::GAIN, 1.f);
+    float size_ = audioProcessor.params.getRawParameterValue("fx_reverb_revsize")->load();
+    if (size != size_)
+    {
+        size = size_;
+        mverb.setParameter(MVerb<float>::SIZE, size);
+    }
     float decay = audioProcessor.params.getRawParameterValue("fx_reverb_decay")->load();
-    tetraVerb->setDecay(decay);
+    mverb.setParameter(MVerb<float>::DECAY, decay);
 
-    float rate = audioProcessor.params.getRawParameterValue("fx_reverb_modrate")->load();
-    float depth = audioProcessor.params.getRawParameterValue("fx_reverb_moddepth")->load();
-    tetraVerb->setModulation(rate, depth);
+    gin::ScratchBuffer outbuf(2, nsamps);
 
-    tetraVerb->processBlock(left, right, nsamps);
+    float* ins[] = { left, right };
+    float* outs[] = { outbuf.getWritePointer(0), outbuf.getWritePointer(1) };
+
+    mverb.process(ins, outs, nsamps);
+
+    for (int i = 0; i < nsamps; ++i)
+    {
+        left[i] = outs[0][i];
+        right[i] = outs[1][i];
+    }
 }
 
 void ReverbFX::clear ()
 {
-    //miniVerb->clear();
+    mverb.reset();  
 }
