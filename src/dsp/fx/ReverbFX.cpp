@@ -32,12 +32,16 @@ void ReverbFX::prepare ( float _srate )
 
 void ReverbFX::processBlock(float* left, float* right, int nsamps, int /* blockOffset */, bool /* audioRate */)
 {
-    mverb.setParameter(MVerb<float>::DAMPINGFREQ, 0.f);
-    mverb.setParameter(MVerb<float>::BANDWIDTHFREQ, 1.f);
-    mverb.setParameter(MVerb<float>::DENSITY, 1.f);
+    float damp = audioProcessor.params.getRawParameterValue("fx_reverb_damp")->load();
+    mverb.setParameter(MVerb<float>::DAMPINGFREQ, damp);
+    float lowpass = audioProcessor.params.getRawParameterValue("fx_reverb_lowpass")->load();
+    mverb.setParameter(MVerb<float>::BANDWIDTHFREQ, lowpass);
+    float density = audioProcessor.params.getRawParameterValue("fx_reverb_density")->load();
+    mverb.setParameter(MVerb<float>::DENSITY, density);
     float predel = audioProcessor.params.getRawParameterValue("fx_reverb_predel")->load();
     mverb.setParameter(MVerb<float>::PREDELAY, predel);
-    mverb.setParameter(MVerb<float>::EARLYMIX, 0.75f);
+    float el = audioProcessor.params.getRawParameterValue("fx_reverb_earlylate")->load();
+    mverb.setParameter(MVerb<float>::EARLYMIX, el);
     float mix = audioProcessor.params.getRawParameterValue("fx_reverb_mix")->load();
     mverb.setParameter(MVerb<float>::MIX, mix);
     mverb.setParameter(MVerb<float>::GAIN, 1.f);

@@ -231,10 +231,10 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add(std::make_unique<juce::AudioParameterInt>("fx_reverb_mode", "FX Reverb Mode", 0, 5, 0));
     layout.add(std::make_unique<juce::AudioParameterFloat>("fx_reverb_decay", "FX Reverb Decay", 0.f, 1.0f, 0.5f));
     layout.add(std::make_unique<juce::AudioParameterFloat>("fx_reverb_revsize", "FX Reverb Size", 0.f, 1.0f, 0.8f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_reverb_lowcut", "FX Reverb Lowcut", juce::NormalisableRange<float>(20.0f, 20000.0f, 1.f, 0.3f), 50.0f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_reverb_highcut", "FX Reverb Highcut", juce::NormalisableRange<float>(20.0f, 20000.0f, 1.f, 0.3f), 15000.0f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_reverb_modrate", "FX Reverb Mod Rate", juce::NormalisableRange<float>(0.f, 4.f, 0.0001f, 0.4f), 0.25f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_reverb_moddepth", "FX Reverb Mod Depth", 0.f, 1.f, 0.25f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_reverb_lowpass", "FX Reverb Lowpass", 0.f, 1.f, 1.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_reverb_damp", "FX Reverb Damp", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_reverb_density", "FX Reverb Density", 0.f, 1.f, 0.75f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("fx_reverb_earlylate", "FX Reverb E/L Mix", 0.f, 1.f, 0.5f));
     layout.add(std::make_unique<juce::AudioParameterFloat>("fx_reverb_predel", "FX Reverb Pre-Delay", juce::NormalisableRange<float>(0.f, 1.f, 0.001f, 0.4f), 0.011f));
     layout.add(std::make_unique<juce::AudioParameterFloat>("fx_reverb_mix", "FX Reverb Mix", 0.f, 1.f, 0.5f));
 

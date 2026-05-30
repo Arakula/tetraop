@@ -18,29 +18,29 @@ FXReverb::FXReverb(TetraOPAudioProcessorEditor& e)
 	predel = std::make_unique<Rotary>(editor, prefix + "predel", "PreDel", Rotary::VerbPredelay);
 	decay = std::make_unique<Rotary>(editor, prefix + "decay", "Decay", Rotary::Percent);
 	size = std::make_unique<Rotary>(editor, prefix + "revsize", "Size", Rotary::Percent);
-	lowcut = std::make_unique<Rotary>(editor, prefix + "lowcut", "Lowcut", Rotary::Hz);
-	highcut = std::make_unique<Rotary>(editor, prefix + "highcut", "Highcut", Rotary::Hz);
-	highcut->invertValue = true;
-	moddepth = std::make_unique<Rotary>(editor, prefix + "moddepth", "ModDep", Rotary::Percent);
-	modrate = std::make_unique<Rotary>(editor, prefix + "modrate", "ModRate", Rotary::Hz1f);
+	damp = std::make_unique<Rotary>(editor, prefix + "damp", "Damp", Rotary::Percent);
+	lowpass = std::make_unique<Rotary>(editor, prefix + "lowpass", "LowPass", Rotary::Percent);
+	lowpass->invertValue = true;
+	earlylate = std::make_unique<Rotary>(editor, prefix + "earlylate", "E/L", Rotary::Percent);
+	density = std::make_unique<Rotary>(editor, prefix + "density", "density", Rotary::Percent);
 	mix = std::make_unique<Rotary>(editor, prefix + "mix", "Mix", Rotary::Percent);
 
 	addAndMakeVisible(predel.get());
 	addAndMakeVisible(decay.get());
 	addAndMakeVisible(size.get());
-	addAndMakeVisible(lowcut.get());
-	addAndMakeVisible(highcut.get());
-	addAndMakeVisible(moddepth.get());
-	addAndMakeVisible(modrate.get());
+	addAndMakeVisible(damp.get());
+	addAndMakeVisible(lowpass.get());
+	addAndMakeVisible(earlylate.get());
+	addAndMakeVisible(density.get());
 	addAndMakeVisible(mix.get());
 
 	editor.registerModParam(predel.get(), TetraOPAudioProcessorEditor::kFX);
 	editor.registerModParam(decay.get(), TetraOPAudioProcessorEditor::kFX);
 	editor.registerModParam(size.get(), TetraOPAudioProcessorEditor::kFX);
-	editor.registerModParam(lowcut.get(), TetraOPAudioProcessorEditor::kFX);
-	editor.registerModParam(highcut.get(), TetraOPAudioProcessorEditor::kFX);
-	editor.registerModParam(moddepth.get(), TetraOPAudioProcessorEditor::kFX);
-	editor.registerModParam(modrate.get(), TetraOPAudioProcessorEditor::kFX);
+	editor.registerModParam(damp.get(), TetraOPAudioProcessorEditor::kFX);
+	editor.registerModParam(lowpass.get(), TetraOPAudioProcessorEditor::kFX);
+	editor.registerModParam(earlylate.get(), TetraOPAudioProcessorEditor::kFX);
+	editor.registerModParam(density.get(), TetraOPAudioProcessorEditor::kFX);
 	editor.registerModParam(mix.get(), TetraOPAudioProcessorEditor::kFX);
 
 	onActiveToggle();
@@ -68,10 +68,10 @@ void FXReverb::onActiveToggle()
 	predel->setEnabled(on);
 	decay->setEnabled(on);
 	size->setEnabled(on);
-	lowcut->setEnabled(on);
-	highcut->setEnabled(on);
-	moddepth->setEnabled(on);
-	modrate->setEnabled(on);
+	damp->setEnabled(on);
+	lowpass->setEnabled(on);
+	earlylate->setEnabled(on);
+	density->setEnabled(on);
 	mix->setEnabled(on);
 }
 
@@ -98,12 +98,12 @@ void FXReverb::resized()
 
 	mix->setBounds(Rectangle<int>(KNOB_WIDTH, KNOB_HEIGHT).withX(KNOB_WIDTH).withBottomY(getBottom() - 10 - PANEL_PAD));
 	predel->setBounds(mix->getBounds().translated(-KNOB_WIDTH, 0));
-	moddepth->setBounds(mix->getBounds().translated(0, -KNOB_HEIGHT));
-	modrate->setBounds(moddepth->getBounds().translated(-KNOB_WIDTH, 0));
-	highcut->setBounds(moddepth->getBounds().translated(0, -KNOB_HEIGHT));
-	lowcut->setBounds(modrate->getBounds().translated(0, -KNOB_HEIGHT));
-	size->setBounds(highcut->getBounds().translated(0, -KNOB_HEIGHT));
-	decay->setBounds(lowcut->getBounds().translated(0, -KNOB_HEIGHT));
+	earlylate->setBounds(mix->getBounds().translated(0, -KNOB_HEIGHT));
+	density->setBounds(earlylate->getBounds().translated(-KNOB_WIDTH, 0));
+	lowpass->setBounds(earlylate->getBounds().translated(0, -KNOB_HEIGHT));
+	damp->setBounds(density->getBounds().translated(0, -KNOB_HEIGHT));
+	size->setBounds(lowpass->getBounds().translated(0, -KNOB_HEIGHT));
+	decay->setBounds(damp->getBounds().translated(0, -KNOB_HEIGHT));
 
 	toggleUIComponents();
 }

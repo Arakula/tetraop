@@ -14,10 +14,10 @@ public:
 	std::unique_ptr<Rotary> predel;
 	std::unique_ptr<Rotary> decay;
 	std::unique_ptr<Rotary> size;
-	std::unique_ptr<Rotary> lowcut;
-	std::unique_ptr<Rotary> highcut;
-	std::unique_ptr<Rotary> modrate;
-	std::unique_ptr<Rotary> moddepth;
+	std::unique_ptr<Rotary> damp;
+	std::unique_ptr<Rotary> lowpass;
+	std::unique_ptr<Rotary> density;
+	std::unique_ptr<Rotary> earlylate;
 	std::unique_ptr<Rotary> mix;
 	juce::TextButton modeBtn;
 

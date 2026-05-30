@@ -599,7 +599,7 @@ void Rotary::drawLabel(juce::Graphics& g, float slider_val)
             text = editor.audioProcessor.params.getParameter(paramId)->getCurrentValueAsText();
         }
         else if (format == Format::VerbPredelay) {
-            text = juce::String(std::round(slider_val * 1000.f)) + " ms";
+            text = juce::String(std::round(slider_val * 200.f)) + " ms";
         }
     }
 
