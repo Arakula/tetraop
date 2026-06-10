@@ -51,7 +51,6 @@ void Voice::noteStarted()
     vel = audioProcessor.modulation->velCurve.get_y_at(note.noteOnVelocity.asUnsignedFloat());
     audioProcessor.modulation->lastVel = vel;
     vel_targ = vel;
-    vel_step = 0.f;
     key = note.initialNote / 127.f;
     mpe_channel = note.midiChannel;
 
@@ -91,8 +90,9 @@ void Voice::noteStarted()
     Utils::setMasked(voice.env, 0.f, mask);
 
     auto velsense = velSenseParam->load();
-    Utils::setMasked(voice.vel_mult, vel * velsense + 1.0f - velsense, mask);
-    Utils::setMasked(voice.vel_step, 0.f, mask);
+    float v = vel * velsense + 1.0f - velsense;
+    Utils::setMasked(voice.vel_mult, v, mask);
+    Utils::setMasked(voice.vel_targ, v, mask);
 
     audioProcessor.modulation->onVoiceTriggered(id, (float)audioProcessor.timeInSeconds, audioProcessor.playing);
 }
@@ -137,6 +137,9 @@ void Voice::noteRetriggered()
     {
         vel_targ = audioProcessor.modulation->velCurve.get_y_at(note.noteOnVelocity.asUnsignedFloat());
         audioProcessor.modulation->lastVel = vel_targ;
+        auto velsense = velSenseParam->load();
+        auto& voice = audioProcessor.synth->vox[batch].voice;
+        Utils::setMasked(voice.vel_targ, vel_targ * velsense + 1.0f - velsense, mask);
     }
 
     key = note.initialNote / 127.f;
@@ -211,6 +214,8 @@ void Voice::setCurrentSampleRate (double newRate)
     auto& voice = audioProcessor.synth->vox[batch].voice;
     float smoothTime = 0.001f; // 1 ms
     voice.env_coeff = 1.0f - expf(-1.0f / (smoothTime * srate));
+    float smoothTimeVel = 0.002f; // 2 ms
+    voice.vel_coeff = 1.0f - expf(-1.0f / (smoothTimeVel * srate));
 }
 
 void Voice::startBlock(int startSample, int numSamples)
@@ -223,6 +228,7 @@ void Voice::startBlock(int startSample, int numSamples)
     int blkoffset = startSample - audioProcessor.currBlockPos + numSamples;
 
     float env_targ = audioProcessor.modulation->getEnvelopeValue(0, id, blkoffset);
+
     if (fastKill)
     {
         if (!fading)
@@ -240,14 +246,6 @@ void Voice::startBlock(int startSample, int numSamples)
     }
 
     Utils::setMasked(voice.env_targ, env_targ, mask);
-
-    if (vel != vel_targ)
-    {
-        float velsense = velSenseParam->load();
-        float vcurr = vel * velsense + 1.0f - velsense;
-        float vtarg = vel_targ * velsense + 1.0f - velsense;
-        Utils::setMasked(voice.vel_step, (vtarg - vcurr) / numSamples, mask);
-    }
 
     updateFilters(false, blkoffset);
     if (audioProcessor.synth->fm->layout == FmMatrix::Layout::Custom 
@@ -283,13 +281,13 @@ void Voice::startBlock(int startSample, int numSamples)
 
 void Voice::updateFreq(float keyval)
 {
-    if (audioProcessor.mtsClientPtr) 
+    if (audioProcessor.mtsClientPtr)
     {
         float frac = keyval - std::floor(keyval);
         if (std::abs(frac) < 1e-6f)
         {
             freq = (float)MTS_NoteToFrequency(audioProcessor.mtsClientPtr, static_cast<char>(keyval), -1);
-        } 
+        }
         else
         {
             int note0 = (int)std::floor(keyval);
@@ -317,18 +315,6 @@ void Voice::updateFreq(float keyval)
 
 void Voice::endBlock(int, int numSamples)
 {
-    // velocity is interpolated over a block in MONO mode
-    if (vel != vel_targ) 
-    {
-        auto& voice = audioProcessor.synth->vox[batch].voice;
-        bool msk[4] = { false, false, false, false };
-        msk[lane] = true;
-        SIMDM mask = SIMDM(msk);
-
-        vel = vel_targ;
-        Utils::setMasked(voice.vel_step, 0.f, mask);
-    }
-
     if (fastKill && fastKillGain <= 0.f)
     {
         clearCurrentNote();

@@ -1,30 +1,27 @@
 # TetraOP
 
-TetraOP is a _utility synthesizer_ designed to be versatile for a wide range of sounds, it combines Wavetables and FM synthesis in an easy to use virtual instrument with a balance between good performance and great sound.
+TetraOP is a wavetable synth with four oscillators, FM, Unison, ring modulation and more.
 
-The main reference for this synth is Ableton Operator, a handy synth for electronic drums and other sounds that is only available for the Live DAW, it also borrows from other synthesizers like Serum, Vital and Dune.
+[]
 
-Other than allowing for complex FM routings and morphing wavetables it comes with a drag-and-drop modulation system that is easy to use with modulators like Macros, LFOs, Envelopes, Random Generators, MPE etc..
+The goal of this synth is to build a versatile synth similar to Ableton Operator, it combines four wavetable oscillators with phase and ring modulation using predefined layouts or a custom modulation matrix.
 
-Performance is well optimized with SIMD across polyphonic voices and unison, for an FM synth that reads Wavetables with cubic interpolation and oversampling it performs well even with priority given to sound quality over CPU usage.
+It is a well executed synth with decent performance and SIMD across voices, it is released as freeware for the KVR developers challenge because frankly I was not sure what to make of it, it is a bit too crafted for a freebie but at the same time not powerful enough to compete with other commercial synths.
 
-## What TetraOP is not
-
-TetraOP is not a do-it-all synthesizer or the ultimate synth or attempts to be so, it does not do sample re-synthesis or granular synthesis or have multiple rendering engines, it does not edit wavetables (at least for now).
+Its built using Juce and makes extensive use of the [Gin library](https://github.com/FigBug/Gin/tree/master) for voicing, utilities and working with wavetables.
 
 ## Features
 
 * Wavetable based synthesis
 * 4 operators with FM and RM routing
 * 10 predefined FM layouts
-* Custom FM and RM routing
+* FM and RM routing matrix
 * 16 Unison voices per operator
 * 5 Unison modes
 * 8 Phase distortion modes
 * 2 Filters with 5 types and 4 modes each
 * Drag-and-drop modulation system
 * Envelopes, LFOs, Macros and other modulation sources
-* MPE and Micro-Tuning (Scala files and MTS)
 
 ## Build
 

@@ -804,9 +804,9 @@ float Modulation::calculateOffset(std::vector<Connection*> conns, int voiceId, i
             auto absamt = std::abs(conn->amount);
             value = value * absamt;
 
-            if (conn->tension != 0.f) {
+            if (std::fabs(conn->tension) > 1e-6f) {
                 float sign = value >= 0 ? 1.f : -1.f;
-                float absval = std::fabs(value) / absamt; // normalize between 0...1 for pow
+                float absval = std::clamp(std::fabs(value) / absamt, 0.f, 1.f);
                 float shaped = conn->tension < 0
                     ? -1 * (std::pow(1 - absval, conn->power) - 1)
                     : std::pow(absval, conn->power);

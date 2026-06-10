@@ -18,10 +18,11 @@ public:
     {
         std::array<float, 4> key; // float 0..127 note pressed used to get wavetable
         float env_coeff = 1.f;
+        float vel_coeff = 1.f;
         SIMDF env;
         SIMDF env_targ;
         SIMDF vel_mult;
-        SIMDF vel_step;
+        SIMDF vel_targ;
 
         // matrix coefficients
         // these are updated per block so that the FM matrix is fully modulatable (when layout is custom)
@@ -123,7 +124,6 @@ private:
 
     // interpolation
     float vel_targ = 0.f;
-    float vel_step = 0.f;
 
     // params
     std::atomic<float>* glideParam = nullptr;

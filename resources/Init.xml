@@ -237,7 +237,7 @@
     <PARAM id="glide_tension" value="0.0"/>
     <PARAM id="global_pitch" value="0.0"/>
     <PARAM id="global_time" value="0.0"/>
-    <PARAM id="layout" value="1.0"/>
+    <PARAM id="layout" value="2.0"/>
     <PARAM id="legato" value="0.0"/>
     <PARAM id="lfo1_delay" value="0.0"/>
     <PARAM id="lfo1_delay_sync" value="0.0"/>
