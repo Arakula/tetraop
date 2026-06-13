@@ -82,11 +82,11 @@ Header::Header(TetraOPAudioProcessorEditor& e)
 
 	addAndMakeVisible(prevPreset);
 	prevPreset.setAlpha(0.f);
-	prevPreset.onClick = [this] { selectNextPreset(true); };
+	prevPreset.onClick = [this] { selectNextPreset(false); };
 
 	addAndMakeVisible(nextPreset);
 	nextPreset.setAlpha(0.f);
-	nextPreset.onClick = [this] { selectNextPreset(false); };
+	nextPreset.onClick = [this] { selectNextPreset(true); };
 
 	addAndMakeVisible(preset);
 	preset.setAlpha(0.f);
