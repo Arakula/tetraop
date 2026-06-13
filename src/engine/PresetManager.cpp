@@ -220,6 +220,7 @@ void PresetManager::loadPreset(Preset preset)
         juce::MemoryBlock state;
         audioProcessor.copyXmlToBinary(*xml, state);
         audioProcessor.setStateInformation(state.getData(), (int)state.getSize()); // sets selected preset from setStateInformation()
+        selectedPreset.name = file.getFileNameWithoutExtension();
     }
     catch (...) {
         loadInit();
