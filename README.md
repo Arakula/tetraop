@@ -1,4 +1,23 @@
-# TetraOP
+<h1 align="center">
+  <!-- <img src="doc/logo.png" width="200" style="padding: 5px;" /> -->
+  TetraOP
+  <br>
+</h1>
+<div align="center">
+
+[![Windows Support](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/tiagolr/tetraop/releases)
+[![Ubuntu Support](https://img.shields.io/badge/Linux-E95420?style=for-the-badge&logo=linux&logoColor=white)](https://github.com/tiagolr/tetraop/releases)
+[![Mac Support](https://img.shields.io/badge/MACOS-adb8c5?style=for-the-badge&logo=macos&logoColor=white)](https://github.com/tiagolr/tetraop/releases)
+
+</div>
+<div align="center">
+
+[![GitHub package.json version](https://img.shields.io/github/v/release/tiagolr/tetraop?color=%40&label=latest)](https://github.com/tiagolr/tetraop/releases/latest)
+![GitHub issues](https://img.shields.io/github/issues-raw/tiagolr/tetraop)
+![GitHub all releases](https://img.shields.io/github/downloads/tiagolr/tetraop/total)
+![Github license](https://img.shields.io/github/license/tiagolr/tetraop)
+
+</div>
 
 TetraOP is a wavetable synth with four oscillators, FM, Unison, ring modulation and more.
 
