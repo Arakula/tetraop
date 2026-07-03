@@ -54,7 +54,7 @@ void Modulator::timerCallback()
 
     if (mod.active && (mod.connections || env1Active)) {
         valbuf_clear = false;
-        valbuf[valbuf_idx] = mod.value;
+        valbuf[valbuf_idx] = mod.value * 0.99f + 0.01f; // HACK make lfo zero values show
         valbuf_idx = (valbuf_idx + 1) % valbuf.size();
         isActive = true;
         activeCountdown = 30; // 30 hz

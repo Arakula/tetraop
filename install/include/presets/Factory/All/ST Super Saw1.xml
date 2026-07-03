@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<TETRAOP version="0.0.1" name="DeleteMe" id="b289d76ff0d046ad822295efeaf1466d"
-         description="" category="" author="" date="20260516T190342.505+0100">
+<TETRAOP version="0.0.2" name="Super Saw1" id="2fcbedca402a4e73a045489cb8943954"
+         description="" category="" author="" date="20260610T142509.419+0100">
   <PARAMETERS>
     <PARAM id="a_feedback" value="0.0"/>
     <PARAM id="a_fixed" value="0.0"/>
     <PARAM id="a_level" value="1.0"/>
-    <PARAM id="a_morph" value="0.2149999737739563"/>
+    <PARAM id="a_morph" value="0.1749999225139618"/>
     <PARAM id="a_morph_snap" value="1.0"/>
     <PARAM id="a_on" value="1.0"/>
     <PARAM id="a_pan" value="0.5"/>
@@ -15,19 +15,19 @@
     <PARAM id="a_phase_offset" value="0.0"/>
     <PARAM id="a_phase_rand" value="1.0"/>
     <PARAM id="a_pitch_cents" value="0.0"/>
-    <PARAM id="a_pitch_oct" value="-1.0"/>
+    <PARAM id="a_pitch_oct" value="0.0"/>
     <PARAM id="a_pitch_semis" value="0.0"/>
     <PARAM id="a_unison_blend" value="1.0"/>
-    <PARAM id="a_unison_detune" value="0.25"/>
-    <PARAM id="a_unison_mode" value="0.0"/>
-    <PARAM id="a_unison_spread" value="0.2999999523162842"/>
+    <PARAM id="a_unison_detune" value="0.239999994635582"/>
+    <PARAM id="a_unison_mode" value="4.0"/>
+    <PARAM id="a_unison_spread" value="0.3399999141693115"/>
     <PARAM id="a_unison_stereo" value="1.0"/>
-    <PARAM id="a_unison_voices" value="1.0"/>
+    <PARAM id="a_unison_voices" value="8.0"/>
     <PARAM id="b_feedback" value="0.0"/>
     <PARAM id="b_fixed" value="0.0"/>
-    <PARAM id="b_level" value="0.0"/>
-    <PARAM id="b_morph" value="0.0"/>
-    <PARAM id="b_morph_snap" value="1.0"/>
+    <PARAM id="b_level" value="1.0"/>
+    <PARAM id="b_morph" value="0.6824993491172791"/>
+    <PARAM id="b_morph_snap" value="0.0"/>
     <PARAM id="b_on" value="0.0"/>
     <PARAM id="b_pan" value="0.5"/>
     <PARAM id="b_phase_dist_amt" value="0.0"/>
@@ -35,14 +35,14 @@
     <PARAM id="b_phase_offset" value="0.0"/>
     <PARAM id="b_phase_rand" value="1.0"/>
     <PARAM id="b_pitch_cents" value="0.0"/>
-    <PARAM id="b_pitch_oct" value="0.0"/>
+    <PARAM id="b_pitch_oct" value="1.0"/>
     <PARAM id="b_pitch_semis" value="0.0"/>
     <PARAM id="b_unison_blend" value="1.0"/>
     <PARAM id="b_unison_detune" value="0.25"/>
     <PARAM id="b_unison_mode" value="0.0"/>
     <PARAM id="b_unison_spread" value="0.2999999523162842"/>
     <PARAM id="b_unison_stereo" value="1.0"/>
-    <PARAM id="b_unison_voices" value="1.0"/>
+    <PARAM id="b_unison_voices" value="4.0"/>
     <PARAM id="c_feedback" value="0.0"/>
     <PARAM id="c_fixed" value="0.0"/>
     <PARAM id="c_level" value="0.0"/>
@@ -83,48 +83,48 @@
     <PARAM id="d_unison_spread" value="0.2999999523162842"/>
     <PARAM id="d_unison_stereo" value="1.0"/>
     <PARAM id="d_unison_voices" value="1.0"/>
-    <PARAM id="env1_att" value="0.009999998845160007"/>
+    <PARAM id="env1_att" value="0.0008699999889358878"/>
     <PARAM id="env1_dec" value="0.1499999910593033"/>
     <PARAM id="env1_del" value="0.0"/>
     <PARAM id="env1_hld" value="0.0"/>
     <PARAM id="env1_mode" value="0.0"/>
-    <PARAM id="env1_rel" value="1.0"/>
-    <PARAM id="env1_sus" value="0.712500274181366"/>
+    <PARAM id="env1_rel" value="1.021425008773804"/>
+    <PARAM id="env1_sus" value="0.800000011920929"/>
     <PARAM id="env1_tenatt" value="0.0"/>
     <PARAM id="env1_tendec" value="-0.25"/>
     <PARAM id="env1_tenrel" value="-0.25"/>
-    <PARAM id="env2_att" value="0.0"/>
-    <PARAM id="env2_dec" value="0.1499999910593033"/>
+    <PARAM id="env2_att" value="0.004999999888241291"/>
+    <PARAM id="env2_dec" value="0.6483799815177917"/>
     <PARAM id="env2_del" value="0.0"/>
     <PARAM id="env2_hld" value="0.0"/>
     <PARAM id="env2_mode" value="0.0"/>
-    <PARAM id="env2_rel" value="1.0"/>
+    <PARAM id="env2_rel" value="0.01499999966472387"/>
     <PARAM id="env2_sus" value="0.0"/>
     <PARAM id="env2_tenatt" value="0.0"/>
-    <PARAM id="env2_tendec" value="-0.25"/>
+    <PARAM id="env2_tendec" value="-0.5949996709823608"/>
     <PARAM id="env2_tenrel" value="-0.25"/>
-    <PARAM id="env3_att" value="0.009999998845160007"/>
+    <PARAM id="env3_att" value="0.004999999888241291"/>
     <PARAM id="env3_dec" value="0.1499999910593033"/>
     <PARAM id="env3_del" value="0.0"/>
     <PARAM id="env3_hld" value="0.0"/>
     <PARAM id="env3_mode" value="0.0"/>
-    <PARAM id="env3_rel" value="1.0"/>
+    <PARAM id="env3_rel" value="0.01499999966472387"/>
     <PARAM id="env3_sus" value="0.800000011920929"/>
     <PARAM id="env3_tenatt" value="0.0"/>
     <PARAM id="env3_tendec" value="-0.25"/>
     <PARAM id="env3_tenrel" value="-0.25"/>
-    <PARAM id="env4_att" value="0.009999998845160007"/>
+    <PARAM id="env4_att" value="0.004999999888241291"/>
     <PARAM id="env4_dec" value="0.1499999910593033"/>
     <PARAM id="env4_del" value="0.0"/>
     <PARAM id="env4_hld" value="0.0"/>
     <PARAM id="env4_mode" value="0.0"/>
-    <PARAM id="env4_rel" value="1.0"/>
+    <PARAM id="env4_rel" value="0.01499999966472387"/>
     <PARAM id="env4_sus" value="0.800000011920929"/>
     <PARAM id="env4_tenatt" value="0.0"/>
     <PARAM id="env4_tendec" value="-0.25"/>
     <PARAM id="env4_tenrel" value="-0.25"/>
-    <PARAM id="f1_cut" value="36.0"/>
-    <PARAM id="f1_drive" value="0.3499999940395355"/>
+    <PARAM id="f1_cut" value="1368.0"/>
+    <PARAM id="f1_drive" value="0.0"/>
     <PARAM id="f1_inA" value="1.0"/>
     <PARAM id="f1_inB" value="1.0"/>
     <PARAM id="f1_inC" value="1.0"/>
@@ -132,8 +132,8 @@
     <PARAM id="f1_mix" value="1.0"/>
     <PARAM id="f1_mode" value="0.0"/>
     <PARAM id="f1_on" value="1.0"/>
-    <PARAM id="f1_res" value="0.449999988079071"/>
-    <PARAM id="f1_type" value="6.0"/>
+    <PARAM id="f1_res" value="0.0"/>
+    <PARAM id="f1_type" value="0.0"/>
     <PARAM id="f2_cut" value="2500.0"/>
     <PARAM id="f2_drive" value="0.0"/>
     <PARAM id="f2_inA" value="0.0"/>
@@ -173,7 +173,7 @@
     <PARAM id="fx_comp_att" value="20.0"/>
     <PARAM id="fx_comp_gain" value="0.0"/>
     <PARAM id="fx_comp_makeup" value="1.0"/>
-    <PARAM id="fx_comp_on" value="1.0"/>
+    <PARAM id="fx_comp_on" value="0.0"/>
     <PARAM id="fx_comp_ratio" value="4.0"/>
     <PARAM id="fx_comp_rel" value="199.9999847412109"/>
     <PARAM id="fx_comp_thresh" value="0.0"/>
@@ -223,21 +223,21 @@
     <PARAM id="fx_phaser_res" value="0.0"/>
     <PARAM id="fx_phaser_stereo" value="0.0"/>
     <PARAM id="fx_phaser_sync" value="0.0"/>
-    <PARAM id="fx_reverb_decay" value="0.5"/>
+    <PARAM id="fx_reverb_decay" value="0.8499999642372131"/>
     <PARAM id="fx_reverb_highcut" value="15000.0009765625"/>
     <PARAM id="fx_reverb_lowcut" value="50.0"/>
-    <PARAM id="fx_reverb_mix" value="0.5"/>
+    <PARAM id="fx_reverb_mix" value="0.2599999904632568"/>
     <PARAM id="fx_reverb_moddepth" value="0.25"/>
     <PARAM id="fx_reverb_mode" value="0.0"/>
     <PARAM id="fx_reverb_modrate" value="0.25"/>
-    <PARAM id="fx_reverb_on" value="0.0"/>
+    <PARAM id="fx_reverb_on" value="1.0"/>
     <PARAM id="fx_reverb_predel" value="0.01099999994039536"/>
     <PARAM id="fx_reverb_revsize" value="0.7999999523162842"/>
     <PARAM id="glide" value="0.0"/>
     <PARAM id="glide_tension" value="0.0"/>
     <PARAM id="global_pitch" value="0.0"/>
     <PARAM id="global_time" value="0.0"/>
-    <PARAM id="layout" value="1.0"/>
+    <PARAM id="layout" value="2.0"/>
     <PARAM id="legato" value="0.0"/>
     <PARAM id="lfo1_delay" value="0.0"/>
     <PARAM id="lfo1_delay_sync" value="0.0"/>
@@ -281,7 +281,7 @@
     <PARAM id="macro2" value="0.0"/>
     <PARAM id="macro3" value="0.0"/>
     <PARAM id="macro4" value="0.0"/>
-    <PARAM id="master_gain" value="1.0"/>
+    <PARAM id="master_gain" value="0.9999999403953552"/>
     <PARAM id="mod10_amt" value="0.5"/>
     <PARAM id="mod10_ten" value="0.0"/>
     <PARAM id="mod11_amt" value="0.5"/>
@@ -302,7 +302,7 @@
     <PARAM id="mod18_ten" value="0.0"/>
     <PARAM id="mod19_amt" value="0.5"/>
     <PARAM id="mod19_ten" value="0.0"/>
-    <PARAM id="mod1_amt" value="0.5"/>
+    <PARAM id="mod1_amt" value="0.4499999284744263"/>
     <PARAM id="mod1_ten" value="0.0"/>
     <PARAM id="mod20_amt" value="0.5"/>
     <PARAM id="mod20_ten" value="0.0"/>
@@ -441,6 +441,12 @@
     <PARAM id="rnd2_rate_sync" value="5.0"/>
     <PARAM id="rnd2_sync" value="1.0"/>
     <PARAM id="vel_sense" value="1.0"/>
+    <PARAM id="f1_ktrack" value="1.0"/>
+    <PARAM id="f2_ktrack"/>
+    <PARAM id="fx_reverb_damp" value="0.8100000023841858"/>
+    <PARAM id="fx_reverb_density"/>
+    <PARAM id="fx_reverb_earlylate"/>
+    <PARAM id="fx_reverb_lowpass"/>
   </PARAMETERS>
   <LFOS>
     <LFO1 points="0 0 0 1 0 0.5 1 0 1 0 "/>
@@ -455,7 +461,7 @@
   <MACROS macro1="Macro1" macro2="Macro2" macro3="Macro3" macro4="Macro4"/>
   <WAVETABLES>
     <Table id="0" path="" mode="1" data=""/>
-    <Table id="1" path="" mode="1" data=""/>
+    <Table id="1" path="Instrument\Clarinett1.flac" mode="0" data=""/>
     <Table id="2" path="" mode="1" data=""/>
     <Table id="3" path="" mode="1" data=""/>
   </WAVETABLES>
