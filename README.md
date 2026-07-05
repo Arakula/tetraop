@@ -25,7 +25,7 @@ TetraOP is a wavetable synth with four oscillators, FM, Unison, ring modulation 
 
 My first attempt at a wavetable synthesizer, it is based of Ableton Operator and combines four wavetable oscillators with phase and ring modulation. Its built using [Gin](https://github.com/FigBug/Gin/tree/master) and Juce.
 
-Overall it's a well executed synth with good performance and SIMD across voices, it doesn't have however wavetable editing or a great filter section or a preset browser etc, due to FM not playing well with wavetables I am not sure I'll be adding new features either.
+Overall it's a well executed synth with good performance and SIMD across voices, it doesn't have however wavetable editor or a great filter section or a preset browser etc, due to FM not playing well with wavetables I am not sure I'll be adding new features either.
 
 ## Features
 
