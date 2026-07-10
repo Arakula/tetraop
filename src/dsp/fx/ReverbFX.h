@@ -3,7 +3,6 @@
 
 #include "FX.h"
 #include "../../engine/Modulation.h"
-#include "./TetraVerb.h"
 #include "MVerb.h"
 
 class ReverbFX
