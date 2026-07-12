@@ -53,7 +53,6 @@ void Voice::noteStarted()
     vel_targ = vel;
     key = note.initialNote / 127.f;
     mpe_channel = note.midiChannel;
-    pitchBendFactor = std::pow(2.f, note.totalPitchbendInSemitones / 12.f);
 
     float glide_total = glideParam->load() * 0.001f;
     glide_elapsed = 0;
@@ -201,8 +200,6 @@ void Voice::notePressureChanged()
 
 void Voice::notePitchbendChanged()
 {
-    auto note = getCurrentlyPlayingNote();
-    pitchBendFactor = std::pow(2.f, note.totalPitchbendInSemitones / 12.f);
 }
 
 void Voice::noteTimbreChanged()
@@ -319,8 +316,6 @@ void Voice::updateFreq(float keyval)
     {
         freq = 440.0f * std::pow(2.0f, (keyval - 69) / 12.0f);
     }
-
-    freq *= pitchBendFactor;
 }
 
 void Voice::endBlock(int, int numSamples)
