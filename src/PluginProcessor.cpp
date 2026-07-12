@@ -40,12 +40,13 @@ static AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add(std::make_unique<AudioParameterBool>("legato", "Legato", false));
     layout.add(std::make_unique<AudioParameterBool>("mono", "Mono", false));
     layout.add(std::make_unique<AudioParameterBool>("mpe", "MPE", false));
+
     layout.add(std::make_unique<AudioParameterFloat>("glide", "Glide", NormalisableRange<float>(0.0f, 8000.0f, 1.f, 0.5f), 0.f));
     layout.add(std::make_unique<AudioParameterFloat>("glide_tension", "Glide Tension", -1.f, 1.f, 0.f));
     layout.add(std::make_unique<AudioParameterFloat>("global_time", "Global Time", -1.f, 1.f, 0.f));
     layout.add(std::make_unique<AudioParameterFloat>("global_pitch", "Global Time", -24.f, 24.f, 0.f));
     layout.add(std::make_unique<AudioParameterFloat>("vel_sense", "Vel Sense", 0.f, 1.f, 1.f));
-    layout.add(std::make_unique<AudioParameterInt>("pitch_bend", "Pitch Bend", 0, 12, 2));
+    layout.add(std::make_unique<AudioParameterInt>("pitch_bend", "Pitch Bend", 1, 48, 2));
     layout.add(std::make_unique<AudioParameterFloat>("master_gain", "Master Gain", NormalisableRange<float>(0.f, 4.f, 0.001f, 0.5f), 1.f));
 
     layout.add(std::make_unique<AudioParameterChoice>("layout", "FM Layout", StringArray{ "A_B_C_D", "DCBA", "CA_DB",

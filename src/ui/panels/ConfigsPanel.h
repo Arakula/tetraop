@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include "../UIUtils.h"
 #include "../widgets/CurveEditor.h"
+#include "../widgets/ValuePicker.h"
 #include "../../Globals.h"
 #include "../ScaledPluginEditor.h"
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -31,7 +32,7 @@ public:
     juce::TextButton mpeEnabledBtn;
     juce::TextButton unboundedMouseBtn;
     std::unique_ptr<CurveEditor> velEditor;
-
+    std::unique_ptr<ValuePicker> bendPicker;
 
 private:
     TetraOPAudioProcessorEditor& editor;

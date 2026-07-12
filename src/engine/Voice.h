@@ -77,6 +77,7 @@ public:
     float vel = 0.f; // norm velocity
     float key = 0.f; // norm note used for keytracking
     int mpe_channel = 1;
+    float pitchBendFactor = 1.f;
 
     float fastKillGain = 1.f; // fastkill fadeout gain
     float fastKillStep = 1.f; // fastkill gain increment per sample
@@ -103,7 +104,7 @@ public:
 
     void notePressureChanged() override;
     void noteTimbreChanged() override;
-    void notePitchbendChanged() override    {}
+    void notePitchbendChanged() override;
     void noteKeyStateChanged() override     {}
 
     void setCurrentSampleRate (double newRate) override;

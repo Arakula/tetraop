@@ -49,6 +49,10 @@ ConfigsPanel::ConfigsPanel(TetraOPAudioProcessorEditor& e)
 			editor.audioProcessor.saveSettings();
 			repaint();
 		};
+
+	bendPicker = std::make_unique<ValuePicker>(editor, "pitch_bend");
+	bendPicker->precision = 0;
+	addAndMakeVisible(bendPicker.get());
 }
 
 ConfigsPanel::~ConfigsPanel()
@@ -121,6 +125,12 @@ void ConfigsPanel::paint(juce::Graphics& g)
 	g.setFont(juce::FontOptions(12.f));
 	g.drawText(juce::String(__DATE__), b.withTrimmedTop(53.f), juce::Justification::centredTop);
 	UIUtils::drawLogo(g, Rectangle<float>(50.f, 50.f).withX(b.getX() + 15).withY(b.getY() + b.getHeight() / 2 - 50.f / 2), COLOR_BACKGROUND().brighter(0.15f));
+
+	g.setFont(FontOptions(16.f));
+	g.setColour(COLOR_BACKGROUND());
+	g.fillRoundedRectangle(bendPicker->getBounds().toFloat().translated(0.5f,0.5f), 3.f);
+	g.setColour(COLOR_KNOB_LABEL());
+	g.drawText("Pitch Bend", bendPicker->getBounds().translated(50, 0).withWidth(100), Justification::centredLeft);
 }
 
 void ConfigsPanel::resized()
@@ -138,6 +148,9 @@ void ConfigsPanel::resized()
 	y += 25;
 
 	unboundedMouseBtn.setBounds(x, y, 200, 25);
+	y += 35;
+
+	bendPicker->setBounds(x, y, 40, 25);
 
 	// column 2
 	y = pad;
@@ -145,7 +158,6 @@ void ConfigsPanel::resized()
 
 	velEditor->setBounds(x, y + 25, 200, 100);
 	y += 20 + 50;
-
 
 	toggleUIComponents();
 }
