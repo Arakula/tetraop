@@ -63,7 +63,7 @@ public:
     std::unique_ptr<Modulation> modulation;
     std::vector<float> leftBuf;
     std::vector<float> rightBuf;
-
+    bool isLoadingPreset = false;
 
     // Undo
     std::unique_ptr<UndoMgr> undomgr;

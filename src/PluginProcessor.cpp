@@ -317,7 +317,7 @@ TetraOPAudioProcessor::TetraOPAudioProcessor()
 
 #ifdef JUCE_DEBUG
     int osstages = 0;
-#else 
+#else
     int osstages = 1;
 #endif
 
@@ -784,7 +784,7 @@ void TetraOPAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
         synth->renderNextBlock(
             osBuffer,
             oversampledMidi,
-            pos * osfactor, 
+            pos * osfactor,
             thisBlock * osfactor);
 
         pos += thisBlock;
@@ -793,7 +793,7 @@ void TetraOPAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
         modulation->endBlock(thisBlock * osfactor);
     }
     synth->endBlock(numSamples * osfactor);
-    
+
     for (int ch = 0; ch < osBuffer.getNumChannels(); ++ch)
     {
         std::memcpy(
@@ -872,7 +872,7 @@ void TetraOPAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
     // serialize FX
     auto fxtree = juce::ValueTree("EFFECTS");
     juce::String s;
-    for (int i = 0; i < int(fxOrder.size()); i++) 
+    for (int i = 0; i < int(fxOrder.size()); i++)
     {
         s << fxOrder[i];
         if (i < int(fxOrder.size()) - 1)
@@ -900,6 +900,8 @@ void TetraOPAudioProcessor::setStateInformation (const void* data, int sizeInByt
     if (undomgr && !undomgr->isUndoing && presetmgr->selectedPreset.name.isNotEmpty()) {
         undomgr->createUndo();
     }
+
+    isLoadingPreset = true;
 
     auto parameters = state.getChildWithName("PARAMETERS");
     auto lfos = state.getChildWithName("LFOS");
@@ -945,7 +947,7 @@ void TetraOPAudioProcessor::setStateInformation (const void* data, int sizeInByt
         tablesMgr->unserialize(tables);
     }
 
-    if (effects.isValid()) 
+    if (effects.isValid())
     {
         std::vector<FX::FXType> numbers;
         juce::String s = effects.getProperty("master").toString();
@@ -962,6 +964,7 @@ void TetraOPAudioProcessor::setStateInformation (const void* data, int sizeInByt
     preset.id = state.getProperty("id", juce::Uuid().toString());
     preset.name = state.getProperty("name", "(Empty)");
     presetmgr->setSelected(preset);
+    isLoadingPreset = false;
 }
 
 //==============================================================================

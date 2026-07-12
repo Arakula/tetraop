@@ -1,7 +1,7 @@
 #include "./Delay.h"
 #include "../../PluginProcessor.h"
 
-Delay::Delay(TetraOPAudioProcessor& p) 
+Delay::Delay(TetraOPAudioProcessor& p)
 	: FX(p, FX::Delay)
 {
 	modeParam = audioProcessor.params.getRawParameterValue(prefix + "mode");
@@ -198,8 +198,8 @@ void Delay::processBlock(float* left, float* right, int nsamps, int /*blockoffse
 
             // Left
             float vL = (v0filter - hpstate_l) * G;
-            float yLP_l = vL + hpstate_l;  
-            hpstate_l = yLP_l + vL;           
+            float yLP_l = vL + hpstate_l;
+            hpstate_l = yLP_l + vL;
             float hpOutL = v0filter - yLP_l;
 
             // Right
@@ -219,7 +219,7 @@ void Delay::processBlock(float* left, float* right, int nsamps, int /*blockoffse
         else if (mode == 1) { // ping-pong
             delayL.write(left[i] * lfactor + v1filter * feedbackL);
             delayR.write(right[i] * rfactor + v0filter * feedbackR);
-        } 
+        }
         else if (mode == 2) { // tap delay
             float preL = predelayL.read(timeLeft);
             float preR = predelayR.read(timeLeft);
@@ -242,6 +242,9 @@ void Delay::processBlock(float* left, float* right, int nsamps, int /*blockoffse
 
 void Delay::parameterChanged(const juce::String& paramId, float value)
 {
+    if (audioProcessor.isLoadingPreset)
+        return;
+
     if (paramId == prefix + "on" || paramId == prefix + "bypass") {
         clear();
     }
