@@ -218,6 +218,15 @@ void Synth::handleMidiEvent (const juce::MidiMessage& m)
     else if (m.isNoteOn())
         lastEventWasNoteOff = false;
 
+    if (m.isController()) {
+        int controllerNumber = m.getControllerNumber();
+        auto val = m.getControllerValue() / 127.f;
+
+        if (controllerNumber == 1) { // modhweel
+            audioProcessor.modulation->modwheelValue = val;
+        }
+    }
+
     MPESynthesiser::handleMidiEvent (m);
 }
 
