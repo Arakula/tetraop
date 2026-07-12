@@ -187,14 +187,15 @@ void Voice::noteStopped (bool allowTailOff)
 
     if (! allowTailOff)
     {
+        audioProcessor.modulation->setVoiceAftertouch(id, 0.f);
         clearCurrentNote();
     }
 }
 
 void Voice::notePressureChanged()
 {
-    //auto note = getCurrentlyPlayingNote();
-    //proc.modMatrix.setPolyValue (*this, proc.modSrcPressure, note.pressure.asUnsignedFloat());
+    auto note = getCurrentlyPlayingNote();
+    audioProcessor.modulation->setVoiceAftertouch(id, note.pressure.asUnsignedFloat());
 }
 
 void Voice::noteTimbreChanged()
@@ -317,12 +318,14 @@ void Voice::endBlock(int, int numSamples)
 {
     if (fastKill && fastKillGain <= 0.f)
     {
+        audioProcessor.modulation->setVoiceAftertouch(id, 0.f);
         clearCurrentNote();
     }
 
     // check if envelope has finished
     if (released && release_elapsed > audioProcessor.modulation->envs[0].rel)
     {
+        audioProcessor.modulation->setVoiceAftertouch(id, 0.f);
         clearCurrentNote();
     }
 
@@ -337,6 +340,7 @@ void Voice::endBlock(int, int numSamples)
 
 void Voice::clear()
 {
+    audioProcessor.modulation->setVoiceAftertouch(id, 0.f);
     clearCurrentNote();
 }
 
