@@ -39,12 +39,14 @@
 #include "dsp/fx/ReverbFX.h"
 #include "dsp/fx/PhaserFX.h"
 #include "ui/ScaledPluginEditor.h"
-
+// CLAP
+#include "clap-juce-extensions/clap-juce-extensions.h"
 
 class TetraOPAudioProcessor
     : public juce::AudioProcessor
     , public juce::AudioProcessorValueTreeState::Listener
     , public juce::ValueTree::Listener
+    , public clap_juce_extensions::clap_properties
 {
 public:
     std::unique_ptr<TablesManager> tablesMgr;
@@ -174,6 +176,14 @@ public:
     void resetSettings();
     void loadTuningFile(String path);
     void loadTuningFileString(const std::string& str, const std::string& format);
+
+    //== CLAP ======================================================================
+    String getWrapperTypeString() {
+        if (wrapperType == wrapperType_Undefined && is_clap)
+            return "CLAP";
+
+        return juce::AudioProcessor::getWrapperTypeDescription(wrapperType);
+    }
 
 private:
     juce::ApplicationProperties settings;

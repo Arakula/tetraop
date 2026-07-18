@@ -10,3 +10,6 @@
 [submodule "libs/surge-tuning"]
 	path = libs/surge-tuning
 	url = https://github.com/surge-synthesizer/tuning-library.git
+[submodule "libs/clap-juce-extensions"]
+	path = libs/clap-juce-extensions
+	url = https://github.com/free-audio/clap-juce-extensions
