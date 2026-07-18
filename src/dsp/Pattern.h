@@ -11,6 +11,7 @@
 #include <vector>
 #include <mutex>
 #include <atomic>
+#include <string>
 
 class Pattern
 {
