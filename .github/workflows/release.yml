@@ -39,7 +39,7 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: tetraop-win
+          name: tetraop-win-vst3
           path: |
             ./build/TetraOP_artefacts/Release/VST3
             ./build/TetraOP_artefacts/Release/presets
@@ -47,6 +47,16 @@ jobs:
             ./build/TetraOP_artefacts/Release/readme.txt
             !./build/TetraOP_artefacts/Release/VST3/*.exp
             !./build/TetraOP_artefacts/Release/VST3/*.lib
+
+      - name: Upload Windows CLAP
+        uses: actions/upload-artifact@v4
+        with:
+          name: tetraop-win-clap
+          path: |
+            ./build/TetraOP_artefacts/Release/CLAP/*.clap
+            ./build/TetraOP_artefacts/Release/presets
+            ./build/TetraOP_artefacts/Release/wavetables
+            ./build/TetraOP_artefacts/Release/readme.txt
 
       - name: Install NSIS
         run: choco install nsis -y
@@ -105,7 +115,7 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: tetraop-macos
+          name: tetraop-macos-vst3
           path: |
             ./build/TetraOP_artefacts/Release/AU
             ./build/TetraOP_artefacts/Release/VST3
@@ -114,6 +124,16 @@ jobs:
             ./build/TetraOP_artefacts/Release/readme.txt
             !./build/TetraOP_artefacts/Release/VST3/*.exp
             !./build/TetraOP_artefacts/Release/VST3/*.lib
+
+      - name: Upload macOS CLAP
+        uses: actions/upload-artifact@v4
+        with:
+          name: tetraop-macos-clap
+          path: |
+            ./build/TetraOP_artefacts/Release/CLAP/*.clap
+            ./build/TetraOP_artefacts/Release/presets
+            ./build/TetraOP_artefacts/Release/wavetables
+            ./build/TetraOP_artefacts/Release/readme.txt
 
   build-linux:
     runs-on: ubuntu-22.04
@@ -151,7 +171,7 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: tetraop-linux
+          name: tetraop-linux-vst3
           path: |
             ./build/TetraOP_artefacts/Release/LV2
             ./build/TetraOP_artefacts/Release/VST3
@@ -161,16 +181,32 @@ jobs:
             !./build/TetraOP_artefacts/Release/VST3/*.exp
             !./build/TetraOP_artefacts/Release/VST3/*.lib
 
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: tetraop-linux-clap
+          path: |
+            ./build/TetraOP_artefacts/Release/CLAP/*.clap
+            ./build/TetraOP_artefacts/Release/presets
+            ./build/TetraOP_artefacts/Release/wavetables
+            ./build/TetraOP_artefacts/Release/readme.txt
+
   release:
     runs-on: ubuntu-latest
     needs: [build-windows, build-macos, build-linux]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     steps:
-      - name: Download Windows artifact
+      - name: Download Windows VST3 artifact
         uses: actions/download-artifact@v4
         with:
-          name: tetraop-win
-          path: artifacts/tetraop-win
+          name: tetraop-win-vst3
+          path: artifacts/tetraop-win-vst3
+
+      - name: Download Windows CLAP artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tetraop-win-clap
+          path: artifacts/tetraop-win-clap
 
       - name: Download Windows installer artifact
         uses: actions/download-artifact@v4
@@ -178,17 +214,29 @@ jobs:
           name: tetraop-win-exe
           path: artifacts/tetraop-win-exe
 
-      - name: Download macOS artifact
+      - name: Download macOS VST3 artifact
         uses: actions/download-artifact@v4
         with:
-          name: tetraop-macos
-          path: artifacts/tetraop-macos
+          name: tetraop-macos-vst3
+          path: artifacts/tetraop-macos-vst3
+
+      - name: Download macOS CLAP artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tetraop-macos-clap
+          path: artifacts/tetraop-macos-clap
 
       - name: Download Linux artifact
         uses: actions/download-artifact@v4
         with:
-          name: tetraop-linux
-          path: artifacts/tetraop-linux
+          name: tetraop-linux-vst3
+          path: artifacts/tetraop-linux-vst3
+
+      - name: Download Linux Clap artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tetraop-linux-clap
+          path: artifacts/tetraop-linux-clap
 
       - name: Append tag to artifacts
         run: |
@@ -196,9 +244,12 @@ jobs:
 
           # Zip each platform's artifacts with the tag in the name
           cd artifacts
-          zip -r tetraop-win-${TAG_NAME}.zip tetraop-win
-          zip -r tetraop-macos-${TAG_NAME}.zip tetraop-macos
-          zip -r tetraop-linux-${TAG_NAME}.zip tetraop-linux
+          zip -r tetraop-win-vst3-${TAG_NAME}.zip tetraop-win-vst3
+          zip -r tetraop-win-clap-${TAG_NAME}.zip tetraop-win-clap
+          zip -r tetraop-macos-vst3-${TAG_NAME}.zip tetraop-macos-vst3
+          zip -r tetraop-macos-clap-${TAG_NAME}.zip tetraop-macos-clap
+          zip -r tetraop-linux-vst3-${TAG_NAME}.zip tetraop-linux-vst3
+          zip -r tetraop-linux-clap-${TAG_NAME}.zip tetraop-linux-clap
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -206,9 +257,12 @@ jobs:
           draft: true
           tag_name: ${{ github.ref_name }}
           files: |
-            artifacts/tetraop-win-*.zip
             artifacts/tetraop-win-exe/*.exe
-            artifacts/tetraop-macos-*.zip
-            artifacts/tetraop-linux-*.zip
+            artifacts/tetraop-win-vst3-*.zip
+            artifacts/tetraop-win-clap-*.zip
+            artifacts/tetraop-macos-vst3-*.zip
+            artifacts/tetraop-macos-clap-*.zip
+            artifacts/tetraop-linux-vst3-*.zip
+            artifacts/tetraop-linux-clap-*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
