@@ -16,6 +16,7 @@ set(CMAKE_XCODE_GENERATE_SCHEME OFF)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_subdirectory(libs/JUCE)
+add_subdirectory(libs/clap-juce-extensions EXCLUDE_FROM_ALL)
 add_subdirectory(libs/surge-tuning)
 add_subdirectory(libs/gin/modules)
 
@@ -56,6 +57,9 @@ juce_add_plugin(${PROJECT_NAME}
         LV2URI "https://github.com/tiagolr/tetraop"
 )
 
+clap_juce_extensions_plugin(TARGET ${PROJECT_NAME}
+        CLAP_ID "com.tilr.tetraop"
+        CLAP_FEATURES instrument synthesizer)
 
 #target_include_directories(${PROJECT_NAME}
 #    PRIVATE
